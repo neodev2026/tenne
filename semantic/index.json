@@ -1,0 +1,174 @@
+﻿{
+  "schemaVersion": "0.1",
+  "canonicalLanguage": "en",
+  "rules": [
+    {
+      "id": "PS-001",
+      "title": "TENNE Product Identity",
+      "domain": "product",
+      "status": "approved",
+      "file": "semantic/product/product-semantics.md",
+      "tags": ["product", "identity", "scope"]
+    },
+    {
+      "id": "PS-002",
+      "title": "Browser Playability",
+      "domain": "product",
+      "status": "approved",
+      "file": "semantic/product/product-semantics.md",
+      "tags": ["browser", "deployment", "playability"]
+    },
+    {
+      "id": "PS-003",
+      "title": "Deterministic Gameplay Core",
+      "domain": "product",
+      "status": "approved",
+      "file": "semantic/product/product-semantics.md",
+      "tags": ["gameplay", "deterministic", "testing"]
+    },
+    {
+      "id": "GS-001",
+      "title": "WAITING",
+      "domain": "gameplay",
+      "status": "approved",
+      "file": "semantic/gameplay/combat-states.md",
+      "tags": ["combat", "state-machine", "waiting"]
+    },
+    {
+      "id": "GS-002",
+      "title": "FIRING",
+      "domain": "gameplay",
+      "status": "approved",
+      "file": "semantic/gameplay/combat-states.md",
+      "tags": ["combat", "state-machine", "firing", "ammo"]
+    },
+    {
+      "id": "GS-003",
+      "title": "RELOADING",
+      "domain": "gameplay",
+      "status": "approved",
+      "file": "semantic/gameplay/combat-states.md",
+      "tags": ["combat", "state-machine", "reload", "stun"]
+    },
+    {
+      "id": "GS-004",
+      "title": "Ammo Exhaustion",
+      "domain": "gameplay",
+      "status": "approved",
+      "file": "semantic/gameplay/combat-states.md",
+      "tags": ["combat", "ammo", "reload"]
+    },
+    {
+      "id": "GS-005",
+      "title": "STUNNED",
+      "domain": "gameplay",
+      "status": "approved",
+      "file": "semantic/gameplay/combat-states.md",
+      "tags": ["combat", "state-machine", "stun"]
+    },
+    {
+      "id": "GS-006",
+      "title": "Skill Activation",
+      "domain": "gameplay",
+      "status": "approved",
+      "file": "semantic/gameplay/skills-and-burst.md",
+      "tags": ["skill", "stun", "activation"]
+    },
+    {
+      "id": "GS-007",
+      "title": "Continuous Skill and STUN",
+      "domain": "gameplay",
+      "status": "approved",
+      "file": "semantic/gameplay/skills-and-burst.md",
+      "tags": ["skill", "continuous-skill", "stun"]
+    },
+    {
+      "id": "GS-008",
+      "title": "Skill Availability",
+      "domain": "gameplay",
+      "status": "approved",
+      "file": "semantic/gameplay/skills-and-burst.md",
+      "tags": ["skill", "burst", "availability"]
+    },
+    {
+      "id": "AS-001",
+      "title": "Gameplay and Rendering Separation",
+      "domain": "architecture",
+      "status": "proposed",
+      "file": "semantic/architecture/architecture-semantics.md",
+      "tags": ["architecture", "domain", "phaser", "rendering"]
+    },
+    {
+      "id": "AS-002",
+      "title": "Combat State Ownership",
+      "domain": "architecture",
+      "status": "proposed",
+      "file": "semantic/architecture/architecture-semantics.md",
+      "tags": ["architecture", "state-machine", "state"]
+    },
+    {
+      "id": "AS-003",
+      "title": "Rendering Cannot Define Gameplay Truth",
+      "domain": "architecture",
+      "status": "proposed",
+      "file": "semantic/architecture/architecture-semantics.md",
+      "tags": ["architecture", "rendering", "gameplay-state"]
+    },
+    {
+      "id": "AS-004",
+      "title": "Gameplay Logic Must Be Testable Without Browser",
+      "domain": "architecture",
+      "status": "proposed",
+      "file": "semantic/architecture/architecture-semantics.md",
+      "tags": ["architecture", "testing", "domain"]
+    },
+    {
+      "id": "EC-001",
+      "title": "TypeScript Strictness",
+      "domain": "engineering",
+      "status": "proposed",
+      "file": "semantic/engineering/conventions.md",
+      "tags": ["typescript", "type-safety"]
+    },
+    {
+      "id": "EC-002",
+      "title": "Descriptive Domain Naming",
+      "domain": "engineering",
+      "status": "proposed",
+      "file": "semantic/engineering/conventions.md",
+      "tags": ["naming", "domain"]
+    },
+    {
+      "id": "EC-003",
+      "title": "One Source of Truth",
+      "domain": "engineering",
+      "status": "proposed",
+      "file": "semantic/engineering/conventions.md",
+      "tags": ["architecture", "duplication", "domain"]
+    },
+    {
+      "id": "EC-004",
+      "title": "New State Transition Requires Test",
+      "domain": "engineering",
+      "status": "proposed",
+      "file": "semantic/engineering/conventions.md",
+      "tags": ["testing", "state-machine", "verification"]
+    },
+    {
+      "id": "EC-005",
+      "title": "Small Logical Change",
+      "domain": "engineering",
+      "status": "proposed",
+      "file": "semantic/engineering/conventions.md",
+      "tags": ["task-scope", "reviewability"]
+    },
+    {
+      "id": "EC-006",
+      "title": "Explain Non-obvious Decisions",
+      "domain": "engineering",
+      "status": "proposed",
+      "file": "semantic/engineering/conventions.md",
+      "tags": ["documentation", "decision", "traceability"]
+    }
+  ]
+}
