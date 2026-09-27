@@ -1,8 +1,8 @@
 TENNE Verification Pipeline Log
-Execution Timestamp: 2026-09-27T07:51:25.274Z
+Execution Timestamp: 2026-09-27T09:30:03.730Z
 
 === Step: TypeScript Strict Typecheck ===
-Duration: 1.98s
+Duration: 2.30s
 Exit Code: 0
 Output:
 
@@ -13,7 +13,7 @@ Output:
 
 
 === Step: ESLint Code Standard & Architecture Lint ===
-Duration: 2.85s
+Duration: 2.62s
 Exit Code: 0
 Output:
 
@@ -24,7 +24,7 @@ Output:
 
 
 === Step: Headless Unit Tests (Vitest) ===
-Duration: 2.13s
+Duration: 2.14s
 Exit Code: 0
 Output:
 
@@ -38,18 +38,18 @@ Output:
 [90mstdout[2m | tests/harness.test.ts
 [22m[39m[TENNE Portal] Initialized on main surface.
 
- [32m✓[39m tests/harness.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/harness.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 30[2mms[22m[39m
 
 [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
-[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
-[2m   Start at [22m 09:51:31
-[2m   Duration [22m 679ms[2m (transform 86ms, setup 0ms, collect 133ms, tests 12ms, environment 1ms, prepare 478ms)[22m
+[2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+[2m   Start at [22m 11:30:09
+[2m   Duration [22m 718ms[2m (transform 110ms, setup 0ms, collect 148ms, tests 33ms, environment 0ms, prepare 450ms)[22m
 
 
 
 
 === Step: Guardrails Registry Compliance (18 rules) ===
-Duration: 0.83s
+Duration: 0.86s
 Exit Code: 0
 Output:
 
@@ -59,7 +59,7 @@ Output:
 === Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
 [G-002: PASS] Branch isolation verified: agent/t-000-harness-bootstrap
-[G-031: HUMAN_REVIEW_APPROVED] Changed files (30 > 5) permitted via authorized bootstrap override.
+[G-031: HUMAN_REVIEW_APPROVED] Changed files (6 > 5) permitted via authorized bootstrap override.
 [G-060: PASS] Task ID T-000 registered and verified.
 [G-061: PASS] Active branch matches isolated task pattern: agent/t-000-harness-bootstrap
 [G-064: PASS] Immutable events.jsonl verified.
@@ -70,31 +70,31 @@ Output:
 
 
 === Step: Compile Public Journey Data ===
-Duration: 0.66s
+Duration: 0.67s
 Exit Code: 0
 Output:
 
 > tenne@0.1.0 generate:journey
 > node scripts/generate-journey-data.mjs
 
-[generate-journey] Successfully compiled 10 events to E:\dev\tenne\public\generated\journey\journey-data.json
+[generate-journey] Successfully compiled 12 events to E:\dev\tenne\public\generated\journey\journey-data.json
 
 
 
 === Step: Validate Public Journey Data Integrity ===
-Duration: 0.52s
+Duration: 0.69s
 Exit Code: 0
 Output:
 
 > tenne@0.1.0 check:journey
 > node scripts/validate-journey-data.mjs
 
-[validate-journey] Passed: Validated 10 events in public journey data.
+[validate-journey] Passed: Validated 12 events in public journey data.
 
 
 
 === Step: Core Documentation Translation Parity (G-066) ===
-Duration: 0.51s
+Duration: 0.64s
 Exit Code: 0
 Output:
 
@@ -109,7 +109,7 @@ Configured severity: WARN (non-blocking diagnostic).
 
 
 === Step: Production Multi-Page Build (Vite) ===
-Duration: 2.15s
+Duration: 2.29s
 Exit Code: 0
 Output:
 
@@ -129,10 +129,10 @@ computing gzip size...
 [2mdist/[22m[36massets/play-C8-SWvaQ.js     [39m[1m[2m  0.27 kB[22m[1m[22m[2m │ gzip:  0.22 kB[22m
 [2mdist/[22m[36massets/style-2uhQ2yAL.js    [39m[1m[2m  0.71 kB[22m[1m[22m[2m │ gzip:  0.40 kB[22m
 [2mdist/[22m[36massets/journey-DKT6Sm7W.js  [39m[1m[2m233.70 kB[22m[1m[22m[2m │ gzip: 72.37 kB[22m
-[32m✓ built in 1.22s[39m
+[32m✓ built in 1.13s[39m
 
 
 
 
-Total Pipeline Duration: 11.63s
+Total Pipeline Duration: 12.21s
 Final Status: ALL_PASSED

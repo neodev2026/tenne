@@ -10,7 +10,7 @@ const REGISTRY_FILE = path.join(ROOT, 'guardrails', 'registry.json');
 const HISTORY_DIR = path.join(ROOT, '.agent-history');
 const OVERRIDES_FILE = path.join(HISTORY_DIR, 'autonomy', 'overrides.json');
 
-function getGitBranch() {
+export function getGitBranch() {
   try {
     return execSync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT }).toString().trim();
   } catch {
@@ -18,7 +18,7 @@ function getGitBranch() {
   }
 }
 
-function getChangedFilesCount() {
+export function getChangedFilesCount() {
   try {
     const out = execSync('git status --porcelain', { cwd: ROOT }).toString().trim();
     if (!out) return 0;
@@ -28,7 +28,79 @@ function getChangedFilesCount() {
   }
 }
 
-function checkGuardrails() {
+/**
+ * Resolves execution branch context and trusted-verification authorization.
+ *
+ * 1. For GitHub Actions pull_request context:
+ *    - requires GITHUB_ACTIONS === 'true'
+ *    - requires GITHUB_EVENT_NAME === 'pull_request'
+ *    - resolves source/task branch from GITHUB_HEAD_REF
+ *
+ * 2. For GitHub Actions push context:
+ *    - requires GITHUB_ACTIONS === 'true'
+ *    - requires GITHUB_EVENT_NAME === 'push'
+ *    - resolves branch from GITHUB_REF_NAME
+ *    - if branch === 'main', identifies Human-Trusted main verification context
+ *
+ * 3. For local execution:
+ *    - ignores GitHub-specific branch variables unless GitHub Actions context is active
+ *    - falls back to Git branch detection
+ */
+export function resolveBranchContext(env = process.env, getGitBranchFn = getGitBranch) {
+  const isCi = env.GITHUB_ACTIONS === 'true';
+  const eventName = env.GITHUB_EVENT_NAME;
+
+  if (isCi && eventName === 'pull_request') {
+    const headRef = env.GITHUB_HEAD_REF?.trim();
+    if (headRef) {
+      return {
+        branch: headRef,
+        isCi: true,
+        isTrustedMainVerification: false,
+        context: 'github_actions_pull_request',
+      };
+    }
+  }
+
+  if (isCi && eventName === 'push') {
+    const refName = env.GITHUB_REF_NAME?.trim();
+    if (refName) {
+      const isMain = refName === 'main';
+      return {
+        branch: refName,
+        isCi: true,
+        isTrustedMainVerification: isMain,
+        context: isMain ? 'github_actions_trusted_main' : 'github_actions_push',
+      };
+    }
+  }
+
+  // Local execution or non-push/pull_request context: ignore stray CI vars, fall back to Git
+  const localBranch = getGitBranchFn();
+  return {
+    branch: localBranch,
+    isCi: false,
+    isTrustedMainVerification: false,
+    context: 'local_git',
+  };
+}
+
+export function resolveTaskBranch(env = process.env, getGitBranchFn = getGitBranch) {
+  return resolveBranchContext(env, getGitBranchFn).branch;
+}
+
+export function isValidTaskBranch(branch) {
+  return typeof branch === 'string' && branch.startsWith('agent/');
+}
+
+export function isVerificationAuthorized(branchContext) {
+  if (branchContext.isTrustedMainVerification) {
+    return true;
+  }
+  return isValidTaskBranch(branchContext.branch);
+}
+
+export function checkGuardrails(options = {}) {
   console.log('=== Checking Guardrails Registry Compliance ===');
 
   if (!fs.existsSync(REGISTRY_FILE)) {
@@ -44,8 +116,10 @@ function checkGuardrails() {
   let hasHumanReviewPending = false;
   const warnings = [];
 
-  const branch = getGitBranch();
-  const fileCount = getChangedFilesCount();
+  const branchContext = options.branchContext || resolveBranchContext(options.env || process.env);
+  const branch = options.branch || branchContext.branch;
+  const isTrustedMainVerification = options.isTrustedMainVerification ?? branchContext.isTrustedMainVerification;
+  const fileCount = options.fileCount ?? getChangedFilesCount();
 
   for (const g of guardrails) {
     // G-002: Main Direct Modification Protection (BLOCK)
@@ -60,11 +134,13 @@ function checkGuardrails() {
 
     // G-061: Every Approved Task Uses an Isolated Branch (BLOCK)
     if (g.id === 'G-061') {
-      if (!branch.startsWith('agent/') && branch !== 'main') {
+      if (isTrustedMainVerification) {
+        console.log('[G-061: PASS] Human-Trusted main verification context authorized via GitHub Actions main event.');
+      } else if (isValidTaskBranch(branch)) {
+        console.log(`[G-061: PASS] Active branch matches isolated task pattern: ${branch}`);
+      } else {
         console.error(`[G-061: BLOCK] Task must execute on an agent/* branch. Found: ${branch}`);
         hasBlockFailure = true;
-      } else {
-        console.log(`[G-061: PASS] Active branch matches isolated task pattern: ${branch}`);
       }
     }
 
@@ -142,4 +218,11 @@ function checkGuardrails() {
   console.log('\n[G-CHECK: SUCCESS] All active guardrails satisfied according to configured semantics.');
 }
 
-checkGuardrails();
+const isDirectRun = Boolean(
+  process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()
+);
+
+if (isDirectRun) {
+  checkGuardrails();
+}
