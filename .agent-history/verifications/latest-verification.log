@@ -1,8 +1,8 @@
 TENNE Verification Pipeline Log
-Execution Timestamp: 2026-09-27T17:37:12.045Z
+Execution Timestamp: 2026-09-27T20:30:46.641Z
 
 === Step: TypeScript Strict Typecheck ===
-Duration: 1.66s
+Duration: 1.56s
 Exit Code: 0
 Output:
 
@@ -13,7 +13,7 @@ Output:
 
 
 === Step: ESLint Code Standard & Architecture Lint ===
-Duration: 1.71s
+Duration: 2.12s
 Exit Code: 0
 Output:
 
@@ -24,7 +24,7 @@ Output:
 
 
 === Step: Headless Unit Tests (Vitest) ===
-Duration: 1.72s
+Duration: 1.91s
 Exit Code: 0
 Output:
 
@@ -41,10 +41,10 @@ Output:
 [90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mTask Identity Resolution (G-060)[2m > [22m[2m5. guardrails check succeeds for active task branch with matching record and passes G-060
 [22m[39m=== Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
-[G-002: PASS] Branch isolation verified: agent/t-001-task-identity-generalization
+[G-002: PASS] Branch isolation verified: agent/t-002-ci-context-isolation
 [G-031: PASS] File count within normal limit: 5 <= 5
-[G-060: PASS] Task ID T-001 registered and verified for branch agent/t-001-task-identity-generalization.
-[G-061: PASS] Active branch matches isolated task pattern: agent/t-001-task-identity-generalization
+[G-060: PASS] Task ID T-002 registered and verified for branch agent/t-002-ci-context-isolation.
+[G-061: PASS] Active branch matches isolated task pattern: agent/t-002-ci-context-isolation
 [G-064: PASS] Immutable events.jsonl verified.
 [G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
 
@@ -71,13 +71,60 @@ Output:
 
 [G-CHECK: SUCCESS] All active guardrails satisfied according to configured semantics.
 
+[90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mCI Context & Test Environment Isolation (T-002)[2m > [22m[2mA. ambient main-push CI environment does NOT leak into explicit agent branch (regression test)
+[22m[39m=== Checking Guardrails Registry Compliance ===
+[G-CHECK] Loaded 18 guardrails.
+[G-002: PASS] Branch isolation verified: agent/missing-task-record
+[G-031: PASS] File count within normal limit: 1 <= 5
+[G-061: PASS] Active branch matches isolated task pattern: agent/missing-task-record
+[G-064: PASS] Immutable events.jsonl verified.
+[G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
+
+[90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mCI Context & Test Environment Isolation (T-002)[2m > [22m[2mB. explicit main branch with proven trusted GitHub Actions main-push context is allowed
+[22m[39m=== Checking Guardrails Registry Compliance ===
+[G-CHECK] Loaded 18 guardrails.
+[G-002: PASS] Branch isolation verified: main
+[G-031: PASS] File count within normal limit: 0 <= 5
+[G-060: PASS] Human-Trusted main verification authorized without active task branch.
+[G-061: PASS] Human-Trusted main verification context authorized via GitHub Actions main event.
+[G-064: PASS] Immutable events.jsonl verified.
+[G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
+
+[G-CHECK: SUCCESS] All active guardrails satisfied according to configured semantics.
+
+[90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mCI Context & Test Environment Isolation (T-002)[2m > [22m[2mC. pull_request execution context is never treated as Human-Trusted main
+[22m[39m=== Checking Guardrails Registry Compliance ===
+[G-CHECK] Loaded 18 guardrails.
+[G-002: PASS] Branch isolation verified: agent/t-002-ci-context-isolation
+[G-031: PASS] File count within normal limit: 5 <= 5
+[G-060: PASS] Task ID T-002 registered and verified for branch agent/t-002-ci-context-isolation.
+[G-061: PASS] Active branch matches isolated task pattern: agent/t-002-ci-context-isolation
+[G-064: PASS] Immutable events.jsonl verified.
+[G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
+
+[G-CHECK: SUCCESS] All active guardrails satisfied according to configured semantics.
+
+[90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mCI Context & Test Environment Isolation (T-002)[2m > [22m[2mD. existing G-061 behavior remains unchanged across isolated contexts
+[22m[39m=== Checking Guardrails Registry Compliance ===
+[G-CHECK] Loaded 18 guardrails.
+[G-002: PASS] Branch isolation verified: main
+[G-031: PASS] File count within normal limit: 0 <= 5
+[G-064: PASS] Immutable events.jsonl verified.
+[G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
+=== Checking Guardrails Registry Compliance ===
+[G-CHECK] Loaded 18 guardrails.
+[G-002: PASS] Branch isolation verified: feature/unisolated
+[G-031: PASS] File count within normal limit: 1 <= 5
+[G-064: PASS] Immutable events.jsonl verified.
+[G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
+
 [90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mChanged-File Budget Accounting (G-031)[2m > [22m[2m1. five normal task-scope files are allowed (count = 5)
 [22m[39m=== Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
-[G-002: PASS] Branch isolation verified: agent/t-001-task-identity-generalization
+[G-002: PASS] Branch isolation verified: agent/t-002-ci-context-isolation
 [G-031: PASS] File count within normal limit: 5 <= 5
-[G-060: PASS] Task ID T-001 registered and verified for branch agent/t-001-task-identity-generalization.
-[G-061: PASS] Active branch matches isolated task pattern: agent/t-001-task-identity-generalization
+[G-060: PASS] Task ID T-002 registered and verified for branch agent/t-002-ci-context-isolation.
+[G-061: PASS] Active branch matches isolated task pattern: agent/t-002-ci-context-isolation
 [G-064: PASS] Immutable events.jsonl verified.
 [G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
 
@@ -86,10 +133,10 @@ Output:
 [90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mChanged-File Budget Accounting (G-031)[2m > [22m[2m2. five normal task-scope files + exact latest-verification.log is still counted as 5 for G-031
 [22m[39m=== Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
-[G-002: PASS] Branch isolation verified: agent/t-001-task-identity-generalization
+[G-002: PASS] Branch isolation verified: agent/t-002-ci-context-isolation
 [G-031: PASS] File count within normal limit: 5 <= 5
-[G-060: PASS] Task ID T-001 registered and verified for branch agent/t-001-task-identity-generalization.
-[G-061: PASS] Active branch matches isolated task pattern: agent/t-001-task-identity-generalization
+[G-060: PASS] Task ID T-002 registered and verified for branch agent/t-002-ci-context-isolation.
+[G-061: PASS] Active branch matches isolated task pattern: agent/t-002-ci-context-isolation
 [G-064: PASS] Immutable events.jsonl verified.
 [G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
 
@@ -98,31 +145,46 @@ Output:
 [90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mChanged-File Budget Accounting (G-031)[2m > [22m[2m3. six normal task-scope files fail G-031 without override (count = 6)
 [22m[39m=== Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
-[G-002: PASS] Branch isolation verified: agent/t-001-task-identity-generalization
-[G-060: PASS] Task ID T-001 registered and verified for branch agent/t-001-task-identity-generalization.
-[G-061: PASS] Active branch matches isolated task pattern: agent/t-001-task-identity-generalization
+[G-002: PASS] Branch isolation verified: agent/t-002-ci-context-isolation
+[G-060: PASS] Task ID T-002 registered and verified for branch agent/t-002-ci-context-isolation.
+[G-061: PASS] Active branch matches isolated task pattern: agent/t-002-ci-context-isolation
 [G-064: PASS] Immutable events.jsonl verified.
 [G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
 
 [90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mChanged-File Budget Accounting (G-031)[2m > [22m[2m4. another arbitrary file under .agent-history/verifications/ is NOT excluded
 [22m[39m=== Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
-[G-002: PASS] Branch isolation verified: agent/t-001-task-identity-generalization
-[G-060: PASS] Task ID T-001 registered and verified for branch agent/t-001-task-identity-generalization.
-[G-061: PASS] Active branch matches isolated task pattern: agent/t-001-task-identity-generalization
+[G-002: PASS] Branch isolation verified: agent/t-002-ci-context-isolation
+[G-060: PASS] Task ID T-002 registered and verified for branch agent/t-002-ci-context-isolation.
+[G-061: PASS] Active branch matches isolated task pattern: agent/t-002-ci-context-isolation
 [G-064: PASS] Immutable events.jsonl verified.
 [G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
 
- [32m✓[39m tests/harness.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 351[2mms[22m[39m
+ [32m✓[39m tests/harness.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 481[2mms[22m[39m
 
 [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
-[2m      Tests [22m [1m[32m26 passed[39m[22m[90m (26)[39m
-[2m   Start at [22m 19:37:16
-[2m   Duration [22m 842ms[2m (transform 111ms, setup 0ms, collect 146ms, tests 353ms, environment 0ms, prepare 365ms)[22m
+[2m      Tests [22m [1m[32m30 passed[39m[22m[90m (30)[39m
+[2m   Start at [22m 22:30:51
+[2m   Duration [22m 977ms[2m (transform 150ms, setup 0ms, collect 198ms, tests 483ms, environment 1ms, prepare 356ms)[22m
 
 
 [90mstderr[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mTask Identity Resolution (G-060)[2m > [22m[2m6. guardrails check blocks for active task branch missing registered record
 [22m[39m[G-060: BLOCK] No registered task record found matching active branch: agent/missing-task-record
+
+[G-CHECK: FAILED] Deterministic blocking guardrail violated.
+
+[90mstderr[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mCI Context & Test Environment Isolation (T-002)[2m > [22m[2mA. ambient main-push CI environment does NOT leak into explicit agent branch (regression test)
+[22m[39m[G-060: BLOCK] No registered task record found matching active branch: agent/missing-task-record
+
+[G-CHECK: FAILED] Deterministic blocking guardrail violated.
+
+[90mstderr[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mCI Context & Test Environment Isolation (T-002)[2m > [22m[2mD. existing G-061 behavior remains unchanged across isolated contexts
+[22m[39m[G-060: BLOCK] Task must execute on a valid task branch to verify task identity. Found: main
+[G-061: BLOCK] Task must execute on an agent/* branch. Found: main
+
+[G-CHECK: FAILED] Deterministic blocking guardrail violated.
+[G-060: BLOCK] Task must execute on a valid task branch to verify task identity. Found: feature/unisolated
+[G-061: BLOCK] Task must execute on an agent/* branch. Found: feature/unisolated
 
 [G-CHECK: FAILED] Deterministic blocking guardrail violated.
 
@@ -139,7 +201,7 @@ Output:
 
 
 === Step: Guardrails Registry Compliance (18 rules) ===
-Duration: 0.52s
+Duration: 0.54s
 Exit Code: 0
 Output:
 
@@ -148,10 +210,10 @@ Output:
 
 === Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
-[G-002: PASS] Branch isolation verified: agent/t-001-task-identity-generalization
+[G-002: PASS] Branch isolation verified: agent/t-002-ci-context-isolation
 [G-031: PASS] File count within normal limit: 5 <= 5
-[G-060: PASS] Task ID T-001 registered and verified for branch agent/t-001-task-identity-generalization.
-[G-061: PASS] Active branch matches isolated task pattern: agent/t-001-task-identity-generalization
+[G-060: PASS] Task ID T-002 registered and verified for branch agent/t-002-ci-context-isolation.
+[G-061: PASS] Active branch matches isolated task pattern: agent/t-002-ci-context-isolation
 [G-064: PASS] Immutable events.jsonl verified.
 [G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
 
@@ -160,14 +222,14 @@ Output:
 
 
 === Step: Compile Public Journey Data ===
-Duration: 0.40s
+Duration: 0.43s
 Exit Code: 0
 Output:
 
 > tenne@0.1.0 generate:journey
 > node scripts/generate-journey-data.mjs
 
-[generate-journey] Successfully compiled 15 events to E:\dev\tenne\public\generated\journey\journey-data.json
+[generate-journey] Successfully compiled 17 events to E:\dev\tenne\public\generated\journey\journey-data.json
 
 
 
@@ -179,12 +241,12 @@ Output:
 > tenne@0.1.0 check:journey
 > node scripts/validate-journey-data.mjs
 
-[validate-journey] Passed: Validated 15 events in public journey data.
+[validate-journey] Passed: Validated 17 events in public journey data.
 
 
 
 === Step: Core Documentation Translation Parity (G-066) ===
-Duration: 0.39s
+Duration: 0.43s
 Exit Code: 0
 Output:
 
@@ -199,7 +261,7 @@ Configured severity: WARN (non-blocking diagnostic).
 
 
 === Step: Production Multi-Page Build (Vite) ===
-Duration: 1.42s
+Duration: 1.60s
 Exit Code: 0
 Output:
 
@@ -219,10 +281,10 @@ computing gzip size...
 [2mdist/[22m[36massets/play-C8-SWvaQ.js     [39m[1m[2m  0.27 kB[22m[1m[22m[2m │ gzip:  0.22 kB[22m
 [2mdist/[22m[36massets/style-2uhQ2yAL.js    [39m[1m[2m  0.71 kB[22m[1m[22m[2m │ gzip:  0.40 kB[22m
 [2mdist/[22m[36massets/journey-DKT6Sm7W.js  [39m[1m[2m233.70 kB[22m[1m[22m[2m │ gzip: 72.37 kB[22m
-[32m✓ built in 732ms[39m
+[32m✓ built in 810ms[39m
 
 
 
 
-Total Pipeline Duration: 8.23s
+Total Pipeline Duration: 9.01s
 Final Status: ALL_PASSED

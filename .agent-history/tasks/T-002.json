@@ -1,0 +1,13 @@
+{
+  "id": "T-002",
+  "title": "Harness Test Environment Isolation & Post-Merge CI Recovery",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-002-ci-context-isolation",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-09-27T22:20:51+02:00"
+}

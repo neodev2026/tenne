@@ -216,9 +216,11 @@ export function checkGuardrails(options = {}) {
   let hasHumanReviewPending = false;
   const warnings = [];
 
-  const branchContext = options.branchContext || resolveBranchContext(options.env || process.env);
+  const env = options.env || (options.branch ? {} : process.env);
+  const branchContext = options.branchContext || resolveBranchContext(env);
   const branch = options.branch || branchContext.branch;
-  const isTrustedMainVerification = options.isTrustedMainVerification ?? branchContext.isTrustedMainVerification;
+  const trustedMainContextIsProven = Boolean(options.isTrustedMainVerification ?? branchContext.isTrustedMainVerification);
+  const isTrustedMainVerification = branch === 'main' && trustedMainContextIsProven;
   const fileCount = options.fileCount ?? getChangedFilesCount(options.customPorcelain ?? null);
   const exitOnError = options.exitOnError ?? true;
 
