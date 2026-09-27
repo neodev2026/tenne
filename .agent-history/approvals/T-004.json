@@ -1,0 +1,33 @@
+{
+  "taskId": "T-004",
+  "approvedAt": "2026-09-28T01:28:54+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Public Portal & Presentation Observability Realignment",
+    "targetBranch": "agent/t-004-portal-observability",
+    "baseCommit": "455cc17",
+    "authorizedFiles": [
+      "index.html",
+      "play/index.html",
+      ".agent-history/tasks/T-004.json",
+      ".agent-history/approvals/T-004.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; no G-031 override, exception, or scope amendment authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g042Authorization": false,
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized",
+    "deferredScope": [
+      "Internal T-000 helper debt in src/main.ts and tests/harness.test.ts explicitly deferred",
+      "Multilingual PROJECT_STATE translation drift in docs/ko/ and docs/de/ explicitly deferred",
+      "Task lifecycle status semantics explicitly deferred pending formal governance design",
+      "Gameplay semantics and implementation explicitly deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-042 authorization is not applicable as zero guardrail code or configuration is modified.",
+    "Public HTML files are presentation surfaces only and must not duplicate active task IDs, commit SHAs, or task lifecycle ledgers.",
+    "Detailed human-facing development history remains delegated to /journey/ and .agent-history/."
+  ]
+}

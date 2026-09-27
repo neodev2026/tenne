@@ -1,8 +1,8 @@
 TENNE Verification Pipeline Log
-Execution Timestamp: 2026-09-27T22:31:35.260Z
+Execution Timestamp: 2026-09-27T23:38:26.812Z
 
 === Step: TypeScript Strict Typecheck ===
-Duration: 3.90s
+Duration: 1.65s
 Exit Code: 0
 Output:
 
@@ -13,7 +13,7 @@ Output:
 
 
 === Step: ESLint Code Standard & Architecture Lint ===
-Duration: 4.34s
+Duration: 1.73s
 Exit Code: 0
 Output:
 
@@ -24,7 +24,7 @@ Output:
 
 
 === Step: Headless Unit Tests (Vitest) ===
-Duration: 8.66s
+Duration: 1.85s
 Exit Code: 0
 Output:
 
@@ -37,7 +37,7 @@ Output:
 [90mstdout[2m | tests/harness.test.ts
 [22m[39m[TENNE Portal] Initialized on main surface.
 
- [32m✓[39m tests/game-domain.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/game-domain.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
 [90mstdout[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mTask Identity Resolution (G-060)[2m > [22m[2m5. guardrails check succeeds for active task branch with matching record and passes G-060
 [22m[39m=== Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
@@ -160,12 +160,12 @@ Output:
 [G-064: PASS] Immutable events.jsonl verified.
 [G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
 
- [32m✓[39m tests/harness.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 991[2mms[22m[39m
+ [32m✓[39m tests/harness.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 468[2mms[22m[39m
 
 [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
 [2m      Tests [22m [1m[32m30 passed[39m[22m[90m (30)[39m
-[2m   Start at [22m 00:31:48
-[2m   Duration [22m 3.30s[2m (transform 242ms, setup 0ms, collect 360ms, tests 997ms, environment 1ms, prepare 2.49s)[22m
+[2m   Start at [22m 01:38:30
+[2m   Duration [22m 955ms[2m (transform 127ms, setup 0ms, collect 143ms, tests 471ms, environment 0ms, prepare 324ms)[22m
 
 
 [90mstderr[2m | tests/harness.test.ts[2m > [22m[2mAgent Harness Infrastructure (M-000, T-000)[2m > [22m[2mTask Identity Resolution (G-060)[2m > [22m[2m6. guardrails check blocks for active task branch missing registered record
@@ -201,7 +201,7 @@ Output:
 
 
 === Step: Guardrails Registry Compliance (18 rules) ===
-Duration: 1.09s
+Duration: 0.51s
 Exit Code: 0
 Output:
 
@@ -210,10 +210,10 @@ Output:
 
 === Checking Guardrails Registry Compliance ===
 [G-CHECK] Loaded 18 guardrails.
-[G-002: PASS] Branch isolation verified: agent/t-003-state-generator-realignment
+[G-002: PASS] Branch isolation verified: agent/t-004-portal-observability
 [G-031: PASS] File count within normal limit: 5 <= 5
-[G-060: PASS] Task ID T-003 registered and verified for branch agent/t-003-state-generator-realignment.
-[G-061: PASS] Active branch matches isolated task pattern: agent/t-003-state-generator-realignment
+[G-060: PASS] Task ID T-004 registered and verified for branch agent/t-004-portal-observability.
+[G-061: PASS] Active branch matches isolated task pattern: agent/t-004-portal-observability
 [G-064: PASS] Immutable events.jsonl verified.
 [G-066: CONFIGURED] Translation sync evaluated under severity: WARN.
 
@@ -222,31 +222,31 @@ Output:
 
 
 === Step: Compile Public Journey Data ===
-Duration: 0.81s
+Duration: 0.41s
 Exit Code: 0
 Output:
 
 > tenne@0.1.0 generate:journey
 > node scripts/generate-journey-data.mjs
 
-[generate-journey] Successfully compiled 18 events to E:\dev\tenne\public\generated\journey\journey-data.json
+[generate-journey] Successfully compiled 19 events to E:\dev\tenne\public\generated\journey\journey-data.json
 
 
 
 === Step: Validate Public Journey Data Integrity ===
-Duration: 0.80s
+Duration: 0.40s
 Exit Code: 0
 Output:
 
 > tenne@0.1.0 check:journey
 > node scripts/validate-journey-data.mjs
 
-[validate-journey] Passed: Validated 18 events in public journey data.
+[validate-journey] Passed: Validated 19 events in public journey data.
 
 
 
 === Step: Core Documentation Translation Parity (G-066) ===
-Duration: 0.84s
+Duration: 0.40s
 Exit Code: 0
 Output:
 
@@ -261,7 +261,7 @@ Configured severity: WARN (non-blocking diagnostic).
 
 
 === Step: Production Multi-Page Build (Vite) ===
-Duration: 4.91s
+Duration: 1.47s
 Exit Code: 0
 Output:
 
@@ -274,17 +274,17 @@ transforming...
 rendering chunks...
 computing gzip size...
 [2mdist/[22m[32mjourney/index.html          [39m[1m[2m  0.66 kB[22m[1m[22m[2m │ gzip:  0.39 kB[22m
-[2mdist/[22m[32mplay/index.html             [39m[1m[2m  2.33 kB[22m[1m[22m[2m │ gzip:  1.02 kB[22m
-[2mdist/[22m[32mindex.html                  [39m[1m[2m  3.37 kB[22m[1m[22m[2m │ gzip:  1.24 kB[22m
+[2mdist/[22m[32mplay/index.html             [39m[1m[2m  2.40 kB[22m[1m[22m[2m │ gzip:  1.02 kB[22m
+[2mdist/[22m[32mindex.html                  [39m[1m[2m  3.52 kB[22m[1m[22m[2m │ gzip:  1.29 kB[22m
 [2mdist/[22m[35massets/style-L6nikaHs.css   [39m[1m[2m  4.63 kB[22m[1m[22m[2m │ gzip:  1.60 kB[22m
 [2mdist/[22m[36massets/main-CZEf-cB8.js     [39m[1m[2m  0.09 kB[22m[1m[22m[2m │ gzip:  0.11 kB[22m
 [2mdist/[22m[36massets/play-C8-SWvaQ.js     [39m[1m[2m  0.27 kB[22m[1m[22m[2m │ gzip:  0.22 kB[22m
 [2mdist/[22m[36massets/style-2uhQ2yAL.js    [39m[1m[2m  0.71 kB[22m[1m[22m[2m │ gzip:  0.40 kB[22m
 [2mdist/[22m[36massets/journey-DKT6Sm7W.js  [39m[1m[2m233.70 kB[22m[1m[22m[2m │ gzip: 72.37 kB[22m
-[32m✓ built in 2.66s[39m
+[32m✓ built in 766ms[39m
 
 
 
 
-Total Pipeline Duration: 25.36s
+Total Pipeline Duration: 8.42s
 Final Status: ALL_PASSED

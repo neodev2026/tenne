@@ -1,0 +1,13 @@
+{
+  "id": "T-004",
+  "title": "Public Portal & Presentation Observability Realignment",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-004-portal-observability",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-09-28T01:28:54+02:00"
+}
