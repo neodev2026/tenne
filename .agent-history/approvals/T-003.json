@@ -1,0 +1,34 @@
+{
+  "taskId": "T-003",
+  "approvedAt": "2026-09-28T00:15:43+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Canonical State & Generator Realignment",
+    "targetBranch": "agent/t-003-state-generator-realignment",
+    "baseCommit": "d77d155",
+    "authorizedFiles": [
+      "PROJECT_STATE.md",
+      "scripts/generate-project-state-candidate.mjs",
+      ".agent-history/tasks/T-003.json",
+      ".agent-history/approvals/T-003.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; no G-031 override, exception, or scope amendment authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g042Authorization": false,
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized",
+    "deferredScope": [
+      "index.html and play/index.html portal/play UI drift explicitly deferred to future task",
+      "Task lifecycle status semantics (e.g., transition of historical tasks from IN_PROGRESS) explicitly deferred pending formal governance design"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-042 authorization is not applicable as zero guardrail code or configuration is modified.",
+    "PROJECT_STATE.md is the sole canonical proposed state document.",
+    "scripts/generate-project-state-candidate.mjs derives all state facts from PROJECT_STATE.md and provides --stdout mode to avoid untracked candidate file creation during verification.",
+    "PROJECT_STATE.candidate.md is a derived review projection and is not an independent source of truth.",
+    "Historical foundation section in PROJECT_STATE.md is explicitly scoped to verified foundation incorporated before T-003 at main@d77d155 and is not an exhaustive task ledger.",
+    "Authoritative task history remains in .agent-history/tasks/ and .agent-history/events.jsonl."
+  ]
+}

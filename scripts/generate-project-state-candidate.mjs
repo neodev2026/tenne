@@ -4,65 +4,46 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
+const CANONICAL_FILE = path.join(ROOT, 'PROJECT_STATE.md');
 const OUTPUT_FILE = path.join(ROOT, 'PROJECT_STATE.candidate.md');
 
-function generateCandidateState() {
-  const content = `# TENNE Project State (Candidate)
+export const CANDIDATE_REVIEW_ENVELOPE = `# TENNE Project State (Candidate Review Projection)
 
 > [!IMPORTANT]
-> **Candidate State for Task T-000 Review.**
-> This file reflects the proposed project state for explicit human review during Task T-000.
-> If approved, this candidate will be promoted to canonical \`PROJECT_STATE.md\` on the PR branch, re-verified, committed, and only then included in the final merge candidate.
-> In accordance with the TENNE Trust Model, promotion is an explicit human-controlled action.
+> **Derived Review Projection — Not Independently Authoritative.**
+> This document is generated from \`PROJECT_STATE.md\`.
+> \`PROJECT_STATE.md\` on the task branch represents the proposed canonical state change.
+> This projection must not be edited or promoted as a competing source of truth.
+> Human merge of the task branch into \`main\` promotes the underlying \`PROJECT_STATE.md\` modifications into Human-Trusted State.`;
 
-## Current Goal
-GOAL-001
-Build a browser-playable TENNE combat game while experimenting with controlled software-agent autonomy.
-
-## Current Phase
-Harness Bootstrap Completed
-
-## Current Milestone
-M-000 - Agent Development Environment (Foundation Established)
-
-## Completed Tasks
-- **T-000**: Harness Bootstrap
-  - Status: VERIFIED_PR_CANDIDATE
-  - Origin: HUMAN_SEEDED
-  - Deliverables:
-    - Vite multi-page application with shells for \`/\`, \`/play/\`, and \`/journey/\`
-    - Agent Journey UI (React + TypeScript) backed by append-only audit stream
-    - Game layer separation (\`src/game/domain\`, \`src/game/application\`, \`src/game/presentation\`) with zero Phaser
-    - Semantic Layer stubs and explicit Semantic Gaps
-    - Guardrail Registry with 18 approved rules and configured enforcement semantics
-    - Unified verification orchestrator (\`npm run verify\`)
-    - Multilingual documentation hierarchy (EN, KO, DE)
-    - GitHub Actions CI/CD workflows
-
-## Current Autonomy
-L1.5 - One Approved Task
-- Active Window: Task T-000 completed.
-- Next Action: Standby for human review and merge.
-
-## Promotion Before Merge
-After explicit human approval:
-1. Promote this candidate to canonical \`PROJECT_STATE.md\` on the PR branch.
-2. Run the full verification pipeline.
-3. Commit and push the promoted canonical project state.
-4. Require final PR CI verification.
-5. Await human merge.
-
-## Trusted State After Merge
-After human merge to \`main\`:
-1. \`main\` becomes the new Human-Trusted State.
-2. Manager Agent re-reads trusted \`PROJECT_STATE.md\` and \`GOAL.md\`.
-3. Manager Agent identifies the highest-value gap and proposes the next task.
-4. Agent halts with \`WAITING FOR HUMAN APPROVAL\`.
-
-Generated At: ` + new Date().toISOString() + `\n`;
-
-  fs.writeFileSync(OUTPUT_FILE, content, 'utf-8');
-  console.log(`[generate-candidate] Successfully generated ${OUTPUT_FILE}`);
+export function deriveCandidateContent(canonicalMarkdown) {
+  const body = canonicalMarkdown.replace(/^#\s+TENNE Project State\s*\r?\n+/, '');
+  return `${CANDIDATE_REVIEW_ENVELOPE}\n\n${body.trimEnd()}\n`;
 }
 
-generateCandidateState();
+export function generateCandidateState(options = {}) {
+  const isStdout = options.stdout ?? process.argv.includes('--stdout');
+  if (!fs.existsSync(CANONICAL_FILE)) {
+    throw new Error(`Canonical project state file not found: ${CANONICAL_FILE}`);
+  }
+
+  const canonicalContent = fs.readFileSync(CANONICAL_FILE, 'utf-8');
+  const candidateContent = deriveCandidateContent(canonicalContent);
+
+  if (isStdout) {
+    process.stdout.write(candidateContent);
+    return candidateContent;
+  }
+
+  fs.writeFileSync(OUTPUT_FILE, candidateContent, 'utf-8');
+  console.log(`[generate-candidate] Successfully generated ${OUTPUT_FILE}`);
+  return candidateContent;
+}
+
+const isDirectExecution = process.argv[1] && (
+  path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()
+);
+
+if (isDirectExecution) {
+  generateCandidateState();
+}
