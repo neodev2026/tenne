@@ -1,0 +1,24 @@
+=== Pull Request CI Verification Failure Log ===
+Timestamp: 2026-09-27T08:55:00Z
+Workflow: Verify
+Job: Deterministic Verification
+Event Trigger: pull_request
+Source Branch: agent/t-000-harness-bootstrap
+Base Branch: main
+Commit: 763347b
+Exit Code: 1
+
+Observed Failure:
+[G-061: BLOCK] Task must execute on an agent/* branch. Found: HEAD
+
+Classification:
+Harness / CI execution-context integration failure
+
+Root Cause:
+GitHub Actions checks out pull_request workflows in detached HEAD / PR merge-ref context (refs/pull/<pr>/merge).
+`git rev-parse --abbrev-ref HEAD` evaluates to 'HEAD' rather than the PR source branch.
+The source branch is recorded in CI metadata as GITHUB_HEAD_REF.
+
+Resolution:
+Update guardrail branch resolution to prioritize GITHUB_HEAD_REF in pull_request contexts and GITHUB_REF_NAME in push contexts before falling back to local git commands.
+Preserve G-061 BLOCK enforcement semantics without weakening branch isolation.

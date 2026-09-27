@@ -1,11 +1,11 @@
-﻿{
+{
   "schemaVersion": "0.1",
   "guardrails": [
     {
       "id": "G-001",
       "title": "Destructive Command Protection",
       "category": "safety",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block"
     },
@@ -13,7 +13,7 @@
       "id": "G-002",
       "title": "Main Direct Modification Protection",
       "category": "safety",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block"
     },
@@ -21,7 +21,7 @@
       "id": "G-003",
       "title": "Tests Must Pass Before Completion",
       "category": "verification",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block_pr_ready",
       "protects": ["PS-003", "EC-004"]
@@ -30,7 +30,7 @@
       "id": "G-004",
       "title": "Build Must Pass",
       "category": "verification",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block_pr_ready"
     },
@@ -38,7 +38,7 @@
       "id": "G-020",
       "title": "Approved Semantic Rules Cannot Be Silently Changed",
       "category": "gameplay",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "require_semantic_change_proposal"
     },
@@ -46,7 +46,7 @@
       "id": "G-030",
       "title": "One Approved Task per Autonomy Window",
       "category": "autonomy",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block_next_task",
       "config": {
@@ -57,7 +57,7 @@
       "id": "G-031",
       "title": "Maximum Files Changed",
       "category": "autonomy",
-      "status": "proposed",
+      "status": "approved",
       "severity": "human_review",
       "action": "require_human_review",
       "config": {
@@ -69,7 +69,7 @@
       "id": "G-040",
       "title": "New Dependency Requires Approval",
       "category": "approval",
-      "status": "proposed",
+      "status": "approved",
       "severity": "human_review",
       "action": "require_human_review"
     },
@@ -77,7 +77,7 @@
       "id": "G-041",
       "title": "Semantic Layer Change Requires Approval",
       "category": "approval",
-      "status": "proposed",
+      "status": "approved",
       "severity": "human_review",
       "action": "require_human_review"
     },
@@ -85,7 +85,7 @@
       "id": "G-042",
       "title": "Guardrail Change Requires Approval",
       "category": "approval",
-      "status": "proposed",
+      "status": "approved",
       "severity": "human_review",
       "action": "require_human_review"
     },
@@ -93,7 +93,7 @@
       "id": "G-052",
       "title": "Semantic Gap Must Not Be Guessed",
       "category": "context",
-      "status": "proposed",
+      "status": "approved",
       "severity": "human_review",
       "action": "require_human_decision"
     },
@@ -101,7 +101,7 @@
       "id": "G-060",
       "title": "Every Task Must Have a Task ID",
       "category": "observability",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block_untracked_change"
     },
@@ -109,7 +109,7 @@
       "id": "G-061",
       "title": "Every Approved Task Uses an Isolated Branch",
       "category": "observability",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block"
     },
@@ -117,7 +117,7 @@
       "id": "G-062",
       "title": "Pull Request Must Explain What Why How",
       "category": "observability",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block_pr_ready"
     },
@@ -125,7 +125,7 @@
       "id": "G-063",
       "title": "Verification Must Produce Evidence",
       "category": "observability",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block_pr_ready"
     },
@@ -133,7 +133,7 @@
       "id": "G-064",
       "title": "Agent History Integrity",
       "category": "observability",
-      "status": "proposed",
+      "status": "approved",
       "severity": "human_review",
       "action": "require_harness_managed_history"
     },
@@ -141,7 +141,7 @@
       "id": "G-065",
       "title": "Generated Journey Data Is Read Only",
       "category": "observability",
-      "status": "proposed",
+      "status": "approved",
       "severity": "block",
       "action": "block_direct_edit"
     },
@@ -149,7 +149,7 @@
       "id": "G-066",
       "title": "Core Documentation Translation Sync",
       "category": "observability",
-      "status": "proposed",
+      "status": "approved",
       "severity": "warn",
       "action": "warn_human_review",
       "config": {

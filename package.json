@@ -1,0 +1,36 @@
+{
+  "name": "tenne",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check:guardrails": "node guardrails/scripts/check-guardrails.mjs",
+    "check:translations": "node scripts/verify-translations.mjs",
+    "check:journey": "node scripts/validate-journey-data.mjs",
+    "generate:journey": "node scripts/generate-journey-data.mjs",
+    "generate:project-state-candidate": "node scripts/generate-project-state-candidate.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@typescript-eslint/eslint-plugin": "8.70.1",
+    "@typescript-eslint/parser": "8.70.1",
+    "@vitejs/plugin-react": "4.7.0",
+    "eslint": "9.39.5",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vitest": "3.2.7"
+  }
+}

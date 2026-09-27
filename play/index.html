@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TENNE — Play</title>
+    <meta name="description" content="TENNE Combat Client — Browser-playable cover-based squad shooter." />
+    <link rel="stylesheet" href="../src/style.css" />
+  </head>
+  <body>
+    <header class="header-nav" id="play-header">
+      <div class="brand-logo" id="brand-logo">
+        <a href="../">TENNE</a>
+        <span class="badge-tag">Combat Client</span>
+      </div>
+      <nav aria-label="Play Navigation">
+        <ul class="nav-links">
+          <li><a href="../" class="nav-link">Portal</a></li>
+          <li><a href="./" class="nav-link active">Play</a></li>
+          <li><a href="../journey/" class="nav-link">Agent Journey</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="hero-section" id="play-main">
+      <h1 class="hero-title" style="font-size: 2.2rem; margin-bottom: 0.5rem;">Combat Field Mount</h1>
+      <p class="hero-subtitle" style="margin-bottom: 1.5rem;">
+        Deterministic, engine-decoupled game canvas container.
+      </p>
+
+      <div class="game-viewport" id="game-container">
+        <div class="placeholder-banner" id="combat-placeholder-banner">
+          <span class="placeholder-tag" id="bootstrap-status-badge">Phase: Harness Bootstrap</span>
+          <h2 style="font-size: 1.5rem; margin-bottom: 0.75rem;">M-000 Harness Bootstrap: Gameplay awaiting T-001+</h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            In accordance with the TENNE Operating Contract, Task T-000 establishes the developer harness and verification tooling. Gameplay features will be implemented in subsequent human-approved tasks.
+          </p>
+          <a href="../journey/" class="btn-secondary" id="btn-view-journey-from-play">Inspect Development History</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>TENNE Combat Client Mount &copy; 2026.</p>
+    </footer>
+
+    <script type="module" src="../src/game/presentation/index.ts"></script>
+  </body>
+</html>

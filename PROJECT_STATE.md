@@ -1,124 +1,40 @@
 # TENNE Project State
 
-> Bootstrap seed.
->
-> This file is manually seeded only because the TENNE Harness does not exist yet.
-> After T-000, PROJECT_STATE.md must be generated from trusted project history rather than maintained as an agent-authored narrative.
-
 ## Current Goal
-
 GOAL-001
-
 Build a browser-playable TENNE combat game while experimenting with controlled software-agent autonomy.
 
 ## Current Phase
-
-Harness Bootstrap
+Harness Bootstrap Completed
 
 ## Current Milestone
+M-000 - Agent Development Environment (Foundation Established)
 
-M-000 - Agent Development Environment
+## Gameplay Status
+No gameplay mechanics are implemented in T-000.
 
-## Current Task
-
-T-000 - Harness Bootstrap
-
-Status:
-
-PROPOSED
-
-Origin:
-
-HUMAN_SEEDED
-
-Automation Coverage:
-
-PARTIAL
+## Completed Tasks
+- **T-000**: Harness Bootstrap
+  - Status: VERIFIED
+  - Origin: HUMAN_SEEDED
+  - Deliverables:
+    - Vite multi-page application with shells for `/`, `/play/`, and `/journey/`
+    - Agent Journey UI (React + TypeScript) backed by append-only audit stream
+    - Game layer separation (`src/game/domain`, `src/game/application`, `src/game/presentation`) with zero Phaser
+    - Semantic Layer stubs and explicit Semantic Gaps
+    - Guardrail Registry with 18 approved rules and configured enforcement semantics
+    - Unified verification orchestrator (`npm run verify`)
+    - Multilingual documentation hierarchy (EN, KO, DE)
+    - GitHub Actions CI/CD workflows
 
 ## Current Autonomy
-
 L1.5 - One Approved Task
+- Active Window: Task T-000 completed and verified.
+- Task Branch Boundary: Task branches (`agent/*`) are working branches and are not Human-Trusted State.
+- Agent Status: Halted. No task is currently active or approved for implementation.
 
-Agents may:
-
-- analyze the product goal,
-- inspect project state,
-- identify gaps,
-- propose tasks,
-- classify tasks,
-- recommend semantic context,
-- recommend skills,
-- implement an approved task,
-- create and run tests,
-- fix failures within approved scope,
-- prepare a pull request.
-
-Agents may not:
-
-- begin an unapproved task,
-- automatically begin the next task,
-- silently change product semantics,
-- silently expand task scope,
-- change guardrails without approval,
-- change autonomy permissions,
-- merge into main.
-
-## Trusted State
-
-No implemented TENNE product exists yet.
-
-The repository currently contains only the bootstrap seed required to create the Agent Harness.
-
-## T-000 Objective
-
-Create the minimum environment required for goal-driven agent development.
-
-Expected T-000 output includes:
-
-- repository structure,
-- Vite application,
-- `/`,
-- `/play/`,
-- `/journey/`,
-- Agent operating environment,
-- Semantic Layer foundation,
-- Guardrail Registry,
-- Agent Journey data foundation,
-- verification tooling,
-- GitHub Actions,
-- public deployment,
-- multilingual core documentation.
-
-## Explicitly Out of Scope
-
-T-000 must not implement:
-
-- firing,
-- reloading,
-- stun behavior,
-- cover mechanics,
-- enemies,
-- skills,
-- Burst,
-- stage progression,
-- production-quality game visuals.
-
-## Human Attention Required
-
-T-000 implementation has not yet been approved.
-
-## Next Action
-
-Prepare the T-000 implementation plan.
-
-Do not modify implementation files until the human explicitly approves T-000 execution.
-
-## After T-000
-
-Once T-000 has been verified, reviewed, and merged into main:
-
-1. Generate PROJECT_STATE.md from trusted history.
-2. Ask the Manager Agent to inspect GOAL.md and the trusted project state.
-3. Ask it to identify the highest-value gap.
-4. Ask it to propose T-001.
-5. Stop before implementation.
+## Trust Boundary & Governance
+1. `main` is the sole Human-Trusted State; this project state is authoritative only when committed to `main` via manual human merge.
+2. The Manager Agent inspects `GOAL.md` and canonical `PROJECT_STATE.md` on Human-Trusted `main` to identify the highest-value gap and formulate the next task proposal.
+3. No next-task ID or scope is pre-assigned.
+4. The Manager Agent halts with `WAITING FOR HUMAN APPROVAL` upon formulating any task proposal. Implementation requires explicit human authorization.

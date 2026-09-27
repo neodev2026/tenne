@@ -1,0 +1,22 @@
+=== Checkpoint Verification Failures Log ===
+Timestamp: 2026-09-26T19:46:06Z
+Evaluator: Human Owner
+Interruption: External Antigravity quota limit
+
+Results:
+PASS:
+- npm ls --depth=0
+- npm run lint
+- npm run check:guardrails
+- npm run check:journey
+- npm run build
+
+FAIL:
+- npm run verify (reason: scripts/verify.mjs does not exist)
+- npm run typecheck (reason: src/journey/App.tsx uses class instead of className at lines 132-134)
+- npm test (reason: no test files exist)
+
+WARN:
+- npm run check:translations (15 Tier-2 documentation files are missing. G-066 non-blocking.)
+
+Status: Recorded in permanent history. Resolution in progress.

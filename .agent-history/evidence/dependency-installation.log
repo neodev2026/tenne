@@ -1,0 +1,22 @@
+=== TENNE Dependency Installation Evidence ===
+Timestamp: 2026-09-26T17:27:40Z
+Command: npm install
+Exit Code: 0
+Audit: 214 packages added, 215 packages audited in 10s.
+
+=== Verified Direct Dependencies (npm ls --depth=0) ===
+tenne@0.1.0 E:\dev\tenne
++-- @types/node@22.20.4
++-- @types/react-dom@19.3.0
++-- @types/react@19.3.0
++-- @typescript-eslint/eslint-plugin@8.70.1
++-- @typescript-eslint/parser@8.70.1
++-- @vitejs/plugin-react@4.7.0
++-- eslint@9.39.5
++-- react-dom@19.3.0
++-- react@19.3.0
++-- typescript@5.9.3
++-- vite@6.4.3
+`-- vitest@3.2.7
+
+Status: All 12 packages match exact human-approved versions.

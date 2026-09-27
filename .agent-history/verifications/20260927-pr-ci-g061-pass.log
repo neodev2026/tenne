@@ -1,0 +1,40 @@
+=== Pull Request CI Execution-Context Fix & Verification Pass Log ===
+Timestamp: 2026-09-27T09:27:00Z
+Evaluator: EngineerAgent & Human Review
+Classification: Harness / CI execution-context resolution fixed and re-verified
+Source Branch: agent/t-000-harness-bootstrap
+Base Branch: main
+
+Context & Fix Summary:
+1. G-061 execution-context fix applied:
+   - pull_request detached HEAD resolves task branch from trusted GitHub Actions metadata (requiring GITHUB_ACTIONS='true' and GITHUB_EVENT_NAME='pull_request').
+   - push context requires GITHUB_ACTIONS='true' and GITHUB_EVENT_NAME='push' to resolve from GITHUB_REF_NAME.
+   - Local execution ignores GitHub-specific branch variables and falls back to git branch detection.
+2. Trust-boundary enforcement:
+   - `isValidTaskBranch()` strictly requires `agent/*`; `main` is NOT a valid task branch.
+   - Human-Trusted main verification is allowed only through the explicit GitHub Actions main-push verification context (`isTrustedMainVerification`).
+   - Stray local environment variables cannot spoof CI metadata.
+
+Verification Results:
+1. Focused Unit Tests (Vitest):
+   - 1. Local agent/* branch -> valid task branch [PASS]
+   - 2. GitHub push on agent/* -> valid task branch [PASS]
+   - 3. GitHub pull_request detached HEAD + GITHUB_HEAD_REF=agent/* -> valid task branch [PASS]
+   - 4. Arbitrary non-agent branch -> invalid [PASS]
+   - 5. Local main used as a task branch -> invalid [PASS]
+   - 6. Stray GITHUB_HEAD_REF without actual pull_request GitHub Actions context -> ignored, falls back to local git [PASS]
+   - 7. Main GitHub verification context -> allowed only through explicit trusted-main verification path, not isValidTaskBranch [PASS]
+   Total Tests: 13 passed (11 in harness.test.ts, 2 in game-domain.test.ts)
+
+2. Unified Verification Pipeline (`npm run verify`):
+   - TypeScript Strict Typecheck: PASS
+   - ESLint Code Standard & Architecture Lint: PASS
+   - Headless Unit Tests (Vitest): PASS
+   - Guardrails Registry Compliance (18 rules): PASS
+   - Compile Public Journey Data: PASS
+   - Validate Public Journey Data Integrity: PASS
+   - Core Documentation Translation Parity (G-066): PASS
+   - Production Multi-Page Build (Vite): PASS
+   Overall: 8/8 PASS
+
+Status: Successfully resolved and recorded in permanent history.

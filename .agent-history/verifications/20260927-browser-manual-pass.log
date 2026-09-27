@@ -1,0 +1,14 @@
+=== Human Manual Browser Smoke Verification Evidence ===
+Timestamp: 2026-09-27T07:48:20Z
+Evaluator: Human Owner
+Target: Vite Preview (http://localhost:4173)
+
+Verification Results:
+- Route /         : PASS — rendered successfully, no JavaScript runtime errors
+- Route /play/    : PASS — rendered successfully, no JavaScript runtime errors
+- Route /journey/ : PASS — rendered successfully using generated Journey data; fallback seeded data was not used
+
+Observed Non-Blocking Warnings:
+- GET /favicon.ico -> 404 (non-blocking browser asset notice, does not affect application runtime or Journey functionality; out of T-000 blocking scope)
+
+Status: SUCCESS. All 3 multi-page web surfaces verified functional in real browser.
