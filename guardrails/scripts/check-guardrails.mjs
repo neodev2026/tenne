@@ -18,11 +18,40 @@ export function getGitBranch() {
   }
 }
 
-export function getChangedFilesCount() {
+export const VERIFICATION_ARTIFACT_PATH = '.agent-history/verifications/latest-verification.log';
+
+export function parseChangedFiles(porcelainOutput) {
+  if (!porcelainOutput || typeof porcelainOutput !== 'string') return [];
+  return porcelainOutput
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const match = line.match(/^(\S{1,2})\s+(.+)$/);
+      if (!match) return line;
+      let rawPath = match[2].trim();
+      if (rawPath.startsWith('"') && rawPath.endsWith('"')) {
+        rawPath = rawPath.slice(1, -1);
+      }
+      if (rawPath.includes(' -> ')) {
+        rawPath = rawPath.split(' -> ')[1].trim();
+      }
+      return rawPath.replace(/\\/g, '/');
+    });
+}
+
+export function filterBudgetCountedFiles(files) {
+  return files.filter((file) => file !== VERIFICATION_ARTIFACT_PATH);
+}
+
+export function getChangedFilesCount(customPorcelain = null) {
   try {
-    const out = execSync('git status --porcelain', { cwd: ROOT }).toString().trim();
-    if (!out) return 0;
-    return out.split('\n').filter(Boolean).length;
+    const out = customPorcelain !== null
+      ? customPorcelain
+      : execSync('git status --porcelain', { cwd: ROOT }).toString();
+    const files = parseChangedFiles(out);
+    const counted = filterBudgetCountedFiles(files);
+    return counted.length;
   } catch {
     return 0;
   }
@@ -100,6 +129,77 @@ export function isVerificationAuthorized(branchContext) {
   return isValidTaskBranch(branchContext.branch);
 }
 
+export function resolveTaskRecordForBranch(branch, tasksDir = path.join(HISTORY_DIR, 'tasks')) {
+  if (!fs.existsSync(tasksDir)) {
+    return {
+      valid: false,
+      error: `Tasks directory missing: ${tasksDir}`,
+    };
+  }
+
+  let files;
+  try {
+    files = fs.readdirSync(tasksDir).filter((f) => f.endsWith('.json'));
+  } catch (err) {
+    return {
+      valid: false,
+      error: `Cannot read tasks directory: ${err.message}`,
+    };
+  }
+
+  let matchedRecord = null;
+  let matchingFile = null;
+  const malformedFiles = [];
+
+  for (const file of files) {
+    const fullPath = path.join(tasksDir, file);
+    try {
+      const data = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
+      if (data && typeof data === 'object') {
+        if (data.branch === branch) {
+          matchedRecord = data;
+          matchingFile = file;
+          break;
+        }
+      }
+    } catch (err) {
+      malformedFiles.push({ file, error: err.message });
+    }
+  }
+
+  if (!matchedRecord) {
+    let msg = `No registered task record found matching active branch: ${branch}`;
+    if (malformedFiles.length > 0) {
+      msg += ` (malformed task file(s) encountered: ${malformedFiles.map((m) => m.file).join(', ')})`;
+    }
+    return {
+      valid: false,
+      error: msg,
+      malformedFiles,
+    };
+  }
+
+  const requiredFields = ['id', 'title', 'status', 'autonomyLevel', 'branch'];
+  const missingFields = requiredFields.filter(
+    (field) => typeof matchedRecord[field] !== 'string' || matchedRecord[field].trim().length === 0
+  );
+
+  if (missingFields.length > 0) {
+    return {
+      valid: false,
+      error: `Task record (${matchingFile}) is missing required schema field(s): ${missingFields.join(', ')}`,
+      record: matchedRecord,
+      matchingFile,
+    };
+  }
+
+  return {
+    valid: true,
+    record: matchedRecord,
+    matchingFile,
+  };
+}
+
 export function checkGuardrails(options = {}) {
   console.log('=== Checking Guardrails Registry Compliance ===');
 
@@ -119,7 +219,12 @@ export function checkGuardrails(options = {}) {
   const branchContext = options.branchContext || resolveBranchContext(options.env || process.env);
   const branch = options.branch || branchContext.branch;
   const isTrustedMainVerification = options.isTrustedMainVerification ?? branchContext.isTrustedMainVerification;
-  const fileCount = options.fileCount ?? getChangedFilesCount();
+  const fileCount = options.fileCount ?? getChangedFilesCount(options.customPorcelain ?? null);
+  const exitOnError = options.exitOnError ?? true;
+
+  const tasksDir = options.tasksDir || path.join(HISTORY_DIR, 'tasks');
+  const taskResolution = resolveTaskRecordForBranch(branch, tasksDir);
+  const activeTaskId = options.activeTaskId || (taskResolution.valid ? taskResolution.record.id : null);
 
   for (const g of guardrails) {
     // G-002: Main Direct Modification Protection (BLOCK)
@@ -153,7 +258,9 @@ export function checkGuardrails(options = {}) {
           try {
             const overrides = JSON.parse(fs.readFileSync(OVERRIDES_FILE, 'utf-8'));
             hasOverride = overrides.some(
-              (o) => o.guardrailId === 'G-031' && o.overrideType === 'BOOTSTRAP_EXCEPTION'
+              (o) => o.guardrailId === 'G-031' &&
+                     o.overrideType === 'BOOTSTRAP_EXCEPTION' &&
+                     (!o.taskId || o.taskId === activeTaskId)
             );
           } catch (e) {
             console.warn('[G-031] Could not parse overrides file:', e.message);
@@ -173,12 +280,18 @@ export function checkGuardrails(options = {}) {
 
     // G-060: Task ID Required (BLOCK)
     if (g.id === 'G-060') {
-      const taskJson = path.join(HISTORY_DIR, 'tasks', 'T-000.json');
-      if (!fs.existsSync(taskJson)) {
-        console.error('[G-060: BLOCK] Active task ID record missing in .agent-history/tasks/');
+      if (isTrustedMainVerification) {
+        console.log('[G-060: PASS] Human-Trusted main verification authorized without active task branch.');
+      } else if (!isValidTaskBranch(branch)) {
+        console.error(`[G-060: BLOCK] Task must execute on a valid task branch to verify task identity. Found: ${branch}`);
         hasBlockFailure = true;
       } else {
-        console.log('[G-060: PASS] Task ID T-000 registered and verified.');
+        if (!taskResolution.valid) {
+          console.error(`[G-060: BLOCK] ${taskResolution.error}`);
+          hasBlockFailure = true;
+        } else {
+          console.log(`[G-060: PASS] Task ID ${taskResolution.record.id} registered and verified for branch ${branch}.`);
+        }
       }
     }
 
@@ -207,15 +320,22 @@ export function checkGuardrails(options = {}) {
 
   if (hasBlockFailure) {
     console.error('\n[G-CHECK: FAILED] Deterministic blocking guardrail violated.');
-    process.exit(1);
+    if (exitOnError) {
+      process.exit(1);
+    }
+    return { success: false, hasBlockFailure: true, hasHumanReviewPending, warnings };
   }
 
   if (hasHumanReviewPending) {
     console.error('\n[G-CHECK: FAILED] Action requires human review / approval record.');
-    process.exit(1);
+    if (exitOnError) {
+      process.exit(1);
+    }
+    return { success: false, hasBlockFailure: false, hasHumanReviewPending: true, warnings };
   }
 
   console.log('\n[G-CHECK: SUCCESS] All active guardrails satisfied according to configured semantics.');
+  return { success: true, hasBlockFailure: false, hasHumanReviewPending: false, warnings };
 }
 
 const isDirectRun = Boolean(

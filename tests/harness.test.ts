@@ -175,4 +175,178 @@ describe('Agent Harness Infrastructure (M-000, T-000)', () => {
       expect(isVerificationAuthorized(ctx)).toBe(true);
     });
   });
+
+  describe('Task Identity Resolution (G-060)', () => {
+    it('1. resolves active task record when record.branch exactly equals active branch', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { resolveTaskRecordForBranch } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const res = resolveTaskRecordForBranch('agent/t-001-task-identity-generalization');
+      expect(res.valid).toBe(true);
+      expect(res.record.id).toBe('T-001');
+      expect(res.record.branch).toBe('agent/t-001-task-identity-generalization');
+    });
+
+    it('2. blocks when no registered task record matches active branch', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { resolveTaskRecordForBranch } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const res = resolveTaskRecordForBranch('agent/unregistered-branch-xyz');
+      expect(res.valid).toBe(false);
+      expect(res.error).toContain('No registered task record found matching active branch');
+    });
+
+    it('3. blocks when task record exists but branch differs from active branch', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { resolveTaskRecordForBranch } = await import('../guardrails/scripts/check-guardrails.mjs');
+      // T-000 has branch 'agent/t-000-harness-bootstrap', so querying with 'agent/t-000-other' must fail
+      const res = resolveTaskRecordForBranch('agent/t-000-other');
+      expect(res.valid).toBe(false);
+      expect(res.error).toContain('No registered task record found matching active branch');
+    });
+
+    it('4. blocks when task record is malformed or missing required schema fields', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { resolveTaskRecordForBranch } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const tempDir = path.join(ROOT, 'scratch', 'test-tasks-malformed');
+      fs.mkdirSync(tempDir, { recursive: true });
+      try {
+        fs.writeFileSync(
+          path.join(tempDir, 'INVALID.json'),
+          JSON.stringify({ id: 'T-999', branch: 'agent/test-missing-fields' }),
+          'utf-8'
+        );
+        const res = resolveTaskRecordForBranch('agent/test-missing-fields', tempDir);
+        expect(res.valid).toBe(false);
+        expect(res.error).toContain('missing required schema field');
+      } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it('5. guardrails check succeeds for active task branch with matching record and passes G-060', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const result = checkGuardrails({
+        branch: 'agent/t-001-task-identity-generalization',
+        exitOnError: false,
+        fileCount: 5,
+      });
+      expect(result.success).toBe(true);
+      expect(result.hasBlockFailure).toBe(false);
+    });
+
+    it('6. guardrails check blocks for active task branch missing registered record', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const result = checkGuardrails({
+        branch: 'agent/missing-task-record',
+        exitOnError: false,
+        fileCount: 1,
+      });
+      expect(result.success).toBe(false);
+      expect(result.hasBlockFailure).toBe(true);
+    });
+
+    it('7. trusted-main CI verification context does not require active task record', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const result = checkGuardrails({
+        branch: 'main',
+        isTrustedMainVerification: true,
+        exitOnError: false,
+        fileCount: 0,
+      });
+      expect(result.success).toBe(true);
+      expect(result.hasBlockFailure).toBe(false);
+    });
+
+    it('8. confirms G-060 implementation contains zero hardcoded T-000 references', () => {
+      const scriptPath = path.join(ROOT, 'guardrails', 'scripts', 'check-guardrails.mjs');
+      const content = fs.readFileSync(scriptPath, 'utf-8');
+      expect(content).not.toContain('T-000.json');
+    });
+  });
+
+  describe('Changed-File Budget Accounting (G-031)', () => {
+    const FIVE_TASK_FILES = [
+      ' M guardrails/scripts/check-guardrails.mjs',
+      ' M tests/harness.test.ts',
+      '?? .agent-history/tasks/T-001.json',
+      '?? .agent-history/approvals/T-001.json',
+      ' M .agent-history/events.jsonl',
+    ].join('\n');
+
+    const VERIFICATION_LOG_ENTRY = ' M .agent-history/verifications/latest-verification.log';
+
+    it('1. five normal task-scope files are allowed (count = 5)', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { getChangedFilesCount, checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      expect(getChangedFilesCount(FIVE_TASK_FILES)).toBe(5);
+
+      const result = checkGuardrails({
+        branch: 'agent/t-001-task-identity-generalization',
+        customPorcelain: FIVE_TASK_FILES,
+        exitOnError: false,
+      });
+      expect(result.success).toBe(true);
+      expect(result.hasHumanReviewPending).toBe(false);
+    });
+
+    it('2. five normal task-scope files + exact latest-verification.log is still counted as 5 for G-031', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { getChangedFilesCount, checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const porcelainWithLog = `${FIVE_TASK_FILES}\n${VERIFICATION_LOG_ENTRY}`;
+      expect(getChangedFilesCount(porcelainWithLog)).toBe(5);
+
+      const result = checkGuardrails({
+        branch: 'agent/t-001-task-identity-generalization',
+        customPorcelain: porcelainWithLog,
+        exitOnError: false,
+      });
+      expect(result.success).toBe(true);
+      expect(result.hasHumanReviewPending).toBe(false);
+    });
+
+    it('3. six normal task-scope files fail G-031 without override (count = 6)', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { getChangedFilesCount, checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const sixFiles = `${FIVE_TASK_FILES}\n M src/unauthorized.ts`;
+      expect(getChangedFilesCount(sixFiles)).toBe(6);
+
+      const result = checkGuardrails({
+        branch: 'agent/t-001-task-identity-generalization',
+        customPorcelain: sixFiles,
+        exitOnError: false,
+      });
+      expect(result.success).toBe(false);
+      expect(result.hasHumanReviewPending).toBe(true);
+    });
+
+    it('4. another arbitrary file under .agent-history/verifications/ is NOT excluded', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { getChangedFilesCount, checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const arbitraryLog = `${FIVE_TASK_FILES}\n M .agent-history/verifications/arbitrary-run.log`;
+      expect(getChangedFilesCount(arbitraryLog)).toBe(6);
+
+      const result = checkGuardrails({
+        branch: 'agent/t-001-task-identity-generalization',
+        customPorcelain: arbitraryLog,
+        exitOnError: false,
+      });
+      expect(result.success).toBe(false);
+      expect(result.hasHumanReviewPending).toBe(true);
+    });
+
+    it('5. exclusion cannot be used for another path with a similar filename', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { getChangedFilesCount } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const similarA = `${FIVE_TASK_FILES}\n M .agent-history/verifications/latest-verification.log.bak`;
+      expect(getChangedFilesCount(similarA)).toBe(6);
+
+      const similarB = `${FIVE_TASK_FILES}\n M scratch/latest-verification.log`;
+      expect(getChangedFilesCount(similarB)).toBe(6);
+
+      const similarC = `${FIVE_TASK_FILES}\n M docs/latest-verification.log`;
+      expect(getChangedFilesCount(similarC)).toBe(6);
+    });
+  });
 });
