@@ -11,8 +11,9 @@ function generateCandidateState() {
 
 > [!IMPORTANT]
 > **Candidate State for Task T-000 Review.**
-> This file reflects proposed project state upon successful human merge of branch \`agent/t-000-harness-bootstrap\`.
-> In accordance with the TENNE Trust Model, promotion of candidate state to canonical \`PROJECT_STATE.md\` is an explicit human-controlled action.
+> This file reflects the proposed project state for explicit human review during Task T-000.
+> If approved, this candidate will be promoted to canonical \`PROJECT_STATE.md\` on the PR branch, re-verified, committed, and only then included in the final merge candidate.
+> In accordance with the TENNE Trust Model, promotion is an explicit human-controlled action.
 
 ## Current Goal
 GOAL-001
@@ -33,7 +34,7 @@ M-000 - Agent Development Environment (Foundation Established)
     - Agent Journey UI (React + TypeScript) backed by append-only audit stream
     - Game layer separation (\`src/game/domain\`, \`src/game/application\`, \`src/game/presentation\`) with zero Phaser
     - Semantic Layer stubs and explicit Semantic Gaps
-    - Guardrail Registry with 18 approved rules and automated checking
+    - Guardrail Registry with 18 approved rules and configured enforcement semantics
     - Unified verification orchestrator (\`npm run verify\`)
     - Multilingual documentation hierarchy (EN, KO, DE)
     - GitHub Actions CI/CD workflows
@@ -43,15 +44,22 @@ L1.5 - One Approved Task
 - Active Window: Task T-000 completed.
 - Next Action: Standby for human review and merge.
 
-## Trusted State Post-Merge
-Following human merge to \`main\` and promotion of this candidate state:
-1. Canonical \`PROJECT_STATE.md\` is updated.
-2. Manager Agent re-reads trusted state and \`GOAL.md\`.
-3. Manager Agent identifies highest-value gap and proposes Task T-001.
+## Promotion Before Merge
+After explicit human approval:
+1. Promote this candidate to canonical \`PROJECT_STATE.md\` on the PR branch.
+2. Run the full verification pipeline.
+3. Commit and push the promoted canonical project state.
+4. Require final PR CI verification.
+5. Await human merge.
+
+## Trusted State After Merge
+After human merge to \`main\`:
+1. \`main\` becomes the new Human-Trusted State.
+2. Manager Agent re-reads trusted \`PROJECT_STATE.md\` and \`GOAL.md\`.
+3. Manager Agent identifies the highest-value gap and proposes the next task.
 4. Agent halts with \`WAITING FOR HUMAN APPROVAL\`.
 
-Generated At: ${new Date().toISOString()}
-`;
+Generated At: ` + new Date().toISOString() + `\n`;
 
   fs.writeFileSync(OUTPUT_FILE, content, 'utf-8');
   console.log(`[generate-candidate] Successfully generated ${OUTPUT_FILE}`);

@@ -1,0 +1,22 @@
+{
+  "taskId": "T-000",
+  "approvedAt": "2026-09-27T14:50:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "action": "T-000 pre-merge state promotion preparation",
+    "targetBranch": "agent/t-000-harness-bootstrap",
+    "evidencePreservation": ".agent-history/evidence/20260927-T-000-PROJECT_STATE.candidate.md",
+    "generatorUpdate": "scripts/generate-project-state-candidate.mjs",
+    "canonicalPromotion": "PROJECT_STATE.md",
+    "rootCandidateRemoval": "PROJECT_STATE.candidate.md",
+    "auditStream": ".agent-history/events.jsonl"
+  },
+  "clarifications": [
+    "Approval covers file changes and verification only on the PR branch.",
+    "Promotion occurs on the PR branch prior to merge.",
+    "The PR branch is not Human-Trusted State before merge to main.",
+    "main becomes Human-Trusted State only upon successful manual merge by the human owner.",
+    "No commit, push, or merge is authorized under this preparation step.",
+    "No next task is approved; no new task implementation may begin."
+  ]
+}
