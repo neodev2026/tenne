@@ -1,0 +1,22 @@
+{
+  "taskId": "T-002",
+  "approvedAt": "2026-09-27T22:20:51+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Harness Test Environment Isolation & Post-Merge CI Recovery",
+    "targetBranch": "agent/t-002-ci-context-isolation",
+    "baseCommit": "6fe8850",
+    "postMergeRegression": "Verify #10 and Deploy Production #2 failed on push to main post-merge at commit 6fe8850 due to ambient process.env leaking isTrustedMainVerification=true into branch-specific unit tests evaluating agent/missing-task-record",
+    "correctiveInvariant": "Verification context may be treated as Human-Trusted main ONLY when effectiveBranch === 'main' && trustedMainContextIsProven; explicit non-main branches must never inherit trusted-main status from ambient CI environment",
+    "g042Authorization": "Explicit human authorization under G-042 for corrective modification of guardrail enforcement implementation in guardrails/scripts/check-guardrails.mjs and unit test environment isolation in tests/harness.test.ts",
+    "g061Policy": "G-061 policy remains unchanged (branch.startsWith('agent/'))",
+    "g031Accounting": "Exact path .agent-history/verifications/latest-verification.log remains excluded from G-031 changed-file budget accounting as an approved deterministic verification artifact; maximum budget remains 5 budget-counted files; no new exclusions authorized",
+    "registryChange": "No guardrail registry definition, severity, or entry change is authorized"
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files; latest-verification.log is regenerated verification evidence.",
+    "isTrustedMainVerification must never bypass task-branch validation when effective branch is an agent/* branch.",
+    "Unit tests testing explicit branches must supply isolated environment/context rather than inheriting ambient process.env.",
+    "No G-031 override is authorized."
+  ]
+}

@@ -180,10 +180,15 @@ describe('Agent Harness Infrastructure (M-000, T-000)', () => {
     it('1. resolves active task record when record.branch exactly equals active branch', async () => {
       // @ts-expect-error dynamic import of mjs script in vitest context
       const { resolveTaskRecordForBranch } = await import('../guardrails/scripts/check-guardrails.mjs');
-      const res = resolveTaskRecordForBranch('agent/t-001-task-identity-generalization');
-      expect(res.valid).toBe(true);
-      expect(res.record.id).toBe('T-001');
-      expect(res.record.branch).toBe('agent/t-001-task-identity-generalization');
+      const res1 = resolveTaskRecordForBranch('agent/t-001-task-identity-generalization');
+      expect(res1.valid).toBe(true);
+      expect(res1.record.id).toBe('T-001');
+      expect(res1.record.branch).toBe('agent/t-001-task-identity-generalization');
+
+      const res2 = resolveTaskRecordForBranch('agent/t-002-ci-context-isolation');
+      expect(res2.valid).toBe(true);
+      expect(res2.record.id).toBe('T-002');
+      expect(res2.record.branch).toBe('agent/t-002-ci-context-isolation');
     });
 
     it('2. blocks when no registered task record matches active branch', async () => {
@@ -226,7 +231,7 @@ describe('Agent Harness Infrastructure (M-000, T-000)', () => {
       // @ts-expect-error dynamic import of mjs script in vitest context
       const { checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
       const result = checkGuardrails({
-        branch: 'agent/t-001-task-identity-generalization',
+        branch: 'agent/t-002-ci-context-isolation',
         exitOnError: false,
         fileCount: 5,
       });
@@ -266,12 +271,94 @@ describe('Agent Harness Infrastructure (M-000, T-000)', () => {
     });
   });
 
+  describe('CI Context & Test Environment Isolation (T-002)', () => {
+    it('A. ambient main-push CI environment does NOT leak into explicit agent branch (regression test)', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const result = checkGuardrails({
+        branch: 'agent/missing-task-record',
+        env: {
+          GITHUB_ACTIONS: 'true',
+          GITHUB_EVENT_NAME: 'push',
+          GITHUB_REF_NAME: 'main',
+        },
+        exitOnError: false,
+        fileCount: 1,
+      });
+      expect(result.success).toBe(false);
+      expect(result.hasBlockFailure).toBe(true);
+    });
+
+    it('B. explicit main branch with proven trusted GitHub Actions main-push context is allowed', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const result = checkGuardrails({
+        branch: 'main',
+        env: {
+          GITHUB_ACTIONS: 'true',
+          GITHUB_EVENT_NAME: 'push',
+          GITHUB_REF_NAME: 'main',
+        },
+        exitOnError: false,
+        fileCount: 0,
+      });
+      expect(result.success).toBe(true);
+      expect(result.hasBlockFailure).toBe(false);
+    });
+
+    it('C. pull_request execution context is never treated as Human-Trusted main', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { resolveBranchContext, checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      const prEnv = {
+        GITHUB_ACTIONS: 'true',
+        GITHUB_EVENT_NAME: 'pull_request',
+        GITHUB_HEAD_REF: 'agent/t-002-ci-context-isolation',
+      };
+      const ctx = resolveBranchContext(prEnv);
+      expect(ctx.isTrustedMainVerification).toBe(false);
+      expect(ctx.branch).toBe('agent/t-002-ci-context-isolation');
+
+      const result = checkGuardrails({
+        env: prEnv,
+        exitOnError: false,
+        fileCount: 5,
+      });
+      expect(result.success).toBe(true);
+      expect(result.hasBlockFailure).toBe(false);
+    });
+
+    it('D. existing G-061 behavior remains unchanged across isolated contexts', async () => {
+      // @ts-expect-error dynamic import of mjs script in vitest context
+      const { isValidTaskBranch, checkGuardrails } = await import('../guardrails/scripts/check-guardrails.mjs');
+      expect(isValidTaskBranch('agent/t-002-ci-context-isolation')).toBe(true);
+      expect(isValidTaskBranch('main')).toBe(false);
+      expect(isValidTaskBranch('feature/unisolated')).toBe(false);
+
+      const mainUntrusted = checkGuardrails({
+        branch: 'main',
+        isTrustedMainVerification: false,
+        exitOnError: false,
+        fileCount: 0,
+      });
+      expect(mainUntrusted.success).toBe(false);
+      expect(mainUntrusted.hasBlockFailure).toBe(true);
+
+      const invalidBranch = checkGuardrails({
+        branch: 'feature/unisolated',
+        exitOnError: false,
+        fileCount: 1,
+      });
+      expect(invalidBranch.success).toBe(false);
+      expect(invalidBranch.hasBlockFailure).toBe(true);
+    });
+  });
+
   describe('Changed-File Budget Accounting (G-031)', () => {
     const FIVE_TASK_FILES = [
       ' M guardrails/scripts/check-guardrails.mjs',
       ' M tests/harness.test.ts',
-      '?? .agent-history/tasks/T-001.json',
-      '?? .agent-history/approvals/T-001.json',
+      '?? .agent-history/tasks/T-002.json',
+      '?? .agent-history/approvals/T-002.json',
       ' M .agent-history/events.jsonl',
     ].join('\n');
 
@@ -283,7 +370,7 @@ describe('Agent Harness Infrastructure (M-000, T-000)', () => {
       expect(getChangedFilesCount(FIVE_TASK_FILES)).toBe(5);
 
       const result = checkGuardrails({
-        branch: 'agent/t-001-task-identity-generalization',
+        branch: 'agent/t-002-ci-context-isolation',
         customPorcelain: FIVE_TASK_FILES,
         exitOnError: false,
       });
@@ -298,7 +385,7 @@ describe('Agent Harness Infrastructure (M-000, T-000)', () => {
       expect(getChangedFilesCount(porcelainWithLog)).toBe(5);
 
       const result = checkGuardrails({
-        branch: 'agent/t-001-task-identity-generalization',
+        branch: 'agent/t-002-ci-context-isolation',
         customPorcelain: porcelainWithLog,
         exitOnError: false,
       });
@@ -313,7 +400,7 @@ describe('Agent Harness Infrastructure (M-000, T-000)', () => {
       expect(getChangedFilesCount(sixFiles)).toBe(6);
 
       const result = checkGuardrails({
-        branch: 'agent/t-001-task-identity-generalization',
+        branch: 'agent/t-002-ci-context-isolation',
         customPorcelain: sixFiles,
         exitOnError: false,
       });
@@ -328,7 +415,7 @@ describe('Agent Harness Infrastructure (M-000, T-000)', () => {
       expect(getChangedFilesCount(arbitraryLog)).toBe(6);
 
       const result = checkGuardrails({
-        branch: 'agent/t-001-task-identity-generalization',
+        branch: 'agent/t-002-ci-context-isolation',
         customPorcelain: arbitraryLog,
         exitOnError: false,
       });
