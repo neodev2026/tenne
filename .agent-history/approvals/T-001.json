@@ -1,0 +1,21 @@
+{
+  "taskId": "T-001",
+  "approvedAt": "2026-09-27T17:08:48+02:00",
+  "amendedAt": "2026-09-27T19:18:06+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Harness Task-Identity Generalization & Verification Integrity",
+    "targetBranch": "agent/t-001-task-identity-generalization",
+    "g060Implementation": "Resolve task identity for active task branches by matching active branch with registered task record where record.branch === activeBranch",
+    "g042Authorization": "Explicit human authorization under G-042 for modifying G-060 enforcement implementation in guardrails/scripts/check-guardrails.mjs and G-031 verification-evidence accounting clarification",
+    "g061Policy": "G-061 policy remains unchanged (branch.startsWith('agent/'))",
+    "g031Accounting": "Exact path .agent-history/verifications/latest-verification.log is excluded from G-031 changed-file budget accounting as a deterministic verification artifact written by verify.mjs; G-031 maximum remains 5 budget-counted files; arbitrary logs or directories are not excluded",
+    "registryChange": "No guardrail registry definition, severity, or entry change is authorized"
+  },
+  "clarifications": [
+    "Task record linkage is strictly record.branch === activeBranch; no branch-name parsing enforcement path.",
+    "Task record status field must exist per schema, but G-060 does not enforce a specific status value such as IN_PROGRESS.",
+    "Trusted-main CI push verification context does not require an active task record.",
+    "T-001 task-authored files remain exactly 5 files; .agent-history/verifications/latest-verification.log does not consume a G-031 task-scope slot."
+  ]
+}

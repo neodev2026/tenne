@@ -1,0 +1,13 @@
+{
+  "id": "T-001",
+  "title": "Harness Task-Identity Generalization & Verification Integrity",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-001-task-identity-generalization",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-09-27T17:08:48+02:00"
+}
