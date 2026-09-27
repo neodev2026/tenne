@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TENNE — Squad Combat Game & Agent Harness</title>
+    <meta name="description" content="TENNE: A browser-playable squad shooter and controlled software-agent autonomy research experiment." />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header class="header-nav" id="main-header">
+      <div class="brand-logo" id="brand-logo">
+        <span>TENNE</span>
+        <span class="badge-tag" id="autonomy-badge">Autonomy L1.5</span>
+      </div>
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links" id="nav-links">
+          <li><a href="./" class="nav-link active" id="nav-portal">Portal</a></li>
+          <li><a href="./play/" class="nav-link" id="nav-play">Play</a></li>
+          <li><a href="./journey/" class="nav-link" id="nav-journey">Agent Journey</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="portal-main">
+      <section class="hero-section" id="hero-section">
+        <h1 class="hero-title" id="hero-title">Deterministic Combat.<br />Verifiable Agent Autonomy.</h1>
+        <p class="hero-subtitle" id="hero-subtitle">
+          TENNE is a zero-install browser squad combat game developed through controlled software-agent autonomy, backed by an observable Semantic Layer and strict human trust boundaries.
+        </p>
+        <div class="action-buttons" id="action-buttons">
+          <a href="./play/" class="btn-primary" id="btn-enter-combat">
+            <span>Launch Combat Client</span>
+            <span aria-hidden="true">&rarr;</span>
+          </a>
+          <a href="./journey/" class="btn-secondary" id="btn-explore-journey">
+            <span>Explore Agent Journey</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="cards-grid" id="status-grid">
+        <div class="card" id="card-goal">
+          <h2 class="card-title">Product Goal</h2>
+          <p class="card-text">
+            Cover-based squad combat with deterministic gameplay logic. Playable instantly from any web browser without installation.
+          </p>
+        </div>
+
+        <div class="card" id="card-harness">
+          <h2 class="card-title">Agent Harness</h2>
+          <p class="card-text">
+            Controlled autonomy operating under Level L1.5. Agents work on isolated task branches and cannot merge to <code class="code-pill">main</code>.
+          </p>
+        </div>
+
+        <div class="card" id="card-state">
+          <h2 class="card-title">Project State</h2>
+          <p class="card-text">
+            Active Milestone: <code class="code-pill">M-000</code><br />
+            Active Task: <code class="code-pill">T-000 Harness Bootstrap</code><br />
+            Baseline Commit: <code class="code-pill">156e9b1</code>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer" id="main-footer">
+      <p>TENNE Project &copy; 2026. Built with human-trusted software agent autonomy.</p>
+    </footer>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

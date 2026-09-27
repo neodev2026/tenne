@@ -1,0 +1,10 @@
+{
+  "id": "TENNE",
+  "name": "TENNE Combat Game & Agent Harness",
+  "goalId": "GOAL-001",
+  "goalDescription": "Build a browser-playable TENNE combat game while experimenting with controlled software-agent autonomy.",
+  "currentPhase": "Harness Bootstrap",
+  "currentMilestone": "M-000",
+  "activeTask": "T-000",
+  "autonomyLevel": "L1.5"
+}

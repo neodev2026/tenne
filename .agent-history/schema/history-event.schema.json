@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentHistoryEvent",
+  "type": "object",
+  "required": [
+    "eventId",
+    "timestamp",
+    "eventType",
+    "taskId",
+    "actor",
+    "systemFacts",
+    "agentExplanations"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "BOOTSTRAP_SEED",
+        "TASK_PROPOSAL",
+        "HUMAN_APPROVAL",
+        "AUTONOMY_OVERRIDE",
+        "VERIFICATION_RUN",
+        "GIT_FACT",
+        "PR_SUBMITTED",
+        "AUTONOMY_LEVEL_CHANGED"
+      ]
+    },
+    "taskId": {
+      "type": "string"
+    },
+    "actor": {
+      "type": "string"
+    },
+    "systemFacts": {
+      "type": "object",
+      "required": ["gitBranch", "gitCommitSha"],
+      "properties": {
+        "gitBranch": { "type": "string" },
+        "gitCommitSha": { "type": "string" },
+        "command": { "type": "string" },
+        "exitCode": { "type": "integer" },
+        "executionDurationMs": { "type": "number" },
+        "filesAffected": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "metadata": { "type": "object" }
+      }
+    },
+    "agentExplanations": {
+      "type": "object",
+      "required": ["summary", "rationale"],
+      "properties": {
+        "summary": { "type": "string" },
+        "rationale": { "type": "string" },
+        "guardrailNotes": { "type": "string" }
+      }
+    }
+  }
+}

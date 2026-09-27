@@ -1,0 +1,21 @@
+=== Browser Smoke Verification Evidence ===
+Timestamp: 2026-09-27T02:14:41Z
+Target Server: Vite Preview (http://localhost:4173)
+
+1. HTTP Surface Verification (Node.js Fetch):
+- Route /         : HTTP 200 OK (3,293 bytes HTML payload)
+- Route /play/    : HTTP 200 OK (2,279 bytes HTML payload)
+- Route /journey/ : HTTP 200 OK (639 bytes HTML payload)
+
+2. Visual Browser Subagent Attempt:
+- Tool: browser_subagent (Recording: browser_smoke_test)
+- Status: Driver Download Failed (Azure Edge CDN 404 for Playwright 1.57.0 driver)
+- Error: failed to create browser context: failed to run playwright manager: failed to install playwright: could not install driver: 404 Not Found from https://playwright.azureedge.net/builds/driver/playwright-1.57.0-win32_x64.zip
+- Result: Supplemental visual rendering blocked by environment infrastructure; HTTP routing and asset serving confirmed.
+
+3. Human Manual Browser Verification:
+- Timestamp: 2026-09-27T07:17:48Z
+- Route /         : PASS (loads cleanly, portal header present)
+- Route /play/    : PASS (loads cleanly, placeholder banner visible)
+- Route /journey/ : FAIL (fetch('./generated/journey/journey-data.json') resolved relative to /journey/ as /journey/generated/... returning HTML index fallback; syntax error: Unexpected token '<', "<!DOCTYPE "... is not valid JSON)
+- Resolution     : Change fetch path to '../generated/journey/journey-data.json' to preserve page-relative resolution across local preview and GitHub Pages repository subpaths.

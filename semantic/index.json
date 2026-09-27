@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": "0.1",
   "canonicalLanguage": "en",
   "rules": [
@@ -94,7 +94,7 @@
       "id": "AS-001",
       "title": "Gameplay and Rendering Separation",
       "domain": "architecture",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/architecture/architecture-semantics.md",
       "tags": ["architecture", "domain", "phaser", "rendering"]
     },
@@ -102,7 +102,7 @@
       "id": "AS-002",
       "title": "Combat State Ownership",
       "domain": "architecture",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/architecture/architecture-semantics.md",
       "tags": ["architecture", "state-machine", "state"]
     },
@@ -110,7 +110,7 @@
       "id": "AS-003",
       "title": "Rendering Cannot Define Gameplay Truth",
       "domain": "architecture",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/architecture/architecture-semantics.md",
       "tags": ["architecture", "rendering", "gameplay-state"]
     },
@@ -118,7 +118,7 @@
       "id": "AS-004",
       "title": "Gameplay Logic Must Be Testable Without Browser",
       "domain": "architecture",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/architecture/architecture-semantics.md",
       "tags": ["architecture", "testing", "domain"]
     },
@@ -126,7 +126,7 @@
       "id": "EC-001",
       "title": "TypeScript Strictness",
       "domain": "engineering",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/engineering/conventions.md",
       "tags": ["typescript", "type-safety"]
     },
@@ -134,7 +134,7 @@
       "id": "EC-002",
       "title": "Descriptive Domain Naming",
       "domain": "engineering",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/engineering/conventions.md",
       "tags": ["naming", "domain"]
     },
@@ -142,7 +142,7 @@
       "id": "EC-003",
       "title": "One Source of Truth",
       "domain": "engineering",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/engineering/conventions.md",
       "tags": ["architecture", "duplication", "domain"]
     },
@@ -150,7 +150,7 @@
       "id": "EC-004",
       "title": "New State Transition Requires Test",
       "domain": "engineering",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/engineering/conventions.md",
       "tags": ["testing", "state-machine", "verification"]
     },
@@ -158,7 +158,7 @@
       "id": "EC-005",
       "title": "Small Logical Change",
       "domain": "engineering",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/engineering/conventions.md",
       "tags": ["task-scope", "reviewability"]
     },
@@ -166,7 +166,7 @@
       "id": "EC-006",
       "title": "Explain Non-obvious Decisions",
       "domain": "engineering",
-      "status": "proposed",
+      "status": "approved",
       "file": "semantic/engineering/conventions.md",
       "tags": ["documentation", "decision", "traceability"]
     }

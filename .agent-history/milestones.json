@@ -1,0 +1,9 @@
+[
+  {
+    "id": "M-000",
+    "title": "Agent Development Environment",
+    "description": "Establish the foundational development, testing, verification, documentation, and history harness for controlled agent autonomy.",
+    "status": "IN_PROGRESS",
+    "tasks": ["T-000"]
+  }
+]

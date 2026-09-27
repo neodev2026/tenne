@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HistoryRecordsSchema",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "object",
+      "required": ["id", "name", "goalId", "currentPhase", "currentMilestone"]
+    },
+    "milestone": {
+      "type": "object",
+      "required": ["id", "title", "status"]
+    },
+    "task": {
+      "type": "object",
+      "required": ["id", "title", "status", "autonomyLevel", "branch"]
+    }
+  }
+}

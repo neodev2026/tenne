@@ -1,0 +1,18 @@
+{
+  "taskId": "T-000",
+  "approvedAt": "2026-09-26T17:09:06+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "A": "T-000 implementation scope",
+    "B": "AS-001 through AS-004",
+    "C": "EC-001 through EC-006",
+    "D": "All 18 guardrails in guardrails/registry.json",
+    "E": "Proposed dependencies (react, react-dom, vite, @vitejs/plugin-react, typescript, vitest, eslint, etc.)",
+    "F": "One-time G-031 bootstrap file-count override",
+    "G": "Proposed repository architecture"
+  },
+  "clarifications": [
+    "Clarification 1: Human-controlled PROJECT_STATE promotion; no automated commit to main; candidate state separate.",
+    "Clarification 2: Guardrail enforcement semantics (BLOCK = hard block; HUMAN_REVIEW = detect & stop for review; WARN = report warning without breaking verify)."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "taskId": "T-000",
+  "revision": 3,
+  "title": "Harness Bootstrap Proposal",
+  "submittedAt": "2026-09-26T17:00:00+02:00",
+  "status": "APPROVED",
+  "scope": [
+    "Repository structure and package configuration",
+    "Multi-page shells for /, /play/, and /journey/",
+    "Agent Journey UI built with React + TypeScript",
+    "Game directory structure: src/game/domain, src/game/application, src/game/presentation (zero Phaser)",
+    "Harness workflows and skills",
+    "Semantic Layer stubs and explicit Semantic Gap documentation",
+    "Enforcement of 18 guardrails in guardrails/registry.json",
+    "Dual-layer history (events.jsonl + structured JSON records)",
+    "Sanitized public journey data generation in public/generated/journey/",
+    "Deterministic verification orchestrator (npm run verify)",
+    "Root canonical documentation and language mirrors in docs/",
+    "GitHub Actions for CI and CD (gated to main push)",
+    "One-time G-031 bootstrap file count override"
+  ]
+}
