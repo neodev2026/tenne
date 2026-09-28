@@ -24,7 +24,7 @@ Class A metrics possess durable, mechanically verifiable observation sources in 
 
 #### 2. Implementation Commits Per Task Branch
 * **Definition**: The total number of logical commits authored on the isolated task branch (`agent/*`) prior to human merge into `main`.
-* **Observation Source**: Git commit graph (`git log origin/main..HEAD --oneline`).
+* **Observation Source**: Git commit graph and PR/merge provenance. A live task-branch range (`git log origin/main..HEAD --oneline`) may be used before merge. Following merge and task-branch deletion, reconstruction must rely on durable merge commit parentage and pull request ancestry rather than a transient branch reference.
 * **Semantic Constraint**: `commit count != implementation cycle count`. Commits represent atomic reviewable save points on a branch, not the number of design, implementation, or correction cycles.
 
 #### 3. Task-Branch CI Outcomes
@@ -38,7 +38,8 @@ Class A metrics possess durable, mechanically verifiable observation sources in 
 * **Values**: `SUCCESS`, `FAILURE`, `CANCELLED`.
 
 #### 5. Main-Push CI Outcomes
-* **Definition**: The discrete execution outcome of automated verification triggered by human merge or direct push to `main`.
+* **Definition**: The discrete execution outcome of automated verification triggered by a push to `main`, normally resulting from a human-authorized pull request merge.
+* **Governance Boundary**: A direct modification or direct push to `main` is not an authorized TENNE task workflow, even if the CI system would technically observe such a push.
 * **Observation Source**: GitHub Actions `verify.yml` workflow runs on event `push` targeting `refs/heads/main`.
 * **Values**: `SUCCESS`, `FAILURE`, `CANCELLED`.
 * **Evidence Invariant**: Real push-to-main CI failures (such as the verified failure following T-001 merge) are vital empirical evidence demonstrating execution-context boundaries. Completed task cycles must never be collapsed into a false "100% success rate" narrative.
@@ -55,12 +56,11 @@ Class A metrics possess durable, mechanically verifiable observation sources in 
 
 #### 8. Project Governance Gate Events
 * **Definition**: Discrete, durable governance transitions required by TENNE trust rules before state transitions become trusted.
-* **Observation Source**: Append-only event stream (`.agent-history/events.jsonl`), Git merge commits, and GitHub pull request records.
-* **Gate Types**:
-  * `HUMAN_APPROVAL`: Explicit authorization of a task proposal and scope under Autonomy L1.5.
-  * `HUMAN_MERGE`: Manual human merge of a task branch PR into `main`.
-  * `G-041_AUTHORIZATION`: Explicit human authorization for Semantic Layer modifications.
-  * `G-042_AUTHORIZATION`: Explicit human authorization for Guardrail modifications.
+* **Governance Gate Categories**:
+  * **Task Approval**: Documented via durable `HUMAN_APPROVAL` event in `.agent-history/events.jsonl` and task approval record in `.agent-history/approvals/`.
+  * **Human Merge**: Documented via Git merge commit on `main` and GitHub pull request record. *(Note: Does not imply a separate `HUMAN_MERGE` event type exists in `events.jsonl`).*
+  * **G-041 Semantic Authorization**: Explicit authorization documented in task approval record and recorded in `HUMAN_APPROVAL` event metadata when applicable.
+  * **G-042 Guardrail Authorization**: Explicit authorization documented in task approval record and recorded in `HUMAN_APPROVAL` event metadata when applicable.
 
 ---
 
