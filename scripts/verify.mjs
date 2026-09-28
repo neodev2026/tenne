@@ -14,7 +14,7 @@ const STEPS = [
   { name: 'Guardrails Registry Compliance (18 rules)', cmd: 'npm', args: ['run', 'check:guardrails'], blocking: true },
   { name: 'Compile Public Journey Data', cmd: 'npm', args: ['run', 'generate:journey'], blocking: true },
   { name: 'Validate Public Journey Data Integrity', cmd: 'npm', args: ['run', 'check:journey'], blocking: true },
-  { name: 'Core Documentation Translation Parity (G-066)', cmd: 'npm', args: ['run', 'check:translations'], blocking: false },
+  { name: 'Required Documentation Translation File Presence & Coverage (G-066)', cmd: 'npm', args: ['run', 'check:translations'], blocking: false },
   { name: 'Production Multi-Page Build (Vite)', cmd: 'npm', args: ['run', 'build'], blocking: true },
 ];
 
