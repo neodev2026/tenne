@@ -1,0 +1,34 @@
+{
+  "taskId": "T-005",
+  "approvedAt": "2026-09-28T02:29:23+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Multilingual Project State Synchronization",
+    "targetBranch": "agent/t-005-multilingual-state-sync",
+    "baseCommit": "8ffe029",
+    "authorizedFiles": [
+      "docs/ko/PROJECT_STATE.md",
+      "docs/de/PROJECT_STATE.md",
+      ".agent-history/tasks/T-005.json",
+      ".agent-history/approvals/T-005.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; no G-031 override, exception, or scope amendment authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g042Authorization": false,
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized",
+    "deferredScope": [
+      "Gameplay roadmap decisions and GAP-GS-001 through GAP-GS-008 explicitly deferred",
+      "Translation verifier structural parity checks in scripts/verify-translations.mjs explicitly deferred",
+      "Internal T-000 helper debt in src/main.ts and tests/harness.test.ts explicitly deferred",
+      "Task lifecycle status semantics explicitly deferred pending formal governance design"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-042 authorization is not applicable as zero guardrail code or configuration is modified.",
+    "docs/ko/PROJECT_STATE.md and docs/de/PROJECT_STATE.md must preserve the structure, factual claims, trust boundaries, historical provenance, and meaning of canonical PROJECT_STATE.md.",
+    "Do not introduce new project facts; do not convert historical provenance into current-state claims; do not add an exhaustive task ledger.",
+    "Detailed human-facing development history remains delegated to /journey/ and .agent-history/."
+  ]
+}

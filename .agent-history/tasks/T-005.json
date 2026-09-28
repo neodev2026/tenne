@@ -1,0 +1,13 @@
+{
+  "id": "T-005",
+  "title": "Multilingual Project State Synchronization",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-005-multilingual-state-sync",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-09-28T02:30:00+02:00"
+}
