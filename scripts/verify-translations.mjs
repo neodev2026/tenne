@@ -25,8 +25,9 @@ const ROOT_TRANSLATIONS = [
 ];
 
 function verifyTranslations() {
-  console.log('=== Checking Core Documentation Translation Sync (G-066) ===');
+  console.log('=== Checking Documentation Translation File Presence & Coverage (G-066) ===');
   console.log('Configured severity: WARN (non-blocking diagnostic).');
+  console.log('Note: Deterministic check validates file presence across language locations; semantic review remains human-verified.');
 
   const warnings = [];
   const languages = ['ko', 'de'];
@@ -47,7 +48,7 @@ function verifyTranslations() {
     for (const file of ROOT_TRANSLATIONS) {
       const target = path.join(DOCS_DIR, lang, file);
       if (!fs.existsSync(target)) {
-        warnings.push(`Missing root translation for [${lang}]: docs/${lang}/${file}`);
+        warnings.push(`Missing required root translation file for [${lang}]: docs/${lang}/${file}`);
       }
     }
   }
@@ -57,7 +58,7 @@ function verifyTranslations() {
     for (const lang of ['en', 'ko', 'de']) {
       const target = path.join(DOCS_DIR, lang, file);
       if (!fs.existsSync(target)) {
-        warnings.push(`Missing Tier 1 doc: docs/${lang}/${file}`);
+        warnings.push(`Missing required Tier 1 translation file: docs/${lang}/${file}`);
       }
     }
   }
@@ -67,17 +68,17 @@ function verifyTranslations() {
     for (const lang of ['en', 'ko', 'de']) {
       const target = path.join(DOCS_DIR, lang, file);
       if (!fs.existsSync(target)) {
-        warnings.push(`Missing Tier 2 doc: docs/${lang}/${file}`);
+        warnings.push(`Missing required Tier 2 translation file: docs/${lang}/${file}`);
       }
     }
   }
 
   if (warnings.length > 0) {
-    console.warn(`\n[G-066: WARN] Detected ${warnings.length} translation synchronization notice(s):`);
+    console.warn(`\n[G-066: WARN] Detected ${warnings.length} missing translation file notice(s):`);
     warnings.forEach((w) => console.warn(`  - ${w}`));
     console.warn('\nPer G-066 configuration (severity: WARN), continuing without failing verification.');
   } else {
-    console.log('\n[G-066: PASS] All Tier 1, Tier 2, and root translations synchronized across EN, KO, and DE.');
+    console.log('\n[G-066: PASS] Required translation files are present across the expected EN, KO, and DE documentation locations.');
   }
 
   // Under severity WARN, process exits with code 0
