@@ -1,0 +1,39 @@
+{
+  "taskId": "T-008",
+  "approvedAt": "2026-09-28T17:07:11+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Define Experiment Metric Semantics",
+    "targetBranch": "agent/t-008-experiment-metric-semantics",
+    "baseCommit": "485d60b",
+    "authorizedFiles": [
+      "semantic/engineering/experiment-metrics.md",
+      "semantic/index.json",
+      ".agent-history/tasks/T-008.json",
+      ".agent-history/approvals/T-008.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope amendment authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": "Explicit human authorization under G-041 to establish canonical experiment metric semantics in semantic/engineering/experiment-metrics.md and register rule EM-001 in semantic/index.json before instrumentation",
+    "g042Authorization": false,
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized",
+    "deferredScope": [
+      "Metrics extraction scripts, schemas, datasets, and historical backfill explicitly deferred",
+      "Gameplay implementation and roadmap decisions explicitly deferred",
+      "Task lifecycle status semantics explicitly deferred pending formal governance design",
+      "Internal T-000 helper debt in src/main.ts and tests/harness.test.ts explicitly deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic change is explicitly authorized by human owner: Define canonical experiment metric semantics before instrumentation.",
+    "G-042 authorization is not applicable as zero guardrail code or configuration is modified.",
+    "EM-001 is explicitly established by human semantic decision as Experiment Metrics under engineering domain; do not claim EM was automatically implied by existing prefix conventions.",
+    "Define Class A (Deterministic Repository / CI Observations), Class B (Human-Labeled Observations), and Class C (Currently Unsupported / Ambiguous).",
+    "Project governance gates (human approval, PR merge, explicit G-041/G-042) must be explicitly distinguished from tool-level operational permissions (shell Allow prompts, IDE dialogs).",
+    "Do not create metrics extraction scripts, metrics schemas, metrics JSON datasets, or historical backfill logic.",
+    "Do not calculate or invent historical metric values in T-008.",
+    "Use only event semantics already supported by current schema and established workflow."
+  ]
+}

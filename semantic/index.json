@@ -169,6 +169,14 @@
       "status": "approved",
       "file": "semantic/engineering/conventions.md",
       "tags": ["documentation", "decision", "traceability"]
+    },
+    {
+      "id": "EM-001",
+      "title": "Experiment Metric Semantics & Evidence Boundaries",
+      "domain": "engineering",
+      "status": "approved",
+      "file": "semantic/engineering/experiment-metrics.md",
+      "tags": ["experiment", "metrics", "observability", "governance"]
     }
   ]
 }
