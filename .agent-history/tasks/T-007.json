@@ -1,0 +1,13 @@
+{
+  "id": "T-007",
+  "title": "Candidate Generator PR Workflow Side-Effect Elimination",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-007-candidate-generator-pr-friction",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-09-28T10:28:00+02:00"
+}
