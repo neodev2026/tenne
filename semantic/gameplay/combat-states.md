@@ -19,14 +19,14 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 
 1. **Posture Axis**:
    * `COVERED`: Character is positioned fully behind cover.
-   * `EXPOSED`: Character is fully exposed and eligible to acquire line of sight for weapon operations.
+   * `EXPOSED`: Character is fully exposed. Firing eligibility is governed by GS-003.
    * `TRANSITIONING_TO_COVERED`: Character is actively transitioning from exposed to covered posture.
    * `TRANSITIONING_TO_EXPOSED`: Character is actively transitioning from covered to exposed posture.
 
 2. **Weapon Action Axis**:
    * `READY`: Weapon is operable and awaiting input or firing conditions.
    * `FIRING`: Weapon is actively discharging a round or burst.
-   * `RELOADING`: Weapon magazine is actively being replenished.
+   * `RELOADING`: A reload action is currently in progress.
 
 3. **Orthogonality Invariant**:
    * `COVERED != RELOADING`. Being in cover does not imply reloading, and reloading does not define posture.
@@ -59,10 +59,10 @@ Character combat state is governed by two distinct, orthogonal state machine axe
    * If Squad Posture Intent changes while a character transition is in progress:
      * The updated Squad Posture Intent is recorded immediately.
      * The active transition continues uninterrupted until completion.
-     * Upon transition completion, the character's Actual Posture is compared against the latest Squad Posture Intent. If Actual Posture differs from Squad Posture Intent and the character is actionable, the required subsequent transition begins immediately.
+     * Upon transition completion, the character's Actual Posture is compared against the latest Squad Posture Intent. If Actual Posture differs from latest Squad Posture Intent, whether a subsequent transition may begin is reevaluated under the canonical rules applicable at that time.
 
 ### Semantic Gap Lineage: GAP-GS-001
-* **Portion Resolved by T-009**: Defined global Squad Posture Intent, individual actual posture distinction, transition atomicity, and completion queueing logic.
+* **Portion Resolved by T-009**: Defined global Squad Posture Intent, individual actual posture distinction, transition atomicity, and completion-time intent reevaluation logic.
 * **Remaining Unresolved Items**: Transition duration constants remain tracked under `GAP-GS-001`.
 
 ---
@@ -159,9 +159,9 @@ Character combat state is governed by two distinct, orthogonal state machine axe
    * Receiving `STUN` does **not** cancel, abort, or pause an ongoing posture transition; the transition continues to completion.
    * *(Note: STUN interaction with Charge Sessions is deferred to the future Weapon / Charge semantic slice).*
 
-3. **Recovery & Actionability**:
-   * When `STUN` expires, the character regains actionable status.
-   * Ongoing posture is preserved, and state transitions or reloads proceed according to canonical invariants (e.g. restarting reload if covered with an incomplete magazine under `GS-004`).
+3. **Expiration & Control Evaluation**:
+   * When `STUN` expires, `STUN` itself no longer prevents the character from acting. Overall actionability is reevaluated under the currently applicable canonical control rules.
+   * Ongoing posture is preserved, and state transitions or reloads proceed according to canonical invariants (such as restarting reload if covered with an incomplete magazine under `GS-004`).
 
 ### Semantic Gap Lineage: GAP-GS-005
 * **Portion Resolved by T-009**: Established STUN as an independent control state orthogonal to posture, defined interruption of firing and cancellation of reload, and non-interruption of posture transitions.
@@ -181,7 +181,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
    * Exactly one character is designated as the **Controlled Character**.
    * Changing the Controlled Character:
      * Switches direct player input routing to the newly selected character.
-     * Redirects the account-scoped Auto-Fire preference to the newly selected character.
+     * Changes which character the account-scoped Auto-Fire preference applies to.
      * Does **not** reset or alter HP, ammo, posture, Weapon Action, status effects, or any other combat state of any character.
 
 2. **Account-Scoped Auto-Fire Preference**:
@@ -189,7 +189,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
    * Within combat:
      * The stored preference applies strictly to the current Controlled Character.
      * All uncontrolled characters operate with effective `AUTO_FIRE_ON` regardless of the account preference.
-     * Switching control (e.g. from character C to E) transfers the stored preference to E, while C assumes effective `AUTO_FIRE_ON`.
+     * Switching control (e.g. from character C to E) causes E to receive the stored preference, while C assumes effective `AUTO_FIRE_ON`.
 
 3. **Auto-Fire Intent vs. Actual Firing**:
    * Effective Auto-Fire intent and the actual `FIRING` weapon action are distinct concepts.
