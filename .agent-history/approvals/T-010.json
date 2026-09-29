@@ -1,0 +1,50 @@
+{
+  "taskId": "T-010",
+  "approvedAt": "2026-09-30T01:36:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Canonicalize Simulation Time and Event Processing Semantics",
+    "targetBranch": "agent/t-010-simulation-and-event-semantics",
+    "baseCommit": "e6f6361",
+    "authorizedFiles": [
+      "semantic/architecture/simulation-semantics.md",
+      "semantic/index.json",
+      ".agent-history/tasks/T-010.json",
+      ".agent-history/approvals/T-010.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope amendment authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": "Explicit human authorization under G-041 to establish canonical simulation time and event processing semantics in semantic/architecture/simulation-semantics.md (AS-005, AS-006, GAP-AS-005, GAP-AS-006) and register approved rules in semantic/index.json",
+    "g042Authorization": false,
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized",
+    "deferredScope": [
+      "Simulation-time integer unit / resolution (milliseconds, ticks, microseconds, frames) explicitly deferred under GAP-AS-005",
+      "Event cascade numerical bound threshold, accounting metric (waves vs. events vs. generations), and overflow behavior explicitly deferred under GAP-AS-006",
+      "Exact boundary behavior at the current simulation timestamp and backward-time / rewind behavior explicitly unassigned",
+      "Charge Session behavior and STUN/Charge interaction explicitly deferred",
+      "Squad Burst System semantics explicitly deferred",
+      "Combat Targeting and Focus-Fire semantics explicitly deferred",
+      "Numerical constants, durations, capacities, fire rates, damage formulas, and TTK formulas explicitly deferred pending human domain specification",
+      "Implementation code in src/game/ explicitly deferred",
+      "Task lifecycle status semantics explicitly deferred pending formal governance design"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic change is explicitly authorized by human owner for AS-005 and AS-006.",
+    "G-042 authorization is not applicable as zero guardrail code or configuration is modified.",
+    "AS-005 establishes deterministic simulation time using an explicit integer representation, independent of wall-clock time, rendering framerate/progress, browser timing, and real-time scheduling.",
+    "Conceptual progression is expressed as advanceTo(targetSimulationTime); pending scheduled events up to targetSimulationTime are processed chronologically according to canonical ordering.",
+    "Do NOT establish targetSimulationTime >= currentSimulationTime; do NOT describe simulation time as necessarily monotonic; backward-time/rewind behavior is not decided; boundary behavior at current simulation timestamp is not canonicalized.",
+    "GAP-AS-005 preserves the unresolved simulation-time integer unit/resolution without inventing concrete units.",
+    "AS-006 establishes the exact 6-tier same-timestamp canonical precedence: 1. Hard Interrupt / Control, 2. Scheduled Completion / State Transition, 3. Player Input, 4. Derived Events, 5. Skill Trigger / Activation, 6. Effect Resolution. Categories must not be reordered, collapsed, or added.",
+    "Event processing occurs through discrete event waves with pre-wave snapshot isolation for sibling trigger evaluation; sibling triggers do not observe intra-wave sibling mutations; sibling skill/effect evaluation remains isolated.",
+    "For effect-producing logic: proposed effects are represented as Effect Intents which do not directly mutate shared state during evaluation, are resolved under canonical resolution rules, and are committed atomically.",
+    "Effect Intents apply to effect-producing logic and are NOT an unapproved universal mutation mechanism for all combat transitions (such as STUN cancellation, posture transitions, or reload cancellation).",
+    "Events derived from committed results become inputs to the next wave and are not recursively processed in the same wave.",
+    "Event cascades are permitted but must be deterministically bounded; exact bound, metric, and overflow behavior remain unresolved under GAP-AS-006.",
+    "T-009 gameplay semantics (GS-001..005, GS-009) remain unchanged and authoritative; 'immediately' represents semantic ordering not delayed by rendering, animation, framerate, or wall-clock timing.",
+    "Preserve existing Gap IDs GAP-GS-001 through GAP-GS-008."
+  ]
+}
