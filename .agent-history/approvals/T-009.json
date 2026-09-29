@@ -1,0 +1,43 @@
+{
+  "taskId": "T-009",
+  "approvedAt": "2026-09-29T23:23:32+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Canonicalize Combat Control, Posture, and Weapon Action Semantics",
+    "targetBranch": "agent/t-009-combat-control-semantics",
+    "baseCommit": "7391f02",
+    "authorizedFiles": [
+      "semantic/gameplay/combat-states.md",
+      "semantic/index.json",
+      ".agent-history/tasks/T-009.json",
+      ".agent-history/approvals/T-009.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope amendment authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": "Explicit human authorization under G-041 to establish canonical combat control, posture, and weapon action semantics in semantic/gameplay/combat-states.md (GS-001 through GS-005, and GS-009) and register approved rules in semantic/index.json",
+    "g042Authorization": false,
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized",
+    "deferredScope": [
+      "Charge Session behavior and STUN/Charge interaction explicitly deferred to future Weapon / Charge slice",
+      "Simulation-time integer representation, advanceTo(), same-timestamp event ordering, event waves, Effect Intents, and Skill execution semantics explicitly deferred to future Semantic Slice B",
+      "Squad Burst System semantics explicitly deferred to future Burst slice",
+      "Combat Targeting and Focus-Fire semantics explicitly deferred to future Targeting slice",
+      "Numerical constants, durations, capacities, fire rates, damage formulas, and TTK formulas explicitly deferred pending human domain specification",
+      "Implementation code in src/game/ explicitly deferred",
+      "Task lifecycle status semantics explicitly deferred pending formal governance design"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic change is explicitly authorized by human owner for GS-001, GS-002, GS-003, GS-004, GS-005, and GS-009.",
+    "G-042 authorization is not applicable as zero guardrail code or configuration is modified.",
+    "GS-009 (Controlled Character & Auto-Fire Preference) is explicitly established by human semantic decision under gameplay domain.",
+    "Preserve existing Gap IDs GAP-GS-001 through GAP-GS-005; do not create GAP-GS-001B or other new Gap IDs.",
+    "Distinguish structural portions resolved by T-009 from remaining unresolved items inside semantic/gameplay/combat-states.md.",
+    "Ammo-depletion reload return rule: if ammo depletion triggered auto-cover and reload completes, return to EXPOSED if Squad Posture Intent is WANT_EXPOSED, or remain COVERED if WANT_COVERED. Automatic cover never modifies Squad Posture Intent.",
+    "Auto-fire intent across STUN: STUN does not alter stored preference or effective intent; after STUN expires, firing eligibility is reevaluated if EXPOSED, while if COVERED intent remains ON without actual firing.",
+    "STUN stops/interrupts active FIRING and cancels active RELOADING without preserving progress or granting ammo; reload restarts as a new reload after STUN expires while covered; STUN does not abort ongoing posture transitions.",
+    "Do not pre-assign future task IDs."
+  ]
+}

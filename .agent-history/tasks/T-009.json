@@ -1,0 +1,13 @@
+{
+  "id": "T-009",
+  "title": "Canonicalize Combat Control, Posture, and Weapon Action Semantics",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-009-combat-control-semantics",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-09-29T23:24:00+02:00"
+}
