@@ -131,6 +131,22 @@
       "tags": ["architecture", "testing", "domain"]
     },
     {
+      "id": "AS-005",
+      "title": "Deterministic Simulation Time & Chronological Progression",
+      "domain": "architecture",
+      "status": "approved",
+      "file": "semantic/architecture/simulation-semantics.md",
+      "tags": ["architecture", "simulation", "time", "deterministic"]
+    },
+    {
+      "id": "AS-006",
+      "title": "Canonical Event Precedence, Snapshot Isolation & Wave Execution",
+      "domain": "architecture",
+      "status": "approved",
+      "file": "semantic/architecture/simulation-semantics.md",
+      "tags": ["architecture", "event-ordering", "event-waves", "effect-intents", "snapshot-isolation"]
+    },
+    {
       "id": "EC-001",
       "title": "TypeScript Strictness",
       "domain": "engineering",
