@@ -1,0 +1,47 @@
+{
+  "taskId": "T-011",
+  "approvedAt": "2026-09-30T10:33:58+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Deterministic Event Batching and Single-Batch Evaluation Kernel",
+    "targetBranch": "agent/t-011-simulation-event-kernel",
+    "baseCommit": "363f95f",
+    "authorizedFiles": [
+      "src/game/domain/index.ts",
+      "tests/game-domain.test.ts",
+      ".agent-history/tasks/T-011.json",
+      ".agent-history/approvals/T-011.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope amendment authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "deferredScope": [
+      "Multi-batch automatic coordination (batch 1 -> batch 2 -> batch 3) and deciding whether category boundaries equal wave boundaries deferred",
+      "Simulation-time concrete integer unit / resolution (milliseconds, ticks, frames, microseconds) deferred under GAP-AS-005",
+      "Event cascade numerical bound threshold, metric (waves vs. events vs. generations), and overflow behavior deferred under GAP-AS-006",
+      "Effect conflict resolution formulas (stacking, refresh, overwrite, aggregation, first-wins/last-wins) deferred under GAP-AS-006",
+      "Continuous advanceTo scheduler, current-timestamp boundary policies, backward-time/rewind mechanics, and time monotonicity remain unassigned by current canonical semantics",
+      "T-009 gameplay combat state machines (posture, reload, STUN, auto-fire routing, numerical constants) deferred to subsequent domain tasks",
+      "Charge sessions, Squad Burst system, and combat targeting deferred",
+      "Rendering adapters, Phaser scenes, UI, and browser integrations deferred under AS-001/AS-003/AS-004"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Simulation time uses explicit integer representation (TypeScript number validated with Number.isSafeInteger); negative safe integers accepted; safe-integer range is an implementation choice; no concrete units defined.",
+    "Event categories follow exact 6-tier canonical precedence (1. Hard Interrupt / Control, 2. Scheduled Completion / State Transition, 3. Player Input, 4. Derived Events, 5. Skill Trigger / Activation, 6. Effect Resolution).",
+    "EventBatch is an implementation choice, not canonically identical to an Event Wave; each batch contains events sharing exactly one timestamp and one category; sibling peers carry no semantic ordering.",
+    "Execution primitive executeEventBatch consumes strictly ONE EventBatch; mixed collections spanning multiple timestamps or categories are prohibited; multi-batch automatic coordination is deferred.",
+    "Snapshot isolation: sibling evaluators in a batch evaluate against the same pre-batch snapshot without observing sibling staged intents; no direct mutation callbacks.",
+    "Effect Intents: staged during evaluation; carry no semantic priority based on array order; conflict resolution deferred under GAP-AS-006.",
+    "Atomic commit: exactly one pure post-evaluation resolver/commit boundary produces committedState from pre-batch snapshot and staged intents.",
+    "Derived events: produced strictly after commit from committed results; emitted in derivedEvents for future processing; no intra-wave recursive processing.",
+    "Bootstrap compatibility: getDomainState() is preserved with gameplayImplemented: false."
+  ]
+}
