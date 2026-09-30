@@ -1,6 +1,7 @@
 {
   "taskId": "T-010",
   "approvedAt": "2026-09-30T01:36:00+02:00",
+  "amendedAt": "2026-09-30T02:09:20+02:00",
   "approver": "Human Owner",
   "approvedScope": {
     "taskTitle": "Canonicalize Simulation Time and Event Processing Semantics",
@@ -45,6 +46,7 @@
     "Events derived from committed results become inputs to the next wave and are not recursively processed in the same wave.",
     "Event cascades are permitted but must be deterministically bounded; exact bound, metric, and overflow behavior remain unresolved under GAP-AS-006.",
     "T-009 gameplay semantics (GS-001..005, GS-009) remain unchanged and authoritative; 'immediately' represents semantic ordering not delayed by rendering, animation, framerate, or wall-clock timing.",
-    "Preserve existing Gap IDs GAP-GS-001 through GAP-GS-008."
+    "Preserve existing Gap IDs GAP-GS-001 through GAP-GS-008.",
+    "Amendment: EVT-000025 contains an incorrect UTC timestamp representation (2026-09-30T01:36:00Z instead of 2026-09-29T23:36:00Z); the authoritative approval instant remains 2026-09-30T01:36:00+02:00 (= 2026-09-29T23:36:00Z). This amendment changes audit-time representation only; no semantic scope, authorization, file budget, or governance permission changes."
   ]
 }

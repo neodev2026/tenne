@@ -30,8 +30,8 @@
      `advanceTo(targetSimulationTime)`
    * Pending scheduled events up to the target simulation time are processed chronologically according to canonical event ordering (see `AS-006`).
 
-3. **Temporal Boundary & Non-Monotonicity Scope**:
-   * The relationship between `targetSimulationTime` and current simulation time is not constrained to monotonic advancement in this rule (backward-time / rewind behavior has not been decided and must not be invented).
+3. **Temporal Boundary Scope**:
+   * Whether simulation-time progression is monotonic, and whether backward-time or rewind behavior is permitted, is not canonicalized by this rule.
    * Inclusive/exclusive behavior for events scheduled exactly at the current simulation timestamp is not canonicalized by this rule and remains an open operational detail.
 
 ### Semantic Gap Lineage: GAP-AS-005
