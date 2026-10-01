@@ -1,0 +1,59 @@
+{
+  "taskId": "T-015",
+  "approvedAt": "2026-10-02T01:45:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Application-Layer Posture Demo Session",
+    "targetBranch": "agent/t-015-posture-demo-session",
+    "baseCommit": "c36e0ffba9eaeb4bbb7bb8342e724f887f5579b9",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/application/index.ts",
+      "tests/game-application.test.ts",
+      ".agent-history/tasks/T-015.json",
+      ".agent-history/approvals/T-015.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Implement PostureDemoSnapshot read-only projection interface in src/game/application/index.ts exposing posture, squadPostureIntent, applicablePostureTransition, isTransitionInProgress, and postureFiringPrerequisiteSatisfied",
+      "Implement PostureDemoSession interface exposing getSnapshot(), setSquadPostureIntent(intent), beginTransition(): boolean, and completeTransition(): boolean",
+      "Implement createPostureDemoSession factory with fallback demo initialization values COVERED and WANT_COVERED classified explicitly as implementation/demo choices",
+      "Enforce command outcome semantics for beginTransition() and completeTransition() without automatic chained transition execution",
+      "Support mid-transition intent updates without cancelling or reversing active posture transitions",
+      "Preserve getDomainState().gameplayImplemented === false",
+      "Headless Vitest unit tests in tests/game-application.test.ts"
+    ],
+    "deferredScope": [
+      "Presentation mounting and /play/ UI rendering deferred to T-016",
+      "Browser and DOM behavior, window, document, and canvas deferred",
+      "Timers, setTimeout, setInterval, requestAnimationFrame, and simulation durations deferred",
+      "Automatic transition completion or automatic chained transitions deferred",
+      "WeaponActionState container and firing transitions deferred",
+      "Ammunition tracking and reload logic deferred",
+      "Persistent STUN state and CharacterControlState deferred",
+      "Global actionability and global canFire deferred",
+      "Squad arrays, cardinality, and character identity deferred",
+      "Controlled Character and Auto-Fire deferred under GS-009",
+      "Domain event taxonomy changes deferred",
+      "T-011 EventBatch and EffectIntent integration deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Presentation layer remains completely unchanged in T-015; runtime gameplay-session ownership lives in Application layer.",
+    "Fallback demo values COVERED and WANT_COVERED are explicitly implementation/demo initialization choices, not canonical defaults.",
+    "State references in PostureDemoSession are replaced solely with return values from approved Domain factories/operations; branded Domain state is never directly mutated.",
+    "Snapshot derived facts evaluate existing Domain queries: applicablePostureTransition evaluates getApplicablePostureTransition, postureFiringPrerequisiteSatisfied evaluates doesPostureSatisfyFiringPrerequisite.",
+    "Snapshot does not expose canFire, global actionability, WeaponActionState, persistent STUN state, ammo, or squad identity.",
+    "beginTransition and completeTransition return boolean command outcomes strictly as Application orchestration without automatic transition chaining.",
+    "Metadata preservation: getDomainState() preserves gameplayImplemented: false."
+  ]
+}
