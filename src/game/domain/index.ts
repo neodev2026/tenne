@@ -9,11 +9,13 @@
  * Rule GS-001: Orthogonal Posture and Weapon Action Axes
  * Rule GS-002: Squad Posture Intent and Transition Atomicity
  * Rule GS-003: Firing Posture Invariant and Ammo-Depletion Auto-Cover
+ * Rule GS-005: STUN as Orthogonal Control State
  *
  * NOTE: T-011 implements deterministic simulation time, event categories,
  * event batching, and single-batch evaluation kernel. T-012 implements
  * Character Posture and Squad Posture Intent state transitions. T-013 implements
- * Weapon Action concepts and posture-side firing eligibility. Full combat
+ * Weapon Action concepts and posture-side firing eligibility. T-014 implements
+ * STUN status representation and STUN-specific firing blocker. Full combat
  * gameplay behaviors remain unimplemented (gameplayImplemented: false).
  */
 
@@ -777,3 +779,65 @@ export function doesPostureSatisfyFiringPrerequisite(posture: CharacterPosture):
   assertCharacterPosture(posture, 'doesPostureSatisfyFiringPrerequisite');
   return posture === CharacterPosture.EXPOSED;
 }
+
+// ============================================================================
+// STUN Status & STUN-Specific Firing Blocker (GS-005 §1, §2, GS-009 §3)
+// ============================================================================
+
+/**
+ * Validates that a value is a boolean primitive representing STUN status.
+ *
+ * [IMPLEMENTATION CHOICE] STUN is established as an independent crowd-control state
+ * orthogonal to Posture (GS-005 §1). The repository does NOT canonically define a closed
+ * Control State vocabulary (e.g. NORMAL, UNSTUNNED). STUN presence/absence is represented
+ * via a primitive boolean flag (isStunned: boolean).
+ */
+export function isStunStatus(value: unknown): value is boolean {
+  return typeof value === 'boolean';
+}
+
+/**
+ * Asserts that a value is a boolean primitive representing STUN status.
+ */
+export function assertStunStatus(value: unknown, context = 'doesStunBlockFiring'): asserts value is boolean {
+  if (!isStunStatus(value)) {
+    throw new TypeError(
+      `[${context}] Invalid STUN status: expected boolean, received ${typeof value} (${String(value)})`
+    );
+  }
+}
+
+/**
+ * Evaluates whether the presence of STUN blocks weapon firing (GS-005 §2, GS-009 §3).
+ *
+ * [SEMANTICALLY REQUIRED]:
+ * - GS-005 §2 mandates that receiving STUN stops/interrupts active FIRING.
+ * - GS-009 §3 mandates that actual firing remains prohibited whenever firing invariants
+ *   (including non-stunned status under GS-005) are not satisfied.
+ *
+ * Behavior:
+ * - isStunned === true => STUN blocks firing => returns true
+ * - isStunned === false => STUN itself does not block firing => returns false
+ *
+ * CRITICAL AUTHORITY BOUNDARY:
+ * - Authoritative question: "Does STUN itself block firing?"
+ * - A return value of `true` means weapon firing is prohibited by the presence of STUN.
+ * - A return value of `false` means strictly: "STUN itself does not block firing."
+ * - A return value of `false` MUST NOT mean:
+ *   - the character is actionable (GS-004 §1: "not stunned or control-restricted")
+ *   - the character is globally eligible to fire
+ *   - all control-side restrictions are absent
+ *   - all firing prerequisites are satisfied
+ *   - canFire is true
+ *   - Weapon Action becomes FIRING
+ *   - firing begins
+ * - This function does NOT evaluate posture (GS-003 §1), weapon action (GS-001 §2),
+ *   ammunition (GS-003 §2), input (GS-009), or cadence/timing (GAP-GS-002).
+ * - Existing posture-side prerequisite query (doesPostureSatisfyFiringPrerequisite)
+ *   and this STUN-specific blocker remain separate narrow facts.
+ */
+export function doesStunBlockFiring(isStunned: boolean): boolean {
+  assertStunStatus(isStunned, 'doesStunBlockFiring');
+  return isStunned;
+}
+

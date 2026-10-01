@@ -1,0 +1,13 @@
+{
+  "id": "T-014",
+  "title": "Represent STUN Status and STUN-Specific Firing Blocker",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-014-stun-status-and-firing-blocker",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "STUN_STATUS_AND_FIRING_BLOCKER",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-02T00:20:00+02:00"
+}

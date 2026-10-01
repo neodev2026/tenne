@@ -29,6 +29,9 @@ import {
   isWeaponAction,
   assertWeaponAction,
   doesPostureSatisfyFiringPrerequisite,
+  isStunStatus,
+  assertStunStatus,
+  doesStunBlockFiring,
 } from '../src/game/domain/index.ts';
 import { getApplicationState } from '../src/game/application/index.ts';
 
@@ -850,3 +853,63 @@ describe('Weapon Action Concepts & Posture Firing Prerequisite (GS-001 §2, GS-0
     expect(domain.gameplayImplemented).toBe(false);
   });
 });
+
+describe('STUN Status & STUN-Specific Firing Blocker (GS-005 §1, §2, GS-009 §3)', () => {
+  it('validates STUN status representation at runtime via isStunStatus and assertStunStatus', () => {
+    expect(isStunStatus(true)).toBe(true);
+    expect(isStunStatus(false)).toBe(true);
+    expect(isStunStatus('true')).toBe(false);
+    expect(isStunStatus(1)).toBe(false);
+    expect(isStunStatus(0)).toBe(false);
+    expect(isStunStatus(null)).toBe(false);
+    expect(isStunStatus(undefined)).toBe(false);
+    expect(isStunStatus({})).toBe(false);
+    expect(isStunStatus([])).toBe(false);
+
+    expect(() => assertStunStatus(true)).not.toThrow();
+    expect(() => assertStunStatus(false)).not.toThrow();
+    expect(() => assertStunStatus('STUNNED')).toThrow(TypeError);
+    expect(() => assertStunStatus(null)).toThrow(TypeError);
+    expect(() => assertStunStatus(undefined)).toThrow(TypeError);
+    expect(() => assertStunStatus(1)).toThrow(TypeError);
+  });
+
+  it('evaluates that STUN blocks firing when isStunned is true (GS-005 §2, GS-009 §3)', () => {
+    expect(doesStunBlockFiring(true)).toBe(true);
+  });
+
+  it('evaluates that STUN itself does not block firing when isStunned is false (GS-005 §2)', () => {
+    // Critical authority boundary: false means strictly "STUN itself does not block firing".
+    // It does NOT mean the character is globally actionable or permitted to fire.
+    expect(doesStunBlockFiring(false)).toBe(false);
+  });
+
+  it('rejects invalid non-boolean runtime inputs to doesStunBlockFiring with TypeError', () => {
+    expect(() => doesStunBlockFiring(null as unknown as boolean)).toThrow(TypeError);
+    expect(() => doesStunBlockFiring(undefined as unknown as boolean)).toThrow(TypeError);
+    expect(() => doesStunBlockFiring('true' as unknown as boolean)).toThrow(TypeError);
+    expect(() => doesStunBlockFiring(1 as unknown as boolean)).toThrow(TypeError);
+    expect(() => doesStunBlockFiring(0 as unknown as boolean)).toThrow(TypeError);
+    expect(() => doesStunBlockFiring({} as unknown as boolean)).toThrow(TypeError);
+    expect(() => doesStunBlockFiring([] as unknown as boolean)).toThrow(TypeError);
+  });
+
+  it('operates as a pure, deterministic, side-effect free query with zero environmental dependency', () => {
+    // Deterministic repeated evaluation
+    expect(doesStunBlockFiring(true)).toBe(true);
+    expect(doesStunBlockFiring(true)).toBe(true);
+    expect(doesStunBlockFiring(false)).toBe(false);
+    expect(doesStunBlockFiring(false)).toBe(false);
+
+    // Completely decoupled from browser globals, frames, and timers
+    expect(typeof window).toBe('undefined');
+  });
+
+  it('preserves getDomainState() with gameplayImplemented: false', () => {
+    const domain = getDomainState();
+    expect(domain.layer).toBe('domain');
+    expect(domain.deterministic).toBe(true);
+    expect(domain.gameplayImplemented).toBe(false);
+  });
+});
+
