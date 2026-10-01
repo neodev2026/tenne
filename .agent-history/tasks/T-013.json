@@ -1,0 +1,13 @@
+{
+  "id": "T-013",
+  "title": "Implement Weapon Action Concepts and Posture-Side Firing Eligibility",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-013-weapon-action-concepts",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "WEAPON_ACTION_CONCEPTS_AND_POSTURE_FIRING_ELIGIBILITY",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-01T16:38:00+02:00"
+}

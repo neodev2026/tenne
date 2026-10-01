@@ -25,6 +25,10 @@ import {
   beginIntentDrivenPostureTransition,
   completeCharacterPostureTransition,
   type CharacterPostureState,
+  WeaponAction,
+  isWeaponAction,
+  assertWeaponAction,
+  doesPostureSatisfyFiringPrerequisite,
 } from '../src/game/domain/index.ts';
 import { getApplicationState } from '../src/game/application/index.ts';
 
@@ -766,6 +770,76 @@ describe('Headless, Orthogonal & Deterministic Execution (AS-001, AS-004, GS-001
 
     expect(completed.state.posture).toBe(CharacterPosture.EXPOSED);
     // Assert all state wrappers are pure objects without window/document/timer handles
+    expect(typeof window).toBe('undefined');
+  });
+
+  it('preserves getDomainState() with gameplayImplemented: false', () => {
+    const domain = getDomainState();
+    expect(domain.layer).toBe('domain');
+    expect(domain.deterministic).toBe(true);
+    expect(domain.gameplayImplemented).toBe(false);
+  });
+});
+
+describe('Weapon Action Concepts & Posture Firing Prerequisite (GS-001 §2, GS-003 §1)', () => {
+  it('exposes exactly three canonical Weapon Action values: READY, FIRING, RELOADING', () => {
+    expect(Object.keys(WeaponAction).sort()).toEqual(['FIRING', 'READY', 'RELOADING']);
+    expect(WeaponAction.READY).toBe('READY');
+    expect(WeaponAction.FIRING).toBe('FIRING');
+    expect(WeaponAction.RELOADING).toBe('RELOADING');
+  });
+
+  it('validates canonical Weapon Action values at runtime via isWeaponAction', () => {
+    expect(isWeaponAction('READY')).toBe(true);
+    expect(isWeaponAction('FIRING')).toBe(true);
+    expect(isWeaponAction('RELOADING')).toBe(true);
+    expect(isWeaponAction('INVALID_ACTION')).toBe(false);
+    expect(isWeaponAction(123)).toBe(false);
+    expect(isWeaponAction(null)).toBe(false);
+    expect(isWeaponAction(undefined)).toBe(false);
+    expect(isWeaponAction({})).toBe(false);
+    expect(isWeaponAction([])).toBe(false);
+  });
+
+  it('enforces canonical Weapon Action values at runtime via assertWeaponAction', () => {
+    expect(() => assertWeaponAction('READY')).not.toThrow();
+    expect(() => assertWeaponAction('FIRING')).not.toThrow();
+    expect(() => assertWeaponAction('RELOADING')).not.toThrow();
+    expect(() => assertWeaponAction('UNKNOWN')).toThrow(TypeError);
+    expect(() => assertWeaponAction(null)).toThrow(TypeError);
+    expect(() => assertWeaponAction(undefined)).toThrow(TypeError);
+  });
+
+  it('evaluates posture-side firing prerequisite according to GS-003 §1', () => {
+    // Firing is strictly permitted only when the character is fully EXPOSED
+    expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.EXPOSED)).toBe(true);
+
+    // Firing is prohibited while COVERED, TRANSITIONING_TO_COVERED, or TRANSITIONING_TO_EXPOSED
+    expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.COVERED)).toBe(false);
+    expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.TRANSITIONING_TO_COVERED)).toBe(false);
+    expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.TRANSITIONING_TO_EXPOSED)).toBe(false);
+  });
+
+  it('rejects invalid posture input consistently with assertCharacterPosture', () => {
+    expect(() =>
+      doesPostureSatisfyFiringPrerequisite('INVALID_POSTURE' as unknown as CharacterPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      doesPostureSatisfyFiringPrerequisite(null as unknown as CharacterPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      doesPostureSatisfyFiringPrerequisite(undefined as unknown as CharacterPosture)
+    ).toThrow(TypeError);
+  });
+
+  it('operates as a pure, deterministic, side-effect free query with zero environmental dependency', () => {
+    // Pure function returns identical result for repeated calls without mutating input
+    const posture = CharacterPosture.EXPOSED;
+    expect(doesPostureSatisfyFiringPrerequisite(posture)).toBe(true);
+    expect(doesPostureSatisfyFiringPrerequisite(posture)).toBe(true);
+    expect(posture).toBe(CharacterPosture.EXPOSED);
+
+    // Completely decoupled from browser globals
     expect(typeof window).toBe('undefined');
   });
 

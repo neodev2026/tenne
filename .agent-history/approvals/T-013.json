@@ -1,0 +1,58 @@
+{
+  "taskId": "T-013",
+  "approvedAt": "2026-10-01T16:38:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Weapon Action Concepts and Posture-Side Firing Eligibility",
+    "targetBranch": "agent/t-013-weapon-action-concepts",
+    "baseCommit": "4464bcddd1d3f244b94a1006ba9ab120e6adc5f5",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/domain/index.ts",
+      "tests/game-domain.test.ts",
+      ".agent-history/tasks/T-013.json",
+      ".agent-history/approvals/T-013.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Canonical Weapon Action values (READY, FIRING, RELOADING) represented in code",
+      "Implementation choice TypeScript helpers (const object, union type, isWeaponAction, assertWeaponAction)",
+      "Pure query doesPostureSatisfyFiringPrerequisite(posture) evaluating strictly the posture-side prerequisite for firing",
+      "Preserve getDomainState() with gameplayImplemented: false"
+    ],
+    "deferredScope": [
+      "WeaponActionState container wrapper and initial factories deferred",
+      "Actual Weapon Action transitions (beginFiring, stopFiring, beginReload, cancelReload) deferred",
+      "Global firing authority explicitly NOT defined; actual firing remains subject to unmodeled/deferred axes",
+      "Ammunition tracking, magazine capacity, and ammo depletion auto-cover deferred under GS-003 and GAP-GS-002",
+      "Cover-triggered reload lifecycle, duration, cancellation, and post-reload return deferred under GS-004, GAP-GS-003, and GAP-GS-004",
+      "STUN control state modeling, duration, and firing interruption deferred under GS-005 and GAP-GS-005",
+      "Controlled Character routing and account-scoped Auto-Fire preference deferred under GS-009",
+      "Cadence, fire interval, rate of fire, charge sessions, and burst timing deferred under GAP-GS-002 and GAP-GS-004",
+      "Domain event taxonomy for weapon action state changes deferred",
+      "T-011 kernel batching or effect intent integration deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Canonical Weapon Action values are exactly READY, FIRING, and RELOADING. The TypeScript const object, union type, and runtime helpers are implementation choices.",
+    "READY is represented only as an approved value; T-013 does not infer ammo availability, firing permission, cooldown completion, input readiness, unstunned state, global actionability, or universal initial state. No READY state factory is created.",
+    "No WeaponActionState container or wrapper is implemented. There is currently insufficient canonical transition authority to safely construct active FIRING or RELOADING state containers. T-013 remains value-only for Weapon Action.",
+    "No Weapon Action transitions (beginFiring, stopFiring, beginReload, etc.) are implemented; no public API puts a character into FIRING or RELOADING as executable combat state.",
+    "Posture-side firing prerequisite is implemented as a pure query: doesPostureSatisfyFiringPrerequisite(posture). EXPOSED returns true; COVERED, TRANSITIONING_TO_COVERED, and TRANSITIONING_TO_EXPOSED return false.",
+    "Critical authority boundary: A result of true means strictly that the Character Posture satisfies the canonical posture-side prerequisite for firing. It does NOT mean actual firing begins, character can globally fire, is globally eligible, is globally actionable, or action becomes FIRING. Actual firing remains subject to additional unmodeled/deferred axes (weapon/ammo state, control state, firing intent/input routing, cadence/timing). T-013 neither evaluates nor defines their complete conjunction.",
+    "Character Posture and Weapon Action remain separate domain vocabularies/types; semantic orthogonality is not asserted via runtime string comparisons.",
+    "No Object.freeze runtime immutability semantics are introduced. as const provides compile-time narrowing and is not tested as runtime freezing.",
+    "T-011 EventBatch, executeEventBatch, EffectIntent, and Derived Events are not used.",
+    "Weapon Action domain event taxonomy remains deferred.",
+    "Metadata preservation: getDomainState() preserves gameplayImplemented: false because false is the existing Human-Trusted value, the lifecycle semantics for changing it to true are not formally defined, and T-013 has no authority to redefine that metadata meaning."
+  ]
+}
