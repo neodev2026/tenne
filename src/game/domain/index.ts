@@ -8,10 +8,12 @@
  * Rule AS-006: Canonical Event Precedence, Snapshot Isolation & Wave Execution
  * Rule GS-001: Orthogonal Posture and Weapon Action Axes
  * Rule GS-002: Squad Posture Intent and Transition Atomicity
+ * Rule GS-003: Firing Posture Invariant and Ammo-Depletion Auto-Cover
  *
  * NOTE: T-011 implements deterministic simulation time, event categories,
  * event batching, and single-batch evaluation kernel. T-012 implements
- * Character Posture and Squad Posture Intent state transitions. Full combat
+ * Character Posture and Squad Posture Intent state transitions. T-013 implements
+ * Weapon Action concepts and posture-side firing eligibility. Full combat
  * gameplay behaviors remain unimplemented (gameplayImplemented: false).
  */
 
@@ -693,4 +695,85 @@ export function completeCharacterPostureTransition(
     state: committedState,
     nextApplicableTransition,
   });
+}
+
+// ============================================================================
+// Weapon Action Concepts & Posture Firing Prerequisite (GS-001 §2, GS-003 §1)
+// ============================================================================
+
+/**
+ * Canonical Weapon Action values mandated by GS-001 §2:
+ * - READY
+ * - FIRING
+ * - RELOADING
+ *
+ * Weapon Action is an independent state machine axis orthogonal to Character Posture.
+ * COVERED != RELOADING and EXPOSED != FIRING.
+ *
+ * [SEMANTICALLY REQUIRED]: The three discrete values and their independent axis.
+ * [IMPLEMENTATION CHOICE]: Representing these values via a TypeScript const object named WeaponAction.
+ * Note: The TypeScript representation itself is an implementation choice, not canonical semantic truth.
+ * Compile-time narrowing via `as const` does not provide runtime object freezing.
+ */
+export const WeaponAction = {
+  READY: 'READY',
+  FIRING: 'FIRING',
+  RELOADING: 'RELOADING',
+} as const;
+
+/**
+ * [IMPLEMENTATION CHOICE]: TypeScript union type derived from the const object.
+ */
+export type WeaponAction = typeof WeaponAction[keyof typeof WeaponAction];
+
+/**
+ * [IMPLEMENTATION CHOICE]: Pure runtime type guard validating canonical WeaponAction values.
+ */
+export function isWeaponAction(value: unknown): value is WeaponAction {
+  return (
+    typeof value === 'string' &&
+    (value === WeaponAction.READY ||
+      value === WeaponAction.FIRING ||
+      value === WeaponAction.RELOADING)
+  );
+}
+
+/**
+ * [IMPLEMENTATION CHOICE]: Runtime assertion utility throwing TypeError on invalid WeaponAction values.
+ */
+export function assertWeaponAction(
+  value: unknown,
+  context = 'WeaponAction'
+): asserts value is WeaponAction {
+  if (!isWeaponAction(value)) {
+    throw new TypeError(
+      `[${context}] Invalid weapon action: expected one of ${Object.values(WeaponAction).join(', ')}, received ${typeof value} (${String(value)})`
+    );
+  }
+}
+
+/**
+ * Evaluates whether an individual character's posture satisfies the canonical
+ * posture-side prerequisite for firing (GS-003 §1).
+ *
+ * [SEMANTICALLY REQUIRED]: GS-003 §1 mandates that weapon firing is strictly permitted
+ * only when the character is fully EXPOSED, and prohibited while COVERED,
+ * TRANSITIONING_TO_COVERED, or TRANSITIONING_TO_EXPOSED.
+ *
+ * [IMPLEMENTATION CHOICE]: Function naming `doesPostureSatisfyFiringPrerequisite`
+ * explicitly answers only the posture prerequisite question.
+ *
+ * CRITICAL AUTHORITY BOUNDARY:
+ * - Authoritative question: "Does this Character Posture satisfy the canonical posture prerequisite for firing?"
+ * - Returns `true` ONLY for `CharacterPosture.EXPOSED`.
+ * - Returns `false` for `COVERED`, `TRANSITIONING_TO_COVERED`, and `TRANSITIONING_TO_EXPOSED`.
+ * - `true` must NOT mean actual FIRING begins, the character can globally fire, is globally
+ *   eligible, is globally actionable, or that Weapon Action becomes FIRING.
+ * - Actual firing remains subject to additional unmodeled/deferred axes such as weapon/ammunition
+ *   state, control state, firing intent/input routing, and weapon-specific timing/cadence.
+ *   This function neither evaluates nor defines their exact conjunction.
+ */
+export function doesPostureSatisfyFiringPrerequisite(posture: CharacterPosture): boolean {
+  assertCharacterPosture(posture, 'doesPostureSatisfyFiringPrerequisite');
+  return posture === CharacterPosture.EXPOSED;
 }
