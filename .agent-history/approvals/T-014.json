@@ -1,0 +1,59 @@
+{
+  "taskId": "T-014",
+  "approvedAt": "2026-10-02T00:20:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Represent STUN Status and STUN-Specific Firing Blocker",
+    "targetBranch": "agent/t-014-stun-status-and-firing-blocker",
+    "baseCommit": "dc979db0fa011fa6bb72c69f3c5510e43618890f",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/domain/index.ts",
+      "tests/game-domain.test.ts",
+      ".agent-history/tasks/T-014.json",
+      ".agent-history/approvals/T-014.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Primitive boolean representation for STUN status: isStunned: boolean",
+      "Pure query doesStunBlockFiring(isStunned: boolean): boolean returning true if isStunned === true and false if isStunned === false",
+      "Runtime validation throwing TypeError on non-boolean input as an implementation choice",
+      "Preserve getDomainState() with gameplayImplemented: false"
+    ],
+    "deferredScope": [
+      "CharacterControlState, NORMAL, UNSTUNNED, NOT_STUNNED, StunStatus enum/const object, and any closed Control State vocabulary explicitly deferred",
+      "Global actionability and global canFire explicitly deferred",
+      "Combined positive predicate (doPostureAndControlSatisfyFiringPrerequisites) explicitly deferred",
+      "STUN application / clear mutators explicitly deferred",
+      "STUN duration, timers, or simulation-time countdown deferred under GAP-GS-005",
+      "STUN stacking, refresh, overwrite policies deferred under GAP-GS-005",
+      "Charge Session interaction deferred under GAP-GS-005",
+      "STUN policy for beginning new posture transitions deferred under GAP-GS-005",
+      "Active FIRING interruption execution deferred",
+      "Active RELOADING cancellation execution deferred",
+      "Ammo and magazine logic deferred under GS-003, GAP-GS-002, and GAP-GS-003",
+      "WeaponActionState transitions deferred",
+      "Controlled Character and Auto-Fire deferred under GS-009",
+      "Domain event taxonomy for STUN deferred",
+      "T-011 EventBatch and EffectIntent integration deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Representation uses primitive boolean isStunned: boolean without introducing CharacterControlState, NORMAL, UNSTUNNED, NOT_STUNNED, StunStatus, or any closed Control State vocabulary.",
+    "Preferred API is doesStunBlockFiring(isStunned: boolean): boolean.",
+    "Required behavior: isStunned === true => STUN blocks firing => return true; isStunned === false => STUN itself does not block firing => return false.",
+    "Critical authority boundary: A result of false MUST mean only: 'STUN itself does not block firing'. It MUST NOT mean the character is actionable, globally eligible to fire, all control restrictions are absent, all firing prerequisites are satisfied, canFire is true, Weapon Action becomes FIRING, or firing begins.",
+    "No combined positive predicate (such as doPostureAndControlSatisfyFiringPrerequisites) is implemented; existing posture-side prerequisite query and new STUN-specific blocker remain separate narrow facts.",
+    "Runtime validation throwing TypeError on non-boolean input is an implementation choice.",
+    "Metadata preservation: getDomainState() preserves gameplayImplemented: false."
+  ]
+}
