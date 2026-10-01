@@ -1,0 +1,52 @@
+{
+  "taskId": "T-012",
+  "approvedAt": "2026-10-01T13:50:51+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Character Posture and Squad Posture Intent State Transitions",
+    "targetBranch": "agent/t-012-character-and-squad-posture",
+    "baseCommit": "cbf9fd1",
+    "authorizedFiles": [
+      "src/game/domain/index.ts",
+      "tests/game-domain.test.ts",
+      ".agent-history/tasks/T-012.json",
+      ".agent-history/approvals/T-012.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope amendment authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "deferredScope": [
+      "Weapon Action state machine (READY, FIRING, RELOADING) and weapon cadence deferred to subsequent slices",
+      "Ammunition tracking, magazine capacity, and ammo depletion auto-cover deferred under GS-003 and GAP-GS-002",
+      "Cover-triggered reload completion and auto-exposure deferred under GS-003 and GAP-GS-004",
+      "STUN control state modeling and whether STUN prevents starting a new posture transition deferred under GS-005 and GAP-GS-005",
+      "Squad member arrays, formation slots, exactly-five container validation, and character identity deferred",
+      "Controlled Character routing and account-scoped Auto-Fire preference deferred under GS-009",
+      "Elapsed-time automatic transition scheduler and numerical durations deferred under GAP-GS-001",
+      "Multi-batch automatic coordination, event wave boundaries, and cascade bounds deferred under GAP-AS-006",
+      "Presentation adapters, keyboard input bindings, Phaser scenes, and UI integrations deferred under AS-001/AS-003/AS-004",
+      "Domain event taxonomy for posture state changes deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Character Posture concepts are exactly COVERED, EXPOSED, TRANSITIONING_TO_COVERED, and TRANSITIONING_TO_EXPOSED.",
+    "Squad Posture Intent concepts are exactly WANT_COVERED and WANT_EXPOSED; squad intent is squad-global semantic state.",
+    "Squad membership, 5-member arrays, formation slots, and Controlled Character are NOT modeled in T-012 data structures.",
+    "Explicit initialization: creation/wrapper APIs require explicit supplied values; no default COVERED, EXPOSED, WANT_COVERED, or WANT_EXPOSED are invented.",
+    "Intent-driven transition: transition direction is derived strictly from current Character Posture and current Squad Posture Intent; public T-012 API provides zero arbitrary caller-selected transition target authority.",
+    "Authority boundary: beginIntentDrivenPostureTransition is a posture-axis / squad-intent transform only; it does not evaluate STUN, future control restrictions, weapon restrictions, or global combat actionability.",
+    "STUN boundary: whether STUN prevents starting a new posture transition remains unresolved and is not decided by T-012.",
+    "Active transition atomicity: changing Squad Posture Intent while in TRANSITIONING_TO_COVERED or TRANSITIONING_TO_EXPOSED does not cancel, reverse, pause, replace, or duplicate the active transition; the active transition remains unchanged and the latest intent is retained independently.",
+    "Transition completion: explicit completion (completeCharacterPostureTransition); TRANSITIONING_TO_COVERED -> COVERED, TRANSITIONING_TO_EXPOSED -> EXPOSED; calling completion on stable posture is rejected.",
+    "Post-completion reevaluation: reaching stable posture reevaluates latest Squad Posture Intent and reports next applicable intent-driven transition; does NOT automatically begin the follow-up transition inside the completion call.",
+    "T-011 kernel integration: posture transitions remain pure synchronous domain functions; no EventBatch, executeEventBatch, or EffectIntent forcing; no synthetic domain events emitted.",
+    "Metadata preservation: getDomainState() preserves gameplayImplemented: false because false is the existing Human-Trusted value, the lifecycle meaning for changing it to true is not formally defined, and T-012 has no authority to redefine that metadata meaning."
+  ]
+}

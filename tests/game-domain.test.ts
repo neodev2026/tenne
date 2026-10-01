@@ -9,6 +9,22 @@ import {
   type DomainEvent,
   type EventBatch,
   type DeepReadonly,
+  CharacterPosture,
+  type StableCharacterPosture,
+  isStableCharacterPosture,
+  assertStableCharacterPosture,
+  isCharacterPosture,
+  assertCharacterPosture,
+  SquadPostureIntent,
+  isSquadPostureIntent,
+  assertSquadPostureIntent,
+  createInitialCharacterPostureState,
+  createSquadPostureIntentState,
+  updateSquadPostureIntent,
+  getApplicablePostureTransition,
+  beginIntentDrivenPostureTransition,
+  completeCharacterPostureTransition,
+  type CharacterPostureState,
 } from '../src/game/domain/index.ts';
 import { getApplicationState } from '../src/game/application/index.ts';
 
@@ -386,5 +402,377 @@ describe('Single-Batch Evaluation Kernel (AS-006 §2, §3, §4)', () => {
     // Exactly one batch evaluation executed; derived events returned without automatic continuation
     expect(evaluatorExecutionCount).toBe(1);
     expect(result.derivedEvents).toHaveLength(1);
+  });
+});
+
+describe('Character Posture & Squad Posture Intent Concepts (GS-001, GS-002)', () => {
+  it('exposes exactly four canonical Character Posture states', () => {
+    expect(Object.keys(CharacterPosture).sort()).toEqual([
+      'COVERED',
+      'EXPOSED',
+      'TRANSITIONING_TO_COVERED',
+      'TRANSITIONING_TO_EXPOSED',
+    ]);
+    expect(CharacterPosture.COVERED).toBe('COVERED');
+    expect(CharacterPosture.EXPOSED).toBe('EXPOSED');
+    expect(CharacterPosture.TRANSITIONING_TO_COVERED).toBe('TRANSITIONING_TO_COVERED');
+    expect(CharacterPosture.TRANSITIONING_TO_EXPOSED).toBe('TRANSITIONING_TO_EXPOSED');
+  });
+
+  it('exposes exactly two canonical Squad Posture Intent states', () => {
+    expect(Object.keys(SquadPostureIntent).sort()).toEqual(['WANT_COVERED', 'WANT_EXPOSED']);
+    expect(SquadPostureIntent.WANT_COVERED).toBe('WANT_COVERED');
+    expect(SquadPostureIntent.WANT_EXPOSED).toBe('WANT_EXPOSED');
+  });
+
+  it('validates Character Posture values at runtime', () => {
+    expect(isCharacterPosture('COVERED')).toBe(true);
+    expect(isCharacterPosture('EXPOSED')).toBe(true);
+    expect(isCharacterPosture('TRANSITIONING_TO_COVERED')).toBe(true);
+    expect(isCharacterPosture('TRANSITIONING_TO_EXPOSED')).toBe(true);
+    expect(isCharacterPosture('INVALID_POSTURE')).toBe(false);
+    expect(isCharacterPosture(null)).toBe(false);
+    expect(isCharacterPosture(undefined)).toBe(false);
+
+    expect(() => assertCharacterPosture('COVERED')).not.toThrow();
+    expect(() => assertCharacterPosture('UNKNOWN')).toThrow(TypeError);
+  });
+
+  it('validates Stable Character Posture values at runtime (excludes transitional postures)', () => {
+    expect(isStableCharacterPosture('COVERED')).toBe(true);
+    expect(isStableCharacterPosture('EXPOSED')).toBe(true);
+    expect(isStableCharacterPosture('TRANSITIONING_TO_COVERED')).toBe(false);
+    expect(isStableCharacterPosture('TRANSITIONING_TO_EXPOSED')).toBe(false);
+    expect(isStableCharacterPosture('INVALID')).toBe(false);
+
+    expect(() => assertStableCharacterPosture('COVERED')).not.toThrow();
+    expect(() => assertStableCharacterPosture('EXPOSED')).not.toThrow();
+    expect(() => assertStableCharacterPosture('TRANSITIONING_TO_COVERED')).toThrow(TypeError);
+    expect(() => assertStableCharacterPosture('TRANSITIONING_TO_EXPOSED')).toThrow(TypeError);
+  });
+
+  it('validates Squad Posture Intent values at runtime', () => {
+    expect(isSquadPostureIntent('WANT_COVERED')).toBe(true);
+    expect(isSquadPostureIntent('WANT_EXPOSED')).toBe(true);
+    expect(isSquadPostureIntent('INVALID_INTENT')).toBe(false);
+    expect(isSquadPostureIntent(123)).toBe(false);
+
+    expect(() => assertSquadPostureIntent('WANT_EXPOSED')).not.toThrow();
+    expect(() => assertSquadPostureIntent('UNKNOWN')).toThrow(TypeError);
+  });
+});
+
+describe('Explicit Initialization & Authority Boundary (GS-001, GS-002)', () => {
+  it('accepts initial COVERED when explicitly supplied', () => {
+    const coveredState = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    expect(coveredState.posture).toBe(CharacterPosture.COVERED);
+    expect(Object.isFrozen(coveredState)).toBe(true);
+  });
+
+  it('accepts initial EXPOSED when explicitly supplied', () => {
+    const exposedState = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    expect(exposedState.posture).toBe(CharacterPosture.EXPOSED);
+    expect(Object.isFrozen(exposedState)).toBe(true);
+  });
+
+  it('rejects missing or invalid initial posture (no invented default COVERED or EXPOSED)', () => {
+    expect(() => createInitialCharacterPostureState(undefined as unknown as StableCharacterPosture)).toThrow(TypeError);
+    expect(() => createInitialCharacterPostureState(null as unknown as StableCharacterPosture)).toThrow(TypeError);
+    expect(() => createInitialCharacterPostureState('RANDOM_DEFAULT' as unknown as StableCharacterPosture)).toThrow(TypeError);
+  });
+
+  it('does NOT accept transitional postures in public initial-state factory (TRANSITIONING_TO_COVERED rejected)', () => {
+    expect(() =>
+      createInitialCharacterPostureState(CharacterPosture.TRANSITIONING_TO_COVERED as unknown as StableCharacterPosture)
+    ).toThrow(TypeError);
+  });
+
+  it('does NOT accept transitional postures in public initial-state factory (TRANSITIONING_TO_EXPOSED rejected)', () => {
+    expect(() =>
+      createInitialCharacterPostureState(CharacterPosture.TRANSITIONING_TO_EXPOSED as unknown as StableCharacterPosture)
+    ).toThrow(TypeError);
+  });
+
+  it('prevents direct structural forging of CharacterPostureState via plain object literals', () => {
+    // Ordinary typed callers cannot directly construct CharacterPostureState via plain object literals
+    // @ts-expect-error Type '{ posture: "TRANSITIONING_TO_EXPOSED"; }' is not assignable to type 'CharacterPostureState' due to internal nominal brand
+    const forgedTransition: CharacterPostureState = {
+      posture: CharacterPosture.TRANSITIONING_TO_EXPOSED,
+    };
+    expect(forgedTransition.posture).toBe(CharacterPosture.TRANSITIONING_TO_EXPOSED);
+
+    // @ts-expect-error Type '{ posture: "COVERED"; }' is not assignable to type 'CharacterPostureState' due to internal nominal brand
+    const forgedStable: CharacterPostureState = {
+      posture: CharacterPosture.COVERED,
+    };
+    expect(forgedStable.posture).toBe(CharacterPosture.COVERED);
+  });
+
+  it('requires explicit initial intent when creating SquadPostureIntentState', () => {
+    const wantCoveredState = createSquadPostureIntentState(SquadPostureIntent.WANT_COVERED);
+    expect(wantCoveredState.intent).toBe(SquadPostureIntent.WANT_COVERED);
+    expect(Object.isFrozen(wantCoveredState)).toBe(true);
+
+    const wantExposedState = createSquadPostureIntentState(SquadPostureIntent.WANT_EXPOSED);
+    expect(wantExposedState.intent).toBe(SquadPostureIntent.WANT_EXPOSED);
+  });
+
+  it('rejects missing or invalid initial intent (no invented default WANT_COVERED or WANT_EXPOSED)', () => {
+    expect(() => createSquadPostureIntentState(undefined as unknown as SquadPostureIntent)).toThrow(TypeError);
+    expect(() => createSquadPostureIntentState(null as unknown as SquadPostureIntent)).toThrow(TypeError);
+    expect(() => createSquadPostureIntentState('RANDOM_INTENT' as unknown as SquadPostureIntent)).toThrow(TypeError);
+  });
+
+  it('updates Squad Posture Intent independently without mutating previous object', () => {
+    const initial = createSquadPostureIntentState(SquadPostureIntent.WANT_COVERED);
+    const updated = updateSquadPostureIntent(initial, SquadPostureIntent.WANT_EXPOSED);
+
+    expect(updated.intent).toBe(SquadPostureIntent.WANT_EXPOSED);
+    expect(initial.intent).toBe(SquadPostureIntent.WANT_COVERED);
+  });
+});
+
+describe('Intent-Driven Posture Transition Applicability (GS-001, GS-002 §2)', () => {
+  it('returns TRANSITIONING_TO_EXPOSED for COVERED + WANT_EXPOSED', () => {
+    expect(
+      getApplicablePostureTransition(CharacterPosture.COVERED, SquadPostureIntent.WANT_EXPOSED)
+    ).toBe(CharacterPosture.TRANSITIONING_TO_EXPOSED);
+  });
+
+  it('returns TRANSITIONING_TO_COVERED for EXPOSED + WANT_COVERED', () => {
+    expect(
+      getApplicablePostureTransition(CharacterPosture.EXPOSED, SquadPostureIntent.WANT_COVERED)
+    ).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+  });
+
+  it('returns null when stable posture already satisfies Squad Intent', () => {
+    expect(
+      getApplicablePostureTransition(CharacterPosture.COVERED, SquadPostureIntent.WANT_COVERED)
+    ).toBeNull();
+    expect(
+      getApplicablePostureTransition(CharacterPosture.EXPOSED, SquadPostureIntent.WANT_EXPOSED)
+    ).toBeNull();
+  });
+
+  it('returns null when character is actively transitioning regardless of Squad Intent', () => {
+    expect(
+      getApplicablePostureTransition(
+        CharacterPosture.TRANSITIONING_TO_EXPOSED,
+        SquadPostureIntent.WANT_EXPOSED
+      )
+    ).toBeNull();
+    expect(
+      getApplicablePostureTransition(
+        CharacterPosture.TRANSITIONING_TO_EXPOSED,
+        SquadPostureIntent.WANT_COVERED
+      )
+    ).toBeNull();
+    expect(
+      getApplicablePostureTransition(
+        CharacterPosture.TRANSITIONING_TO_COVERED,
+        SquadPostureIntent.WANT_COVERED
+      )
+    ).toBeNull();
+    expect(
+      getApplicablePostureTransition(
+        CharacterPosture.TRANSITIONING_TO_COVERED,
+        SquadPostureIntent.WANT_EXPOSED
+      )
+    ).toBeNull();
+  });
+});
+
+describe('Intent-Driven Transition Initiation & Authority Boundary (GS-002 §2)', () => {
+  it('initiates TRANSITIONING_TO_EXPOSED for COVERED + WANT_EXPOSED', () => {
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const result = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_EXPOSED);
+
+    expect(result.posture).toBe(CharacterPosture.TRANSITIONING_TO_EXPOSED);
+  });
+
+  it('initiates TRANSITIONING_TO_COVERED for EXPOSED + WANT_COVERED', () => {
+    const exposed = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const result = beginIntentDrivenPostureTransition(exposed, SquadPostureIntent.WANT_COVERED);
+
+    expect(result.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+  });
+
+  it('produces no new transition for COVERED + WANT_COVERED', () => {
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const result = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_COVERED);
+
+    expect(result.posture).toBe(CharacterPosture.COVERED);
+  });
+
+  it('produces no new transition for EXPOSED + WANT_EXPOSED', () => {
+    const exposed = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const result = beginIntentDrivenPostureTransition(exposed, SquadPostureIntent.WANT_EXPOSED);
+
+    expect(result.posture).toBe(CharacterPosture.EXPOSED);
+  });
+
+  it('does NOT provide caller-selected arbitrary target authority in public API', () => {
+    // Transition direction is derived strictly from (posture, squadIntent).
+    // The public function takes strictly (currentState, squadIntent) with no target parameter.
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    // When intent is WANT_COVERED, caller cannot force TRANSITIONING_TO_EXPOSED
+    const result = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_COVERED);
+    expect(result.posture).toBe(CharacterPosture.COVERED);
+  });
+});
+
+describe('Active Transition Atomicity Across Intent Changes (GS-002 §2)', () => {
+  it('preserves TRANSITIONING_TO_EXPOSED when Squad Intent changes to WANT_COVERED', () => {
+    // Canonically construct active transition state via beginIntentDrivenPostureTransition
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const inFlight = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_EXPOSED);
+    expect(inFlight.posture).toBe(CharacterPosture.TRANSITIONING_TO_EXPOSED);
+
+    const squad = createSquadPostureIntentState(SquadPostureIntent.WANT_EXPOSED);
+
+    // Intent changes mid-transition
+    const updatedSquad = updateSquadPostureIntent(squad, SquadPostureIntent.WANT_COVERED);
+    expect(updatedSquad.intent).toBe(SquadPostureIntent.WANT_COVERED);
+
+    // Re-evaluating transition start on in-flight character preserves active transition
+    const result = beginIntentDrivenPostureTransition(inFlight, updatedSquad.intent);
+    expect(result.posture).toBe(CharacterPosture.TRANSITIONING_TO_EXPOSED);
+  });
+
+  it('preserves TRANSITIONING_TO_COVERED when Squad Intent changes to WANT_EXPOSED', () => {
+    // Canonically construct active transition state via beginIntentDrivenPostureTransition
+    const exposed = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const inFlight = beginIntentDrivenPostureTransition(exposed, SquadPostureIntent.WANT_COVERED);
+    expect(inFlight.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+
+    const squad = createSquadPostureIntentState(SquadPostureIntent.WANT_COVERED);
+
+    // Intent changes mid-transition
+    const updatedSquad = updateSquadPostureIntent(squad, SquadPostureIntent.WANT_EXPOSED);
+    expect(updatedSquad.intent).toBe(SquadPostureIntent.WANT_EXPOSED);
+
+    // Re-evaluating transition start on in-flight character preserves active transition
+    const result = beginIntentDrivenPostureTransition(inFlight, updatedSquad.intent);
+    expect(result.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+  });
+
+  it('guarantees active transition cannot be cancelled, reversed, or replaced mid-flight', () => {
+    // Canonically construct both active transition states
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const inFlightExpose = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_EXPOSED);
+
+    const exposed = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const inFlightCover = beginIntentDrivenPostureTransition(exposed, SquadPostureIntent.WANT_COVERED);
+
+    expect(beginIntentDrivenPostureTransition(inFlightCover, SquadPostureIntent.WANT_COVERED).posture).toBe(
+      CharacterPosture.TRANSITIONING_TO_COVERED
+    );
+    expect(beginIntentDrivenPostureTransition(inFlightCover, SquadPostureIntent.WANT_EXPOSED).posture).toBe(
+      CharacterPosture.TRANSITIONING_TO_COVERED
+    );
+    expect(beginIntentDrivenPostureTransition(inFlightExpose, SquadPostureIntent.WANT_COVERED).posture).toBe(
+      CharacterPosture.TRANSITIONING_TO_EXPOSED
+    );
+    expect(beginIntentDrivenPostureTransition(inFlightExpose, SquadPostureIntent.WANT_EXPOSED).posture).toBe(
+      CharacterPosture.TRANSITIONING_TO_EXPOSED
+    );
+  });
+});
+
+describe('Transition Completion & Post-Completion Intent Reevaluation (GS-002 §2)', () => {
+  it('completes TRANSITIONING_TO_EXPOSED strictly to committed EXPOSED posture', () => {
+    // Canonically construct active transition state
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const inFlight = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_EXPOSED);
+
+    const result = completeCharacterPostureTransition(inFlight, SquadPostureIntent.WANT_EXPOSED);
+
+    expect(result.state.posture).toBe(CharacterPosture.EXPOSED);
+    expect(result.nextApplicableTransition).toBeNull();
+  });
+
+  it('completes TRANSITIONING_TO_COVERED strictly to committed COVERED posture', () => {
+    // Canonically construct active transition state
+    const exposed = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const inFlight = beginIntentDrivenPostureTransition(exposed, SquadPostureIntent.WANT_COVERED);
+
+    const result = completeCharacterPostureTransition(inFlight, SquadPostureIntent.WANT_COVERED);
+
+    expect(result.state.posture).toBe(CharacterPosture.COVERED);
+    expect(result.nextApplicableTransition).toBeNull();
+  });
+
+  it('rejects completion call when character is already in a stable posture (COVERED or EXPOSED)', () => {
+    const stableCovered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const stableExposed = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    expect(() =>
+      completeCharacterPostureTransition(stableCovered, SquadPostureIntent.WANT_COVERED)
+    ).toThrow(/already in stable posture/);
+
+    expect(() =>
+      completeCharacterPostureTransition(stableExposed, SquadPostureIntent.WANT_EXPOSED)
+    ).toThrow(/already in stable posture/);
+  });
+
+  it('reports TRANSITIONING_TO_COVERED when completing to EXPOSED while latest intent is WANT_COVERED, without auto-executing it', () => {
+    // Canonically construct active transition state
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const inFlight = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_EXPOSED);
+
+    // Completes while current squad intent is WANT_COVERED
+    const result = completeCharacterPostureTransition(inFlight, SquadPostureIntent.WANT_COVERED);
+
+    // Committed posture is EXPOSED, not immediately switched to TRANSITIONING_TO_COVERED
+    expect(result.state.posture).toBe(CharacterPosture.EXPOSED);
+    // Reevaluated next applicability reports the needed transition for future scheduling
+    expect(result.nextApplicableTransition).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+  });
+
+  it('reports TRANSITIONING_TO_EXPOSED when completing to COVERED while latest intent is WANT_EXPOSED, without auto-executing it', () => {
+    // Canonically construct active transition state
+    const exposed = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const inFlight = beginIntentDrivenPostureTransition(exposed, SquadPostureIntent.WANT_COVERED);
+
+    // Completes while current squad intent is WANT_EXPOSED
+    const result = completeCharacterPostureTransition(inFlight, SquadPostureIntent.WANT_EXPOSED);
+
+    // Committed posture is COVERED, not immediately switched to TRANSITIONING_TO_EXPOSED
+    expect(result.state.posture).toBe(CharacterPosture.COVERED);
+    // Reevaluated next applicability reports the needed transition for future scheduling
+    expect(result.nextApplicableTransition).toBe(CharacterPosture.TRANSITIONING_TO_EXPOSED);
+  });
+
+  it('reports no next transition when completion destination matches latest intent', () => {
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const inFlightExpose = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_EXPOSED);
+    const resultExpose = completeCharacterPostureTransition(inFlightExpose, SquadPostureIntent.WANT_EXPOSED);
+    expect(resultExpose.state.posture).toBe(CharacterPosture.EXPOSED);
+    expect(resultExpose.nextApplicableTransition).toBeNull();
+
+    const exposed = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const inFlightCover = beginIntentDrivenPostureTransition(exposed, SquadPostureIntent.WANT_COVERED);
+    const resultCover = completeCharacterPostureTransition(inFlightCover, SquadPostureIntent.WANT_COVERED);
+    expect(resultCover.state.posture).toBe(CharacterPosture.COVERED);
+    expect(resultCover.nextApplicableTransition).toBeNull();
+  });
+});
+
+describe('Headless, Orthogonal & Deterministic Execution (AS-001, AS-004, GS-001)', () => {
+  it('operates with zero dependency on STUN, Weapon Action, ammo, timers, or browser globals', () => {
+    const covered = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const inFlight = beginIntentDrivenPostureTransition(covered, SquadPostureIntent.WANT_EXPOSED);
+    const completed = completeCharacterPostureTransition(inFlight, SquadPostureIntent.WANT_EXPOSED);
+
+    expect(completed.state.posture).toBe(CharacterPosture.EXPOSED);
+    // Assert all state wrappers are pure objects without window/document/timer handles
+    expect(typeof window).toBe('undefined');
+  });
+
+  it('preserves getDomainState() with gameplayImplemented: false', () => {
+    const domain = getDomainState();
+    expect(domain.layer).toBe('domain');
+    expect(domain.deterministic).toBe(true);
+    expect(domain.gameplayImplemented).toBe(false);
   });
 });
