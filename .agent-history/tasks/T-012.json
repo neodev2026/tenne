@@ -1,0 +1,13 @@
+{
+  "id": "T-012",
+  "title": "Implement Character Posture and Squad Posture Intent State Transitions",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-012-character-and-squad-posture",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "CHARACTER_POSTURE_AND_SQUAD_INTENT",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-01T13:51:00+02:00"
+}

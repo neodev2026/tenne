@@ -6,10 +6,13 @@
  * Rule AS-004: Gameplay Logic Must Be Testable Without Browser
  * Rule AS-005: Deterministic Simulation Time & Chronological Progression
  * Rule AS-006: Canonical Event Precedence, Snapshot Isolation & Wave Execution
+ * Rule GS-001: Orthogonal Posture and Weapon Action Axes
+ * Rule GS-002: Squad Posture Intent and Transition Atomicity
  *
  * NOTE: T-011 implements deterministic simulation time, event categories,
- * event batching, and single-batch evaluation kernel. T-009 combat gameplay
- * behaviors remain unimplemented (gameplayImplemented: false).
+ * event batching, and single-batch evaluation kernel. T-012 implements
+ * Character Posture and Squad Posture Intent state transitions. Full combat
+ * gameplay behaviors remain unimplemented (gameplayImplemented: false).
  */
 
 // ============================================================================
@@ -343,5 +346,351 @@ export function executeEventBatch<TState, TEvent extends DomainEvent>(
     committedState,
     stagedIntents: frozenStagedIntents,
     derivedEvents,
+  });
+}
+
+// ============================================================================
+// Character Posture & Squad Posture Intent (GS-001, GS-002)
+// ============================================================================
+
+/**
+ * Canonical Character Posture concepts (GS-001 §1).
+ *
+ * Posture is orthogonal to Weapon Action.
+ * COVERED != RELOADING and EXPOSED != FIRING.
+ */
+export const CharacterPosture = {
+  COVERED: 'COVERED',
+  EXPOSED: 'EXPOSED',
+  TRANSITIONING_TO_COVERED: 'TRANSITIONING_TO_COVERED',
+  TRANSITIONING_TO_EXPOSED: 'TRANSITIONING_TO_EXPOSED',
+} as const;
+
+export type CharacterPosture = typeof CharacterPosture[keyof typeof CharacterPosture];
+
+/**
+ * [IMPLEMENTATION CHOICE] Stable-only posture alias used to enforce the T-012 initialization boundary.
+ *
+ * Restricts initialization to stable postures (COVERED or EXPOSED) and excludes active
+ * transitional postures (TRANSITIONING_TO_COVERED, TRANSITIONING_TO_EXPOSED).
+ *
+ * Canonical values remain:
+ * - COVERED
+ * - EXPOSED
+ * - TRANSITIONING_TO_COVERED
+ * - TRANSITIONING_TO_EXPOSED
+ *
+ * The StableCharacterPosture alias is only an implementation-level subset and boundary utility,
+ * not a canonical concept.
+ */
+export type StableCharacterPosture =
+  | typeof CharacterPosture.COVERED
+  | typeof CharacterPosture.EXPOSED;
+
+export function isStableCharacterPosture(value: unknown): value is StableCharacterPosture {
+  return (
+    typeof value === 'string' &&
+    (value === CharacterPosture.COVERED || value === CharacterPosture.EXPOSED)
+  );
+}
+
+export function assertStableCharacterPosture(
+  value: unknown,
+  context = 'StableCharacterPosture'
+): asserts value is StableCharacterPosture {
+  if (!isStableCharacterPosture(value)) {
+    throw new TypeError(
+      `[${context}] Invalid stable character posture: expected one of ${CharacterPosture.COVERED}, ${CharacterPosture.EXPOSED}, received ${typeof value} (${String(value)})`
+    );
+  }
+}
+
+export function isCharacterPosture(value: unknown): value is CharacterPosture {
+  return (
+    typeof value === 'string' &&
+    (value === CharacterPosture.COVERED ||
+      value === CharacterPosture.EXPOSED ||
+      value === CharacterPosture.TRANSITIONING_TO_COVERED ||
+      value === CharacterPosture.TRANSITIONING_TO_EXPOSED)
+  );
+}
+
+export function assertCharacterPosture(
+  value: unknown,
+  context = 'CharacterPosture'
+): asserts value is CharacterPosture {
+  if (!isCharacterPosture(value)) {
+    throw new TypeError(
+      `[${context}] Invalid character posture: expected one of ${Object.values(CharacterPosture).join(', ')}, received ${typeof value} (${String(value)})`
+    );
+  }
+}
+
+/**
+ * Canonical Squad Posture Intent concepts (GS-002 §1).
+ *
+ * Squad-global tactical directive distinct from character-local actual posture.
+ */
+export const SquadPostureIntent = {
+  WANT_COVERED: 'WANT_COVERED',
+  WANT_EXPOSED: 'WANT_EXPOSED',
+} as const;
+
+export type SquadPostureIntent = typeof SquadPostureIntent[keyof typeof SquadPostureIntent];
+
+export function isSquadPostureIntent(value: unknown): value is SquadPostureIntent {
+  return (
+    typeof value === 'string' &&
+    (value === SquadPostureIntent.WANT_COVERED || value === SquadPostureIntent.WANT_EXPOSED)
+  );
+}
+
+export function assertSquadPostureIntent(
+  value: unknown,
+  context = 'SquadPostureIntent'
+): asserts value is SquadPostureIntent {
+  if (!isSquadPostureIntent(value)) {
+    throw new TypeError(
+      `[${context}] Invalid squad posture intent: expected one of ${Object.values(SquadPostureIntent).join(', ')}, received ${typeof value} (${String(value)})`
+    );
+  }
+}
+
+/**
+ * Internal nominal brand for CharacterPostureState.
+ *
+ * [IMPLEMENTATION CHOICE] Unexported unique symbol preventing ordinary typed callers
+ * from bypassing transition authority via plain object literal construction.
+ * Not an unapproved canonical gameplay concept.
+ */
+declare const characterPostureStateBrand: unique symbol;
+
+/**
+ * Character Posture State wrapper.
+ *
+ * [IMPLEMENTATION CHOICE] Encapsulates individual character posture with a nominal brand.
+ * Ordinary typed external callers cannot construct arbitrary CharacterPostureState values
+ * via plain object literals; within the T-012 implementation boundary, active transition
+ * states are entered through beginIntentDrivenPostureTransition().
+ *
+ * Note: The nominal brand is a compile-time implementation boundary and does not represent
+ * an unapproved gameplay concept, runtime framework complexity, or protection against
+ * deliberate unsafe casts (such as `as unknown as`). The canonical truth is the transition
+ * behavior and atomicity, not this function name or API shape.
+ */
+export interface CharacterPostureState {
+  readonly posture: CharacterPosture;
+  readonly [characterPostureStateBrand]: true;
+}
+
+/**
+ * Internal factory creating branded CharacterPostureState values.
+ * Strictly internal to this module; not exported.
+ */
+function createBrandedPostureState(posture: CharacterPosture): CharacterPostureState {
+  return Object.freeze({
+    posture,
+  }) as unknown as CharacterPostureState;
+}
+
+/**
+ * Squad Posture Intent State wrapper.
+ * [IMPLEMENTATION CHOICE] Encapsulates global squad intent independently.
+ * Does not model squad member arrays, 5-member container validation, formation slots,
+ * or character identity.
+ */
+export interface SquadPostureIntentState {
+  readonly intent: SquadPostureIntent;
+}
+
+// ============================================================================
+// Explicit Initialization Factories (No Invented Defaults)
+// ============================================================================
+
+/**
+ * Creates an initial CharacterPostureState requiring an explicit stable initial posture.
+ *
+ * Authority Boundary:
+ * - Accepts strictly StableCharacterPosture (COVERED or EXPOSED).
+ * - Rejects transitional postures (TRANSITIONING_TO_COVERED, TRANSITIONING_TO_EXPOSED).
+ *   Within the T-012 implementation boundary, active transition states are entered through
+ *   beginIntentDrivenPostureTransition().
+ * - Does NOT invent COVERED or EXPOSED as a default.
+ * - Caller must explicitly supply the initial stable posture.
+ * - Does NOT define which stable posture combat canonically starts in.
+ */
+export function createInitialCharacterPostureState(
+  initialPosture: StableCharacterPosture
+): CharacterPostureState {
+  assertStableCharacterPosture(initialPosture, 'createInitialCharacterPostureState');
+  return createBrandedPostureState(initialPosture);
+}
+
+/**
+ * Creates a SquadPostureIntentState requiring an explicit initial intent.
+ * Canonical semantics does not define a universal initial intent (no default WANT_COVERED or WANT_EXPOSED).
+ */
+export function createSquadPostureIntentState(initialIntent: SquadPostureIntent): SquadPostureIntentState {
+  assertSquadPostureIntent(initialIntent, 'createSquadPostureIntentState');
+  return Object.freeze({
+    intent: initialIntent,
+  });
+}
+
+// ============================================================================
+// State Operations & Invariant-Enforcing Transitions
+// ============================================================================
+
+/**
+ * Updates Squad Posture Intent independently (GS-002 §1).
+ *
+ * Updating Squad Posture Intent does NOT mutate or cancel an ongoing character transition.
+ */
+export function updateSquadPostureIntent(
+  currentState: SquadPostureIntentState,
+  newIntent: SquadPostureIntent
+): SquadPostureIntentState {
+  assertSquadPostureIntent(newIntent, 'updateSquadPostureIntent');
+  if (currentState.intent === newIntent) {
+    return currentState;
+  }
+  return Object.freeze({
+    intent: newIntent,
+  });
+}
+
+/**
+ * Pure query determining whether an intent-driven posture transition is applicable (GS-001, GS-002 §2).
+ *
+ * Applicable mappings for stable posture:
+ * - COVERED + WANT_EXPOSED -> TRANSITIONING_TO_EXPOSED
+ * - EXPOSED + WANT_COVERED -> TRANSITIONING_TO_COVERED
+ * - COVERED + WANT_COVERED -> null (matches intent)
+ * - EXPOSED + WANT_EXPOSED -> null (matches intent)
+ *
+ * For active transitions (TRANSITIONING_TO_COVERED, TRANSITIONING_TO_EXPOSED), returns null
+ * (an ongoing transition cannot be replaced or restarted).
+ *
+ * NOTE: This is a posture-axis / squad-intent transform query only. It does NOT evaluate STUN,
+ * future control restrictions, weapon restrictions, or global combat actionability.
+ */
+export function getApplicablePostureTransition(
+  posture: CharacterPosture,
+  intent: SquadPostureIntent
+): 'TRANSITIONING_TO_COVERED' | 'TRANSITIONING_TO_EXPOSED' | null {
+  assertCharacterPosture(posture, 'getApplicablePostureTransition');
+  assertSquadPostureIntent(intent, 'getApplicablePostureTransition');
+
+  if (posture === CharacterPosture.COVERED && intent === SquadPostureIntent.WANT_EXPOSED) {
+    return CharacterPosture.TRANSITIONING_TO_EXPOSED;
+  }
+
+  if (posture === CharacterPosture.EXPOSED && intent === SquadPostureIntent.WANT_COVERED) {
+    return CharacterPosture.TRANSITIONING_TO_COVERED;
+  }
+
+  return null;
+}
+
+/**
+ * Begins an intent-driven posture transition derived strictly from current posture and Squad Intent (GS-002 §2).
+ *
+ * [IMPLEMENTATION CHOICE] Within the T-012 implementation boundary, active transition states
+ * are entered through beginIntentDrivenPostureTransition(). The canonical truth is the transition
+ * behavior and atomicity, not this function name or API shape.
+ *
+ * Authority Rules:
+ * - COVERED + WANT_EXPOSED -> returns new state with TRANSITIONING_TO_EXPOSED
+ * - EXPOSED + WANT_COVERED -> returns new state with TRANSITIONING_TO_COVERED
+ * - COVERED + WANT_COVERED -> returns unchanged state (no new transition)
+ * - EXPOSED + WANT_EXPOSED -> returns unchanged state (no new transition)
+ * - TRANSITIONING_TO_COVERED -> returns unchanged state (active transition atomicity preserved)
+ * - TRANSITIONING_TO_EXPOSED -> returns unchanged state (active transition atomicity preserved)
+ *
+ * IMPORTANT AUTHORITY BOUNDARY:
+ * - Transition direction is derived strictly from (posture, squadIntent). The public API provides
+ *   zero caller-selected target transition authority (no arbitrary transition escape hatch).
+ * - This function is a POSTURE-AXIS / SQUAD-INTENT transform ONLY.
+ * - It does NOT evaluate:
+ *   - STUN or whether STUN prevents starting a new posture transition (unresolved under GAP-GS-005)
+ *   - Future control restrictions
+ *   - Weapon restrictions
+ *   - Global combat actionability
+ */
+export function beginIntentDrivenPostureTransition(
+  currentState: CharacterPostureState,
+  squadIntent: SquadPostureIntent
+): CharacterPostureState {
+  assertCharacterPosture(currentState?.posture, 'beginIntentDrivenPostureTransition');
+  assertSquadPostureIntent(squadIntent, 'beginIntentDrivenPostureTransition');
+
+  // If already transitioning, preserve active transition without cancellation, reversal, or replacement
+  if (
+    currentState.posture === CharacterPosture.TRANSITIONING_TO_COVERED ||
+    currentState.posture === CharacterPosture.TRANSITIONING_TO_EXPOSED
+  ) {
+    return currentState;
+  }
+
+  const applicable = getApplicablePostureTransition(currentState.posture, squadIntent);
+  if (applicable === null) {
+    return currentState;
+  }
+
+  return createBrandedPostureState(applicable);
+}
+
+/**
+ * Result of completing an active posture transition.
+ *
+ * [IMPLEMENTATION CHOICE] Returns the committed destination state and reports whether
+ * current Squad Intent warrants a subsequent transition without auto-executing it.
+ */
+export interface PostureTransitionCompletionResult {
+  readonly state: CharacterPostureState;
+  readonly nextApplicableTransition: 'TRANSITIONING_TO_COVERED' | 'TRANSITIONING_TO_EXPOSED' | null;
+}
+
+/**
+ * Completes an active posture transition explicitly (GS-002 §2).
+ *
+ * Transitions:
+ * - TRANSITIONING_TO_COVERED -> COVERED
+ * - TRANSITIONING_TO_EXPOSED -> EXPOSED
+ *
+ * Post-Completion Reevaluation:
+ * - Compares committed stable posture against latest Squad Posture Intent.
+ * - If committed posture differs from intent (e.g. EXPOSED reached while intent is WANT_COVERED),
+ *   reports the next applicable transition in `nextApplicableTransition`.
+ * - IMPORTANT: Does NOT automatically begin that second transition inside the completion call.
+ *
+ * Throws TypeError/Error if currentState is already in a stable posture (COVERED or EXPOSED).
+ * Decoupled from numerical elapsed time (no timers, frames, or browser scheduling).
+ */
+export function completeCharacterPostureTransition(
+  currentState: CharacterPostureState,
+  currentSquadIntent: SquadPostureIntent
+): PostureTransitionCompletionResult {
+  assertCharacterPosture(currentState?.posture, 'completeCharacterPostureTransition');
+  assertSquadPostureIntent(currentSquadIntent, 'completeCharacterPostureTransition');
+
+  if (currentState.posture === CharacterPosture.COVERED || currentState.posture === CharacterPosture.EXPOSED) {
+    throw new Error(
+      `[completeCharacterPostureTransition] Cannot complete transition: character is already in stable posture (${currentState.posture})`
+    );
+  }
+
+  const destinationPosture: CharacterPosture =
+    currentState.posture === CharacterPosture.TRANSITIONING_TO_COVERED
+      ? CharacterPosture.COVERED
+      : CharacterPosture.EXPOSED;
+
+  const committedState: CharacterPostureState = createBrandedPostureState(destinationPosture);
+
+  const nextApplicableTransition = getApplicablePostureTransition(destinationPosture, currentSquadIntent);
+
+  return Object.freeze({
+    state: committedState,
+    nextApplicableTransition,
   });
 }
