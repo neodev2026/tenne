@@ -1,0 +1,13 @@
+{
+  "id": "T-019",
+  "title": "Implement Canonical Reload Cancellation Domain State Transitions",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-019-reload-cancellation-domain",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "RELOAD_CANCELLATION_DOMAIN_TRANSITIONS",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-02T16:22:25+02:00"
+}
