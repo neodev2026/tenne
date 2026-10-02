@@ -1,0 +1,54 @@
+{
+  "taskId": "T-016",
+  "approvedAt": "2026-10-02T02:30:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Thin Interactive Posture Presentation Adapter on /play/",
+    "targetBranch": "agent/t-016-interactive-posture-presentation",
+    "baseCommit": "9c3c77eb388626128d27e9e6a8f361f1e4b922a5",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/presentation/index.ts",
+      "tests/presentation.test.ts",
+      ".agent-history/tasks/T-016.json",
+      ".agent-history/approvals/T-016.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Implement derivePostureDemoViewModel pure projection function in src/game/presentation/index.ts converting PostureDemoSnapshot into presentation view model",
+      "Implement createPostureDemoController adapter in src/game/presentation/index.ts dispatching UI actions to PostureDemoSession and rereading snapshot",
+      "Implement mountPostureDemo DOM adapter mounting into #game-container on /play/",
+      "Preserve browser auto-mount under typeof document !== 'undefined' guard",
+      "Preserve existing initializePresentationShell compatibility surface",
+      "Enforce mandatory authority wording disclaimers and snapshot-derived control availability rules",
+      "Headless unit tests in tests/presentation.test.ts covering view-model derivation, button states, authority disclaimers, controller action dispatch, and state walkthroughs"
+    ],
+    "deferredScope": [
+      "Application and Domain modifications (zero changes authorized)",
+      "HTML and CSS modifications (play/index.html and src/style.css untouched)",
+      "WeaponActionState and firing execution",
+      "Persistent STUN state and STUN toggles",
+      "Ammunition tracking and reload lifecycle",
+      "Timers, setTimeout, setInterval, and requestAnimationFrame simulation durations",
+      "Automatic transition completion and automatic chained transitions",
+      "Global canFire and global actionability",
+      "Phaser, Canvas, WebGL, sprites, and animations"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Presentation holds a service reference to PostureDemoSession solely to dispatch commands and read snapshots; Presentation owns zero gameplay state.",
+    "Snapshot refresh rule: every presentation command dispatches to session, rereads getSnapshot(), and derives a fresh view model.",
+    "Button availability is derived strictly from snapshot facts (Begin enabled iff applicablePostureTransition !== null; Complete enabled iff isTransitionInProgress === true).",
+    "Mandatory authority wording: 'Posture check only — this does not mean global firing permission.' and demo controls notice.",
+    "Metadata preservation: getDomainState() preserves gameplayImplemented: false."
+  ]
+}

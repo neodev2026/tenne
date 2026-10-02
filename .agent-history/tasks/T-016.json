@@ -1,0 +1,13 @@
+{
+  "id": "T-016",
+  "title": "Implement Thin Interactive Posture Presentation Adapter on /play/",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-016-interactive-posture-presentation",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "INTERACTIVE_POSTURE_PRESENTATION",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-02T02:30:00+02:00"
+}
