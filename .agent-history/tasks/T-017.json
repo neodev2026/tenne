@@ -1,0 +1,13 @@
+{
+  "id": "T-017",
+  "title": "Represent Weapon Action as Explicit Domain State",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-017-weapon-action-state",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "WEAPON_ACTION_STATE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-02T10:48:00+02:00"
+}

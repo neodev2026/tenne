@@ -15,8 +15,9 @@
  * event batching, and single-batch evaluation kernel. T-012 implements
  * Character Posture and Squad Posture Intent state transitions. T-013 implements
  * Weapon Action concepts and posture-side firing eligibility. T-014 implements
- * STUN status representation and STUN-specific firing blocker. Full combat
- * gameplay behaviors remain unimplemented (gameplayImplemented: false).
+ * STUN status representation and STUN-specific firing blocker. T-017 implements
+ * Weapon Action explicit domain state. Full combat gameplay behaviors remain
+ * unimplemented (gameplayImplemented: false).
  */
 
 // ============================================================================
@@ -752,6 +753,33 @@ export function assertWeaponAction(
       `[${context}] Invalid weapon action: expected one of ${Object.values(WeaponAction).join(', ')}, received ${typeof value} (${String(value)})`
     );
   }
+}
+
+/**
+ * Weapon Action State wrapper (GS-001 §2).
+ *
+ * [IMPLEMENTATION CHOICE] Encapsulates individual character weapon action state.
+ * Plain readonly data container consistent with SquadPostureIntentState.
+ * Does not define transitions, ammo, reload lifecycle, or firing authority.
+ */
+export interface WeaponActionState {
+  readonly action: WeaponAction;
+}
+
+/**
+ * Creates a WeaponActionState requiring an explicit weapon action.
+ *
+ * Authority Boundary:
+ * - Requires explicit canonical WeaponAction (READY, FIRING, RELOADING).
+ * - Does NOT invent READY as a universal default.
+ * - Reuses existing assertWeaponAction to enforce runtime validation.
+ * - Returns an Object.freeze'd immutable state wrapper as an implementation choice.
+ */
+export function createWeaponActionState(action: WeaponAction): WeaponActionState {
+  assertWeaponAction(action, 'createWeaponActionState');
+  return Object.freeze({
+    action,
+  });
 }
 
 /**
