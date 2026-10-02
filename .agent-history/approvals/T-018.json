@@ -1,0 +1,52 @@
+{
+  "taskId": "T-018",
+  "approvedAt": "2026-10-02T15:17:35+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Specify Weapon Action Target After Reload Cancellation",
+    "targetBranch": "agent/t-018-reload-cancellation-target",
+    "baseCommit": "95da909292b079c565644fe8f72a28f72cd47644",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "semantic/gameplay/combat-states.md",
+      ".agent-history/tasks/T-018.json",
+      ".agent-history/approvals/T-018.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 4 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": "Explicit human semantic authorization under Guardrail G-041 to establish in semantic/gameplay/combat-states.md (GS-004 §2) that Weapon Action immediately transitions to READY upon reload cancellation (uncover-triggered and STUN-triggered)",
+    "g042Authorization": false,
+    "semanticChange": "Update canonical reload cancellation specification in semantic/gameplay/combat-states.md (GS-004 §2) so that both uncover-triggered and STUN-triggered reload cancellation explicitly specify that Weapon Action immediately transitions to READY, incomplete reload progress is discarded, zero ammunition is granted, and READY after cancellation carries an explicit authority boundary",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Update semantic/gameplay/combat-states.md rule GS-004 §2 (Reload Cancellation) to specify that Weapon Action immediately transitions to READY for both uncovering and STUN triggers",
+      "Record explicit authority boundary: READY after cancellation denotes strictly that weapon is no longer FIRING or RELOADING; does not imply firing permission, ammo availability, global actionability, absence of STUN, or satisfaction of posture prerequisites",
+      "Update GS-004 Semantic Gap Lineage (GAP-GS-003) to reflect that post-cancellation Weapon Action target state is resolved as READY, while reload duration, manual reload, and reserve ammo remain unresolved",
+      "Zero modifications to src/game/ or tests/"
+    ],
+    "deferredScope": [
+      "Domain transition functions (cancelReloadOnPostureTransition, cancelReloadOnStun, generic transition APIs) explicitly deferred to future implementation task",
+      "src/game/domain/index.ts and tests/game-domain.test.ts modifications deferred",
+      "Firing cadence, rate of fire, fire intervals, and ammo consumption per shot deferred under GAP-GS-002",
+      "Reload simulation duration, manual reload existence, and reserve ammunition rules deferred under GAP-GS-003",
+      "STUN simulation duration, multiple-STUN resolution, and charge session interactions deferred under GAP-GS-005",
+      "Controlled character routing and account-scoped Auto-Fire preference deferred under GS-009",
+      "Global canFire, combined firing predicates, and global actionability deferred",
+      "Application and Presentation layer changes deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 4 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is TRUE (explicit human owner decision).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Human Semantic Decision 1: If a character begins transitioning from COVERED toward EXPOSED while RELOADING, reload is cancelled immediately, Weapon Action immediately becomes READY, incomplete reload progress is discarded, and zero ammunition is granted.",
+    "Human Semantic Decision 2: If a character receives STUN while RELOADING, reload is cancelled immediately, Weapon Action immediately becomes READY, incomplete reload progress is discarded, and zero ammunition is granted.",
+    "Authority boundary: READY after cancellation means strictly that the weapon is no longer FIRING or RELOADING. READY does NOT imply firing permission, ammunition availability, global actionability, absence of STUN, or satisfaction of posture prerequisites.",
+    "GAP-GS-002 is NOT resolved.",
+    "GAP-GS-003 is NOT resolved except for this exact cancellation target-state clarification; reload duration, manual reload, and reserve-ammo rules remain unresolved.",
+    "No fourth WeaponAction value is added.",
+    "No Domain implementation code or test code is changed in this Semantic Layer task.",
+    "No implementation API shape (such as non-RELOADING cancellation no-op semantics) is introduced into the canonical specification."
+  ]
+}
