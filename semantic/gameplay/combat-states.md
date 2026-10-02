@@ -103,7 +103,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 * **Domain**: Gameplay
 * **Status**: Approved (Canonical)
 * **Tags**: `combat`, `reload`, `cancellation`, `stun`
-* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009).
+* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009). Reload cancellation target state authorized under Guardrail G-041 (Task T-018).
 
 ### Specification
 1. **Cover-Triggered Reload Condition**:
@@ -117,13 +117,23 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 2. **Reload Cancellation**:
    * If a character begins transitioning from `COVERED` toward `EXPOSED` (`TRANSITIONING_TO_EXPOSED`) while `RELOADING`:
      * Reload is **cancelled immediately**.
+     * Weapon Action immediately transitions to `READY`.
      * Incomplete reload progress is discarded (not preserved).
      * Zero ammunition is granted to the magazine.
    * If a character receives `STUN` while `RELOADING`:
      * Reload is **cancelled immediately**.
+     * Weapon Action immediately transitions to `READY`.
      * Incomplete reload progress is discarded.
      * Zero ammunition is granted.
    * Invariant: Reload is never merely paused; an interrupted reload is fully cancelled.
+   * **Authority Boundary for Post-Cancellation READY**:
+     * `READY` after reload cancellation denotes strictly that the weapon is no longer `FIRING` or `RELOADING`.
+     * `READY` does **not** imply:
+       * firing permission
+       * ammunition availability
+       * global actionability
+       * absence of `STUN`
+       * satisfaction of posture prerequisites
 
 3. **Post-STUN Reload Resumption**:
    * If `STUN` expires while:
@@ -134,6 +144,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 
 ### Semantic Gap Lineage: GAP-GS-003
 * **Portion Resolved by T-009**: Established reload as a Weapon Action, automatic cover-triggered entry invariant, cancellation semantics upon uncovering or stun (no progress preservation, zero ammo gained), and post-stun restart conditions.
+* **Portion Resolved by T-018**: Established explicit post-cancellation Weapon Action target state (`READY`) for uncover-triggered and STUN-triggered reload cancellation with explicit authority boundary.
 * **Remaining Unresolved Items**: Exact reload duration in simulation time, whether manual reload input exists, and reserve ammunition rules remain open pending domain specification.
 
 ---
