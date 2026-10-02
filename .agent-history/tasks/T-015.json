@@ -1,0 +1,13 @@
+{
+  "id": "T-015",
+  "title": "Implement Application-Layer Posture Demo Session",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-015-posture-demo-session",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "POSTURE_DEMO_SESSION",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-02T01:45:00+02:00"
+}
