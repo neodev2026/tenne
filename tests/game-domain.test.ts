@@ -34,6 +34,8 @@ import {
   isStunStatus,
   assertStunStatus,
   doesStunBlockFiring,
+  cancelReloadOnPostureTransition,
+  cancelReloadOnStun,
 } from '../src/game/domain/index.ts';
 import { getApplicationState } from '../src/game/application/index.ts';
 
@@ -976,5 +978,202 @@ describe('Weapon Action Explicit Domain State Representation (GS-001 §2)', () =
     expect(domain.gameplayImplemented).toBe(false);
   });
 });
+
+describe('Reload Cancellation State Transitions (GS-004 §2)', () => {
+  describe('Posture-Triggered Reload Cancellation', () => {
+    it('cancels active reload and transitions to READY when beginning transition toward EXPOSED', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      const result = cancelReloadOnPostureTransition(reloading, CharacterPosture.TRANSITIONING_TO_EXPOSED);
+
+      // Returns READY
+      expect(result.action).toBe(WeaponAction.READY);
+      expect(result.action).toBe('READY');
+
+      // Returns a new state object (not in-place mutation)
+      expect(result).not.toBe(reloading);
+
+      // Result remains immutable / frozen
+      expect(Object.isFrozen(result)).toBe(true);
+      // @ts-expect-error Cannot assign to read-only property 'action'
+      expect(() => { result.action = WeaponAction.FIRING; }).toThrow();
+
+      // Original state is unmutated
+      expect(reloading.action).toBe(WeaponAction.RELOADING);
+    });
+
+    it('returns identical currentState reference when character is in COVERED (trigger inactive)', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      const result = cancelReloadOnPostureTransition(reloading, CharacterPosture.COVERED);
+
+      // Inapplicable trigger returns identical reference (no-op implementation behavior)
+      expect(result).toBe(reloading);
+      expect(result.action).toBe(WeaponAction.RELOADING);
+    });
+
+    it('returns identical currentState reference when character is TRANSITIONING_TO_COVERED (trigger inactive)', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      const result = cancelReloadOnPostureTransition(reloading, CharacterPosture.TRANSITIONING_TO_COVERED);
+
+      expect(result).toBe(reloading);
+      expect(result.action).toBe(WeaponAction.RELOADING);
+    });
+
+    it('returns identical currentState reference when character is in EXPOSED (trigger inactive)', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      const result = cancelReloadOnPostureTransition(reloading, CharacterPosture.EXPOSED);
+
+      expect(result).toBe(reloading);
+      expect(result.action).toBe(WeaponAction.RELOADING);
+    });
+
+    it('throws Error if currentState is READY (precondition contract: not reloading)', () => {
+      const ready = createWeaponActionState(WeaponAction.READY);
+      expect(() =>
+        cancelReloadOnPostureTransition(ready, CharacterPosture.TRANSITIONING_TO_EXPOSED)
+      ).toThrow(/Cannot cancel reload: character is not reloading/);
+    });
+
+    it('throws Error if currentState is FIRING (precondition contract: not reloading)', () => {
+      const firing = createWeaponActionState(WeaponAction.FIRING);
+      expect(() =>
+        cancelReloadOnPostureTransition(firing, CharacterPosture.TRANSITIONING_TO_EXPOSED)
+      ).toThrow(/Cannot cancel reload: character is not reloading/);
+    });
+
+    it('rejects invalid posture input with TypeError via existing assertCharacterPosture', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      expect(() =>
+        cancelReloadOnPostureTransition(reloading, 'INVALID_POSTURE' as unknown as CharacterPosture)
+      ).toThrow(TypeError);
+      expect(() =>
+        cancelReloadOnPostureTransition(reloading, null as unknown as CharacterPosture)
+      ).toThrow(TypeError);
+      expect(() =>
+        cancelReloadOnPostureTransition(reloading, undefined as unknown as CharacterPosture)
+      ).toThrow(TypeError);
+    });
+
+    it('rejects invalid currentState input with TypeError via existing assertWeaponAction', () => {
+      expect(() =>
+        cancelReloadOnPostureTransition(
+          null as unknown as WeaponActionState,
+          CharacterPosture.TRANSITIONING_TO_EXPOSED
+        )
+      ).toThrow(TypeError);
+      expect(() =>
+        cancelReloadOnPostureTransition(
+          { action: 'INVALID_ACTION' as unknown as WeaponAction },
+          CharacterPosture.TRANSITIONING_TO_EXPOSED
+        )
+      ).toThrow(TypeError);
+    });
+  });
+
+  describe('STUN-Triggered Reload Cancellation', () => {
+    it('cancels active reload and transitions to READY when isStunned is true', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      const result = cancelReloadOnStun(reloading, true);
+
+      // Returns READY
+      expect(result.action).toBe(WeaponAction.READY);
+      expect(result.action).toBe('READY');
+
+      // Returns a new state object (not in-place mutation)
+      expect(result).not.toBe(reloading);
+
+      // Result remains immutable / frozen
+      expect(Object.isFrozen(result)).toBe(true);
+
+      // Original state is unmutated
+      expect(reloading.action).toBe(WeaponAction.RELOADING);
+    });
+
+    it('returns identical currentState reference when isStunned is false (trigger inactive)', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      const result = cancelReloadOnStun(reloading, false);
+
+      // Inapplicable trigger returns identical reference (no-op implementation behavior)
+      expect(result).toBe(reloading);
+      expect(result.action).toBe(WeaponAction.RELOADING);
+    });
+
+    it('throws Error if currentState is READY (precondition contract: not reloading)', () => {
+      const ready = createWeaponActionState(WeaponAction.READY);
+      expect(() => cancelReloadOnStun(ready, true)).toThrow(
+        /Cannot cancel reload: character is not reloading/
+      );
+    });
+
+    it('throws Error if currentState is FIRING (precondition contract: not reloading)', () => {
+      const firing = createWeaponActionState(WeaponAction.FIRING);
+      expect(() => cancelReloadOnStun(firing, true)).toThrow(
+        /Cannot cancel reload: character is not reloading/
+      );
+    });
+
+    it('rejects invalid STUN input with TypeError via existing assertStunStatus', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      expect(() => cancelReloadOnStun(reloading, 'true' as unknown as boolean)).toThrow(TypeError);
+      expect(() => cancelReloadOnStun(reloading, 1 as unknown as boolean)).toThrow(TypeError);
+      expect(() => cancelReloadOnStun(reloading, 0 as unknown as boolean)).toThrow(TypeError);
+      expect(() => cancelReloadOnStun(reloading, null as unknown as boolean)).toThrow(TypeError);
+      expect(() => cancelReloadOnStun(reloading, undefined as unknown as boolean)).toThrow(TypeError);
+    });
+
+    it('rejects invalid currentState input with TypeError via existing assertWeaponAction', () => {
+      expect(() => cancelReloadOnStun(null as unknown as WeaponActionState, true)).toThrow(TypeError);
+      expect(() =>
+        cancelReloadOnStun({ action: 'INVALID_ACTION' as unknown as WeaponAction }, true)
+      ).toThrow(TypeError);
+    });
+  });
+
+  describe('Authority Boundary & Headless Execution Integrity (GS-004 §2, AS-001, AS-004)', () => {
+    it('verifies READY after cancellation denotes strictly non-firing and non-reloading status', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      const postPostureCancel = cancelReloadOnPostureTransition(
+        reloading,
+        CharacterPosture.TRANSITIONING_TO_EXPOSED
+      );
+      const postStunCancel = cancelReloadOnStun(reloading, true);
+
+      // Both result in READY
+      expect(postPostureCancel.action).toBe(WeaponAction.READY);
+      expect(postStunCancel.action).toBe(WeaponAction.READY);
+
+      // Critical Authority Boundary verification:
+      // READY after cancellation does NOT imply posture prerequisite satisfaction
+      expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.TRANSITIONING_TO_EXPOSED)).toBe(false);
+      expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.COVERED)).toBe(false);
+
+      // READY after cancellation does NOT imply absence of STUN
+      expect(doesStunBlockFiring(true)).toBe(true);
+
+      // Neither function alters posture, STUN status, ammo, or global actionability
+    });
+
+    it('operates as pure, deterministic state transformations with zero browser globals', () => {
+      const reloading = createWeaponActionState(WeaponAction.RELOADING);
+      const res1 = cancelReloadOnPostureTransition(reloading, CharacterPosture.TRANSITIONING_TO_EXPOSED);
+      const res2 = cancelReloadOnPostureTransition(reloading, CharacterPosture.TRANSITIONING_TO_EXPOSED);
+      expect(res1.action).toBe(res2.action);
+
+      const res3 = cancelReloadOnStun(reloading, true);
+      const res4 = cancelReloadOnStun(reloading, true);
+      expect(res3.action).toBe(res4.action);
+
+      // Headless verification
+      expect(typeof window).toBe('undefined');
+    });
+
+    it('preserves getDomainState() with gameplayImplemented: false', () => {
+      const domain = getDomainState();
+      expect(domain.layer).toBe('domain');
+      expect(domain.deterministic).toBe(true);
+      expect(domain.gameplayImplemented).toBe(false);
+    });
+  });
+});
+
 
 

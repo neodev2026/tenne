@@ -9,6 +9,7 @@
  * Rule GS-001: Orthogonal Posture and Weapon Action Axes
  * Rule GS-002: Squad Posture Intent and Transition Atomicity
  * Rule GS-003: Firing Posture Invariant and Ammo-Depletion Auto-Cover
+ * Rule GS-004: Cover-Triggered Reload, Cancellation and Resumption
  * Rule GS-005: STUN as Orthogonal Control State
  *
  * NOTE: T-011 implements deterministic simulation time, event categories,
@@ -16,8 +17,9 @@
  * Character Posture and Squad Posture Intent state transitions. T-013 implements
  * Weapon Action concepts and posture-side firing eligibility. T-014 implements
  * STUN status representation and STUN-specific firing blocker. T-017 implements
- * Weapon Action explicit domain state. Full combat gameplay behaviors remain
- * unimplemented (gameplayImplemented: false).
+ * Weapon Action explicit domain state. T-019 implements canonical reload
+ * cancellation domain state transitions (GS-004 §2). Full combat gameplay behaviors
+ * remain unimplemented (gameplayImplemented: false).
  */
 
 // ============================================================================
@@ -867,5 +869,119 @@ export function assertStunStatus(value: unknown, context = 'doesStunBlockFiring'
 export function doesStunBlockFiring(isStunned: boolean): boolean {
   assertStunStatus(isStunned, 'doesStunBlockFiring');
   return isStunned;
+}
+
+// ============================================================================
+// Reload Cancellation State Transitions (GS-004 §2)
+// ============================================================================
+
+/**
+ * Cancels an active reload triggered by beginning transition from COVERED toward EXPOSED (GS-004 §2).
+ *
+ * [SEMANTICALLY REQUIRED] GS-004 §2 mandates that if a character begins transitioning
+ * from COVERED toward EXPOSED (TRANSITIONING_TO_EXPOSED) while RELOADING:
+ * 1. Reload is cancelled immediately.
+ * 2. Weapon Action immediately transitions to READY.
+ * 3. Incomplete reload progress is discarded (not preserved).
+ * 4. Zero ammunition is granted to the magazine.
+ *
+ * [API PRECONDITION CONTRACT]:
+ * - This function operates strictly as a transition operation for an active reload.
+ * - If currentState.action !== WeaponAction.RELOADING, throws Error.
+ * - This rejection is an API precondition / caller-contract decision, NOT a new canonical gameplay semantic.
+ *
+ * [IMPLEMENTATION / API BEHAVIOR]:
+ * - If currentPosture !== CharacterPosture.TRANSITIONING_TO_EXPOSED, returns currentState unchanged.
+ * - Returning the existing state reference unchanged is an implementation/API behavior only,
+ *   NOT canonical gameplay semantics.
+ * - When cancellation applies, returns a NEW WeaponActionState via createWeaponActionState(WeaponAction.READY).
+ *   The existing WeaponActionState is never mutated, and no shared singleton state is introduced.
+ *
+ * CRITICAL AUTHORITY BOUNDARY (GS-004 §2):
+ * - READY after reload cancellation denotes strictly that Weapon Action is no longer:
+ *   - FIRING
+ *   - RELOADING
+ * - READY does NOT imply:
+ *   - firing permission
+ *   - ammunition availability
+ *   - global actionability
+ *   - absence of STUN
+ *   - satisfaction of posture prerequisites
+ * - Does NOT perform ammo mutation, reload progress tracking, reload timing, posture mutation,
+ *   firing execution, firing interruption, or Auto-Fire reevaluation.
+ */
+export function cancelReloadOnPostureTransition(
+  currentState: WeaponActionState,
+  currentPosture: CharacterPosture
+): WeaponActionState {
+  assertWeaponAction(currentState?.action, 'cancelReloadOnPostureTransition');
+  assertCharacterPosture(currentPosture, 'cancelReloadOnPostureTransition');
+
+  if (currentState.action !== WeaponAction.RELOADING) {
+    throw new Error(
+      `[cancelReloadOnPostureTransition] Cannot cancel reload: character is not reloading (action: ${currentState.action})`
+    );
+  }
+
+  if (currentPosture !== CharacterPosture.TRANSITIONING_TO_EXPOSED) {
+    return currentState;
+  }
+
+  return createWeaponActionState(WeaponAction.READY);
+}
+
+/**
+ * Cancels an active reload triggered by receiving STUN (GS-004 §2, GS-005 §2).
+ *
+ * [SEMANTICALLY REQUIRED] GS-004 §2 and GS-005 §2 mandate that if a character receives
+ * STUN while RELOADING:
+ * 1. Reload is cancelled immediately.
+ * 2. Weapon Action immediately transitions to READY.
+ * 3. Incomplete reload progress is discarded.
+ * 4. Zero ammunition is granted.
+ *
+ * [API PRECONDITION CONTRACT]:
+ * - This function operates strictly as a transition operation for an active reload.
+ * - If currentState.action !== WeaponAction.RELOADING, throws Error.
+ * - This rejection is an API precondition / caller-contract decision, NOT a new canonical gameplay semantic.
+ *
+ * [IMPLEMENTATION / API BEHAVIOR]:
+ * - If isStunned === false, returns currentState unchanged.
+ * - Returning the existing state reference unchanged is an implementation/API behavior only,
+ *   NOT canonical gameplay semantics.
+ * - When cancellation applies, returns a NEW WeaponActionState via createWeaponActionState(WeaponAction.READY).
+ *   The existing WeaponActionState is never mutated, and no shared singleton state is introduced.
+ *
+ * CRITICAL AUTHORITY BOUNDARY (GS-004 §2):
+ * - READY after reload cancellation denotes strictly that Weapon Action is no longer:
+ *   - FIRING
+ *   - RELOADING
+ * - READY does NOT imply:
+ *   - firing permission
+ *   - ammunition availability
+ *   - global actionability
+ *   - absence of STUN
+ *   - satisfaction of posture prerequisites
+ * - Does NOT perform ammo mutation, reload progress tracking, reload timing, STUN duration handling,
+ *   posture mutation, firing execution, firing interruption, or Auto-Fire reevaluation.
+ */
+export function cancelReloadOnStun(
+  currentState: WeaponActionState,
+  isStunned: boolean
+): WeaponActionState {
+  assertWeaponAction(currentState?.action, 'cancelReloadOnStun');
+  assertStunStatus(isStunned, 'cancelReloadOnStun');
+
+  if (currentState.action !== WeaponAction.RELOADING) {
+    throw new Error(
+      `[cancelReloadOnStun] Cannot cancel reload: character is not reloading (action: ${currentState.action})`
+    );
+  }
+
+  if (!isStunned) {
+    return currentState;
+  }
+
+  return createWeaponActionState(WeaponAction.READY);
 }
 
