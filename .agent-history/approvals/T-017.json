@@ -1,0 +1,61 @@
+{
+  "taskId": "T-017",
+  "approvedAt": "2026-10-02T10:48:00+02:00",
+  "amendedAt": "2026-10-02T11:30:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Represent Weapon Action as Explicit Domain State",
+    "targetBranch": "agent/t-017-weapon-action-state",
+    "baseCommit": "572e272707319fdbacaa79fba4260f4051e24da5",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/domain/index.ts",
+      "tests/game-domain.test.ts",
+      ".agent-history/tasks/T-017.json",
+      ".agent-history/approvals/T-017.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Export interface WeaponActionState with readonly action: WeaponAction",
+      "Export factory createWeaponActionState(action: WeaponAction): WeaponActionState requiring explicit caller-supplied WeaponAction",
+      "Reject invalid runtime inputs via existing assertWeaponAction utility consistently with domain validation conventions",
+      "Return Object.freeze'd immutable state wrapper as an implementation choice",
+      "Preserve getDomainState() with gameplayImplemented: false",
+      "Headless Vitest unit tests in tests/game-domain.test.ts"
+    ],
+    "deferredScope": [
+      "Weapon Action transition graph and generic setWeaponAction/updateWeaponAction mutators deferred",
+      "beginFiring, stopFiring, beginReload, completeReload, and cancelReload deferred",
+      "Firing execution, trigger input, cadence, rate of fire, and fire interval deferred under GAP-GS-002",
+      "Ammo tracking, magazine capacity, and ammo-depletion auto-cover deferred under GS-003 and GAP-GS-002",
+      "Reload duration, reload lifecycle, and reload cancellation rules deferred under GS-004, GAP-GS-003, and GAP-GS-004",
+      "STUN interaction with FIRING or RELOADING deferred under GS-005 and GAP-GS-005",
+      "Combined posture + Weapon Action firing predicates and global canFire/actionability deferred",
+      "Controlled character routing and account-scoped Auto-Fire preference deferred under GS-009",
+      "Timers, frame loops, and simulation time progression deferred under AS-005 and GAP-AS-005",
+      "T-011 EventBatch, executeEventBatch, EffectIntent, and Derived Events deferred",
+      "Application layer integration deferred",
+      "Presentation layer integration deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "WeaponActionState is only a representation of an explicitly supplied canonical WeaponAction value.",
+    "WeaponActionState does NOT mean the action is currently legal, firing is permitted, reload prerequisites are satisfied, the character is globally actionable, or READY is the universal initial state.",
+    "createWeaponActionState requires the caller to explicitly provide WeaponAction; does NOT default to WeaponAction.READY.",
+    "createWeaponActionState reuses the existing assertWeaponAction utility to reject invalid runtime inputs consistently with Domain validation conventions.",
+    "Object.freeze is authorized as an implementation choice, not gameplay semantics.",
+    "No Weapon Action transition mutators are implemented.",
+    "No combined firing predicates or global actionability queries are introduced.",
+    "Metadata preservation: getDomainState() preserves gameplayImplemented: false.",
+    "Amendment: EVT-000034 recorded an initial approval timestamp of 2026-10-02T09:10:00Z (11:10:00+02:00); authoritative approval instant is 2026-10-02T10:48:00+02:00 (= 2026-10-02T08:48:00Z), recorded via amendment event EVT-000035 while preserving EVT-000034 as historical audit evidence. This amendment changes audit timestamp representation only; zero semantic, scope, or file-budget changes."
+  ]
+}

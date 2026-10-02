@@ -29,6 +29,8 @@ import {
   isWeaponAction,
   assertWeaponAction,
   doesPostureSatisfyFiringPrerequisite,
+  type WeaponActionState,
+  createWeaponActionState,
   isStunStatus,
   assertStunStatus,
   doesStunBlockFiring,
@@ -912,4 +914,67 @@ describe('STUN Status & STUN-Specific Firing Blocker (GS-005 §1, §2, GS-009 §
     expect(domain.gameplayImplemented).toBe(false);
   });
 });
+
+describe('Weapon Action Explicit Domain State Representation (GS-001 §2)', () => {
+  it('represents READY weapon action via createWeaponActionState', () => {
+    const state: WeaponActionState = createWeaponActionState(WeaponAction.READY);
+    expect(state.action).toBe(WeaponAction.READY);
+    expect(state.action).toBe('READY');
+  });
+
+  it('represents FIRING weapon action via createWeaponActionState', () => {
+    const state: WeaponActionState = createWeaponActionState(WeaponAction.FIRING);
+    expect(state.action).toBe(WeaponAction.FIRING);
+    expect(state.action).toBe('FIRING');
+  });
+
+  it('represents RELOADING weapon action via createWeaponActionState', () => {
+    const state: WeaponActionState = createWeaponActionState(WeaponAction.RELOADING);
+    expect(state.action).toBe(WeaponAction.RELOADING);
+    expect(state.action).toBe('RELOADING');
+  });
+
+  it('enforces explicit caller requirement with no default READY value', () => {
+    // Calling with undefined or null must be rejected with TypeError (no default assumed)
+    expect(() => createWeaponActionState(undefined as unknown as WeaponAction)).toThrow(TypeError);
+    expect(() => createWeaponActionState(null as unknown as WeaponAction)).toThrow(TypeError);
+  });
+
+  it('rejects invalid runtime inputs consistently with domain validation conventions', () => {
+    expect(() => createWeaponActionState('INVALID_ACTION' as unknown as WeaponAction)).toThrow(TypeError);
+    expect(() => createWeaponActionState('CHARGING' as unknown as WeaponAction)).toThrow(TypeError);
+    expect(() => createWeaponActionState(123 as unknown as WeaponAction)).toThrow(TypeError);
+    expect(() => createWeaponActionState({} as unknown as WeaponAction)).toThrow(TypeError);
+    expect(() => createWeaponActionState([] as unknown as WeaponAction)).toThrow(TypeError);
+    expect(() => createWeaponActionState(true as unknown as WeaponAction)).toThrow(TypeError);
+  });
+
+  it('returns an immutable Object.freeze wrapper consistent with current Domain conventions', () => {
+    const state = createWeaponActionState(WeaponAction.READY);
+    expect(Object.isFrozen(state)).toBe(true);
+    // @ts-expect-error Cannot assign to 'action' because it is a read-only property
+    expect(() => { state.action = WeaponAction.FIRING; }).toThrow();
+  });
+
+  it('ensures existing posture firing prerequisite behavior remains unchanged', () => {
+    expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.EXPOSED)).toBe(true);
+    expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.COVERED)).toBe(false);
+    expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.TRANSITIONING_TO_COVERED)).toBe(false);
+    expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.TRANSITIONING_TO_EXPOSED)).toBe(false);
+  });
+
+  it('ensures existing STUN blocker behavior remains unchanged', () => {
+    expect(doesStunBlockFiring(true)).toBe(true);
+    expect(doesStunBlockFiring(false)).toBe(false);
+  });
+
+  it('operates headlessly with zero browser globals and preserves gameplayImplemented: false', () => {
+    expect(typeof window).toBe('undefined');
+    const domain = getDomainState();
+    expect(domain.layer).toBe('domain');
+    expect(domain.deterministic).toBe(true);
+    expect(domain.gameplayImplemented).toBe(false);
+  });
+});
+
 
