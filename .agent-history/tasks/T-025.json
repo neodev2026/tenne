@@ -1,0 +1,13 @@
+{
+  "id": "T-025",
+  "title": "Specify Application Multi-Axis Combat State Coordination Boundary",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-025-application-coordination-boundary",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-04T00:20:00+02:00"
+}
