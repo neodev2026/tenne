@@ -41,6 +41,8 @@ import {
   assertMagazineAmmo,
   type MagazineAmmoState,
   createMagazineAmmoState,
+  type AmmoDepletionResponse,
+  resolveAmmoDepletionResponse,
 } from '../src/game/domain/index.ts';
 import { getApplicationState } from '../src/game/application/index.ts';
 
@@ -1331,6 +1333,134 @@ describe('Magazine Ammunition Explicit Domain State (GS-003 §2, AS-002)', () =>
     expect(domain.gameplayImplemented).toBe(false);
   });
 });
+
+describe('Ammo Depletion Auto-Cover Response (GS-003 §2)', () => {
+  it('A & B. resolves canonical coordinated response (FIRING -> IDLE, EXPOSED -> TRANSITIONING_TO_COVERED) in one call', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    const response: AmmoDepletionResponse = resolveAmmoDepletionResponse(firingWeapon, exposedPosture);
+
+    // Coordinated result in single AmmoDepletionResponse object
+    expect(response.weaponAction.action).toBe(WeaponAction.IDLE);
+    expect(response.characterPosture.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+  });
+
+  it('C. preserves immutability and returns frozen objects without mutating inputs', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    const response = resolveAmmoDepletionResponse(firingWeapon, exposedPosture);
+
+    // Outer container is frozen
+    expect(Object.isFrozen(response)).toBe(true);
+
+    // Inner state wrappers are frozen
+    expect(Object.isFrozen(response.weaponAction)).toBe(true);
+    expect(Object.isFrozen(response.characterPosture)).toBe(true);
+
+    // @ts-expect-error Cannot assign to 'weaponAction' because it is a read-only property
+    expect(() => { response.weaponAction = createWeaponActionState(WeaponAction.IDLE); }).toThrow();
+    // @ts-expect-error Cannot assign to 'action' because it is a read-only property
+    expect(() => { response.weaponAction.action = WeaponAction.FIRING; }).toThrow();
+    // @ts-expect-error Cannot assign to 'posture' because it is a read-only property
+    expect(() => { response.characterPosture.posture = CharacterPosture.EXPOSED; }).toThrow();
+
+    // Inputs remain unmutated and distinct from outputs
+    expect(firingWeapon.action).toBe(WeaponAction.FIRING);
+    expect(exposedPosture.posture).toBe(CharacterPosture.EXPOSED);
+    expect(response.weaponAction).not.toBe(firingWeapon);
+    expect(response.characterPosture).not.toBe(exposedPosture);
+  });
+
+  it('D. rejects non-FIRING WeaponAction with Error (precondition contract: not actively firing)', () => {
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    const idleWeapon = createWeaponActionState(WeaponAction.IDLE);
+    expect(() => resolveAmmoDepletionResponse(idleWeapon, exposedPosture)).toThrow(
+      /Cannot resolve ammo depletion response: weapon action is not FIRING/
+    );
+
+    const reloadingWeapon = createWeaponActionState(WeaponAction.RELOADING);
+    expect(() => resolveAmmoDepletionResponse(reloadingWeapon, exposedPosture)).toThrow(
+      /Cannot resolve ammo depletion response: weapon action is not FIRING/
+    );
+  });
+
+  it('E. rejects non-EXPOSED CharacterPosture with Error (precondition contract: firing exposure invariant)', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+
+    const coveredPosture = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    expect(() => resolveAmmoDepletionResponse(firingWeapon, coveredPosture)).toThrow(
+      /Cannot resolve ammo depletion response: character posture is not EXPOSED/
+    );
+
+    const transToCovered = beginIntentDrivenPostureTransition(
+      createInitialCharacterPostureState(CharacterPosture.EXPOSED),
+      SquadPostureIntent.WANT_COVERED
+    );
+    expect(() => resolveAmmoDepletionResponse(firingWeapon, transToCovered)).toThrow(
+      /Cannot resolve ammo depletion response: character posture is not EXPOSED/
+    );
+
+    const transToExposed = beginIntentDrivenPostureTransition(
+      createInitialCharacterPostureState(CharacterPosture.COVERED),
+      SquadPostureIntent.WANT_EXPOSED
+    );
+    expect(() => resolveAmmoDepletionResponse(firingWeapon, transToExposed)).toThrow(
+      /Cannot resolve ammo depletion response: character posture is not EXPOSED/
+    );
+  });
+
+  it('F. rejects invalid runtime inputs with TypeError according to existing domain conventions', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    // Malformed/null/undefined weaponAction
+    expect(() => resolveAmmoDepletionResponse(null as unknown as WeaponActionState, exposedPosture)).toThrow(TypeError);
+    expect(() => resolveAmmoDepletionResponse(undefined as unknown as WeaponActionState, exposedPosture)).toThrow(TypeError);
+    expect(() => resolveAmmoDepletionResponse({ action: 'INVALID' as unknown as WeaponAction }, exposedPosture)).toThrow(TypeError);
+    expect(() => resolveAmmoDepletionResponse({} as unknown as WeaponActionState, exposedPosture)).toThrow(TypeError);
+
+    // Malformed/null/undefined characterPosture
+    expect(() => resolveAmmoDepletionResponse(firingWeapon, null as unknown as CharacterPostureState)).toThrow(TypeError);
+    expect(() => resolveAmmoDepletionResponse(firingWeapon, undefined as unknown as CharacterPostureState)).toThrow(TypeError);
+    expect(() => resolveAmmoDepletionResponse(firingWeapon, { posture: 'INVALID' as unknown as CharacterPosture } as unknown as CharacterPostureState)).toThrow(TypeError);
+    expect(() => resolveAmmoDepletionResponse(firingWeapon, {} as unknown as CharacterPostureState)).toThrow(TypeError);
+  });
+
+  it('G. validates authority boundaries: result action is IDLE (never RELOADING), does not satisfy firing prerequisite, and requires neither SquadPostureIntent nor MagazineAmmoState', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    const response = resolveAmmoDepletionResponse(firingWeapon, exposedPosture);
+
+    // Result action is strictly IDLE, never RELOADING
+    expect(response.weaponAction.action).toBe(WeaponAction.IDLE);
+    expect(response.weaponAction.action).not.toBe(WeaponAction.RELOADING);
+
+    // Result posture is strictly TRANSITIONING_TO_COVERED
+    expect(response.characterPosture.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+
+    // Authority boundary: post-depletion posture does NOT satisfy firing prerequisite
+    expect(doesPostureSatisfyFiringPrerequisite(response.characterPosture.posture)).toBe(false);
+
+    // Verified API shape: resolveAmmoDepletionResponse has arity 2 (takes only weaponAction and posture)
+    expect(resolveAmmoDepletionResponse.length).toBe(2);
+
+    // Response contains exactly the two coordinated state properties
+    expect(Object.keys(response).sort()).toEqual(['characterPosture', 'weaponAction']);
+  });
+
+  it('H. operates headlessly with zero browser globals and preserves gameplayImplemented: false', () => {
+    expect(typeof window).toBe('undefined');
+    const domain = getDomainState();
+    expect(domain.layer).toBe('domain');
+    expect(domain.deterministic).toBe(true);
+    expect(domain.gameplayImplemented).toBe(false);
+  });
+});
+
 
 
 

@@ -1,0 +1,13 @@
+{
+  "id": "T-024",
+  "title": "Implement Canonical Ammo-Depletion Domain Transition API",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-024-ammo-depletion-domain",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-03T17:40:00+02:00"
+}

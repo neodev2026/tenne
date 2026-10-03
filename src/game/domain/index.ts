@@ -21,6 +21,7 @@
  * cancellation domain state transitions (GS-004 §2). T-020 implements
  * Magazine Ammunition explicit domain state (GS-003 §2, AS-002). T-022 implements
  * WeaponAction IDLE baseline domain state and updates reload cancellation (GS-001 §2, GS-004 §2).
+ * T-024 implements canonical ammo-depletion domain transition API (GS-003 §2).
  * Full combat gameplay behaviors remain unimplemented (gameplayImplemented: false).
  */
 
@@ -1055,4 +1056,90 @@ export function createMagazineAmmoState(current: MagazineAmmo): MagazineAmmoStat
     current,
   });
 }
+
+// ============================================================================
+// Ammo Depletion Auto-Cover Response (GS-003 §2)
+// ============================================================================
+
+/**
+ * Coordinated state result of the canonical ammo-depletion response (GS-003 §2).
+ *
+ * Guarantees that WeaponAction IDLE and CharacterPosture TRANSITIONING_TO_COVERED
+ * are produced together as one coordinated canonical response.
+ *
+ * Authority Boundary:
+ * - Domain guarantee: Encapsulates both canonical resulting states together in one immutable
+ *   container; the Domain operation never produces a partial depletion response.
+ * - Application boundary: This structure does not commit or mutate character state. Applying
+ *   both states atomically to an observable character remains the responsibility of Application-layer
+ *   orchestration.
+ */
+export interface AmmoDepletionResponse {
+  readonly weaponAction: WeaponActionState;
+  readonly characterPosture: CharacterPostureState;
+}
+
+/**
+ * Resolves the canonical ammo-depletion response for an EXPOSED firing character (GS-003 §2).
+ *
+ * [SEMANTICALLY REQUIRED]:
+ * - Trigger: When an EXPOSED character fires the final round from the magazine and magazine ammo reaches 0:
+ *   1. Active firing ends immediately.
+ *   2. Weapon Action immediately transitions: FIRING -> IDLE.
+ *   3. Character Posture immediately transitions: EXPOSED -> TRANSITIONING_TO_COVERED.
+ * - Coordinated Invariant: Both transitions are part of the same canonical response.
+ *   No persistent or externally observable combat state may remain in which:
+ *   WeaponAction == FIRING while CharacterPosture == TRANSITIONING_TO_COVERED.
+ * - Squad Posture Intent Invariance: Squad Posture Intent is NOT modified by this
+ *   character-local automatic response.
+ * - Reload Timing Boundary: Reload does NOT begin during TRANSITIONING_TO_COVERED.
+ *   Reload may only begin later when fully COVERED and GS-004 conditions are met.
+ *
+ * [API PRECONDITION CONTRACT]:
+ * - currentWeaponAction.action MUST be WeaponAction.FIRING.
+ * - currentPosture.posture MUST be CharacterPosture.EXPOSED.
+ * - If valid Domain states violate these preconditions, throws Error.
+ * - There is no inactive-trigger no-op contract; caller invokes this API strictly after
+ *   ammo depletion has already occurred.
+ *
+ * [COORDINATION GUARANTEE & APPLICATION BOUNDARY]:
+ * - Domain guarantee:
+ *   This operation produces both canonical resulting states together in one immutable response
+ *   and never emits a partial ammo-depletion result.
+ * - Application boundary:
+ *   This Domain API does not itself mutate or commit character state. Applying both returned states
+ *   as one externally observable transition remains the responsibility of later Application-layer
+ *   orchestration.
+ *
+ * [AUTHORITY BOUNDARY FOR POST-DEPLETION IDLE]:
+ * - IDLE denotes strictly that no active FIRING or RELOADING action is in progress.
+ * - IDLE does NOT imply firing permission, ammo availability, ammo > 0, absence of STUN,
+ *   exposed posture, satisfaction of firing prerequisites, global actionability, reload eligibility,
+ *   reload start, or replenishment.
+ */
+export function resolveAmmoDepletionResponse(
+  currentWeaponAction: WeaponActionState,
+  currentPosture: CharacterPostureState
+): AmmoDepletionResponse {
+  assertWeaponAction(currentWeaponAction?.action, 'resolveAmmoDepletionResponse');
+  assertCharacterPosture(currentPosture?.posture, 'resolveAmmoDepletionResponse');
+
+  if (currentWeaponAction.action !== WeaponAction.FIRING) {
+    throw new Error(
+      `[resolveAmmoDepletionResponse] Cannot resolve ammo depletion response: weapon action is not FIRING (action: ${currentWeaponAction.action})`
+    );
+  }
+
+  if (currentPosture.posture !== CharacterPosture.EXPOSED) {
+    throw new Error(
+      `[resolveAmmoDepletionResponse] Cannot resolve ammo depletion response: character posture is not EXPOSED (posture: ${currentPosture.posture})`
+    );
+  }
+
+  return Object.freeze({
+    weaponAction: createWeaponActionState(WeaponAction.IDLE),
+    characterPosture: createBrandedPostureState(CharacterPosture.TRANSITIONING_TO_COVERED),
+  });
+}
+
 
