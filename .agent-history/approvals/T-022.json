@@ -1,0 +1,57 @@
+{
+  "taskId": "T-022",
+  "approvedAt": "2026-10-03T12:25:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement WeaponAction IDLE Domain State and Update Reload Cancellation",
+    "targetBranch": "agent/t-022-idle-domain",
+    "baseCommit": "bc3df1e0d8ea161078df96bcaa229572a89c1616",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/domain/index.ts",
+      "tests/game-domain.test.ts",
+      ".agent-history/tasks/T-022.json",
+      ".agent-history/approvals/T-022.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Replace active Domain enum/value definition WeaponAction.READY with WeaponAction.IDLE in src/game/domain/index.ts without keeping READY as an alias",
+      "Update runtime validation functions isWeaponAction and assertWeaponAction to accept IDLE and reject READY, while CHARGING remains rejected",
+      "Preserve WeaponActionState representation shape unchanged (readonly action: WeaponAction)",
+      "Preserve createWeaponActionState behavior to require explicit WeaponAction, accept IDLE, reject READY with TypeError, and return frozen state",
+      "Update reload cancellation transition functions cancelReloadOnPostureTransition and cancelReloadOnStun to return createWeaponActionState(WeaponAction.IDLE)",
+      "Preserve precondition error throw when currentState.action !== RELOADING and unchanged reference return when cancellation triggers are inactive",
+      "Preserve authority boundary comments: IDLE strictly denotes no active weapon action in progress; does not imply firing permission, ammo availability, absence of STUN, exposed posture, or global actionability",
+      "Update domain tests and add focused tests in tests/game-domain.test.ts to verify IDLE vocabulary, runtime validation rejecting READY and CHARGING, reload cancellation returning IDLE, and authority boundaries",
+      "Preserve getDomainState().gameplayImplemented === false"
+    ],
+    "deferredScope": [
+      "Ammo depletion WeaponAction transitions (FIRING -> IDLE upon magazine ammo reaching 0) and auto-cover deferred to subsequent semantic/domain task",
+      "Auto-cover and firing start/stop APIs deferred",
+      "Ammo decrement, consumption per shot, magazine capacity, and reserve ammo deferred under GAP-GS-002 and GAP-GS-003",
+      "Reload simulation duration, manual reload, and reload completion deferred under GAP-GS-003",
+      "CHARGING value and charge sessions deferred under GAP-GS-005",
+      "Global canFire, readiness state, weapon capability state, and generic WeaponAction transition graph deferred",
+      "Application layer integration deferred",
+      "Presentation layer integration deferred",
+      "Semantic and guardrail changes deferred (G-041 false, G-042 false)"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified; canonical semantics established in T-021).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Human Decision: Active Domain implementation refactored from READY to IDLE in accordance with canonical T-021 semantics.",
+    "Do NOT keep READY as an alias or backward-compatibility fallback.",
+    "Authority boundary: IDLE denotes strictly that no active weapon action is currently in progress (neither FIRING nor RELOADING); IDLE does NOT imply firing permission, ammunition availability, ammo > 0, absence of STUN, CharacterPosture.EXPOSED, satisfaction of firing posture prerequisites, global character actionability, or reload eligibility.",
+    "Reload cancellation transitions cancelReloadOnPostureTransition and cancelReloadOnStun return createWeaponActionState(WeaponAction.IDLE) upon applicable triggers.",
+    "Preserve getDomainState() with gameplayImplemented: false.",
+    "Historical T-017 through T-021 records and events remain unmodified."
+  ]
+}

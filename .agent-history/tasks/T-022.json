@@ -1,0 +1,13 @@
+{
+  "id": "T-022",
+  "title": "Implement WeaponAction IDLE Domain State and Update Reload Cancellation",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-022-idle-domain",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-03T12:25:00+02:00"
+}
