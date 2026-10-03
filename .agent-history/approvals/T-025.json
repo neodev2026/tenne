@@ -1,0 +1,65 @@
+{
+  "taskId": "T-025",
+  "approvedAt": "2026-10-04T00:20:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Specify Application Multi-Axis Combat State Coordination Boundary",
+    "targetBranch": "agent/t-025-application-coordination-boundary",
+    "baseCommit": "e24e9dfb21a644e20f0b85e9ff8f98118158c1c3",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "semantic/architecture/architecture-semantics.md",
+      ".agent-history/tasks/T-025.json",
+      ".agent-history/approvals/T-025.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 4 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": "Explicit human architecture semantic authorization under Guardrail G-041 to specify the Application Multi-Axis Combat State Coordination Boundary in semantic/architecture/architecture-semantics.md under AS-002",
+    "g042Authorization": false,
+    "semanticChange": "Update canonical AS-002 in semantic/architecture/architecture-semantics.md to specify the Application Multi-Axis Combat State Coordination Boundary, authorizing an in-memory Application coordination container pattern for multi-axis Domain responses (specifically CharacterPostureState and WeaponActionState for ammo depletion), establishing immutable copy-on-write reference replacement, defining non-guarantees (not Domain ownership, not DB/ACID atomicity), excluding MagazineAmmoState, STUN/control state, and SquadPostureIntent, keeping PostureDemoSession unchanged, preserving EventBatch and EffectIntent boundaries, recording stale-response architectural risk while deferring stale-response failure policy, and leaving character-vs-weapon structural ownership unresolved",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Update semantic/architecture/architecture-semantics.md rule AS-002 (Combat State Ownership) with Human Semantic Authorization header and explicit Application Multi-Axis Combat State Coordination Boundary specification",
+      "Authorize an Application-layer coordination container pattern for cases where one canonical Domain response updates multiple independent Domain state axes (such as AmmoDepletionResponse updating WeaponActionState and CharacterPostureState)",
+      "Clarify that the coordination container is an Application orchestration snapshot/aggregate of references to canonical Domain values, NOT canonical Domain ownership or decomposition",
+      "Restrict the authorized coordinated axes for the immediate ammo-depletion use case strictly to CharacterPostureState and WeaponActionState; explicitly exclude MagazineAmmoState, STUN/control status, SquadPostureIntent, and universal Character aggregate definitions",
+      "Specify immutable copy-on-write whole-container replacement (construct complete next snapshot, then replace reference) to avoid exposing partially updated coordination snapshots",
+      "Specify that this is an in-memory Application reference-replacement guarantee, NOT database transactional atomicity, ACID, rollback, distributed atomicity, or concurrency/version-control semantics",
+      "Specify that PostureDemoSession remains unchanged and posture-only, and future combat sessions/containers must be separate unless explicitly authorized later",
+      "Record that EventBatch is a Domain evaluation kernel with unordered peer events and is NOT the Application integration mechanism for AmmoDepletionResponse",
+      "Preserve the AS-006 boundary: EffectIntent is strictly for effect-producing logic and is NOT a universal mutation or Application coordination mechanism",
+      "Record the stale-response architectural risk (precomputed response becoming stale if applied after source state changes) and preferred synchronous design direction, while strictly deferring stale-response failure policy and avoiding invented concurrency frameworks",
+      "Preserve the unresolved boundary for character-vs-weapon structural ownership",
+      "Zero modifications to Domain, Application, or Presentation implementation code or tests (implementation strictly deferred)"
+    ],
+    "deferredScope": [
+      "Application code implementation of the multi-axis coordination container and transition functions deferred to subsequent task",
+      "Concrete TypeScript public naming (e.g. CharacterCombatState) deferred to implementation",
+      "Stale-response failure policy (whether stale application throws Error, returns false, no-ops, or emits an event) deferred",
+      "Character-vs-weapon canonical Domain structural ownership decomposition deferred under AS-002",
+      "Inclusion of MagazineAmmoState, STUN/control status, and squad membership in Application aggregates deferred",
+      "General CombatSession or combat-oriented Application session implementation deferred",
+      "Ammo decrement, consumption per shot, capacity, and reserve ammo deferred under GAP-GS-002 and GAP-GS-003",
+      "Reload duration, timing, and replenishment deferred under GAP-GS-003",
+      "CHARGING and charge sessions deferred under GAP-GS-005",
+      "Global canFire, Auto-Fire execution behavior, and Presentation rendering deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 4 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is TRUE (explicit human owner decision).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Human Architecture Decision: Authorize an Application-layer coordination container pattern for cases where one canonical Domain response updates multiple independent Domain state axes (CharacterPostureState and WeaponActionState for ammo depletion).",
+    "Container is an Application orchestration snapshot/aggregate holding references to canonical Domain state values; it is NOT canonical Domain ownership or structural decomposition between character and weapon.",
+    "Coordination pattern requires immutable copy-on-write whole-container replacement (construct complete next snapshot before replacing/exposing reference) to avoid exposing partially updated coordination snapshots.",
+    "Guarantee is strictly an in-memory Application reference-replacement guarantee; it is NOT database transactional atomicity, ACID, rollback, distributed atomicity, or concurrency/version-control semantics.",
+    "MagazineAmmoState, STUN/control status, and SquadPostureIntent are NOT included.",
+    "PostureDemoSession remains unchanged and posture-only.",
+    "EventBatch is a Domain evaluation-wave kernel and is NOT the Application integration mechanism for AmmoDepletionResponse.",
+    "EffectIntent boundary is preserved (strictly effect-producing logic, not universal mutation or Application coordination).",
+    "Stale-response architectural risk is recorded and synchronous resolution/replacement preferred, while stale-response failure policy (throw/return false/no-op/event) remains unresolved; no invented concurrency frameworks.",
+    "Zero Domain/Application/Presentation implementation files or tests are modified in T-025.",
+    "Historical T-000 through T-024 records and events are preserved without modification."
+  ]
+}
