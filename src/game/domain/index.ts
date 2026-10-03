@@ -19,8 +19,9 @@
  * STUN status representation and STUN-specific firing blocker. T-017 implements
  * Weapon Action explicit domain state. T-019 implements canonical reload
  * cancellation domain state transitions (GS-004 §2). T-020 implements
- * Magazine Ammunition explicit domain state (GS-003 §2, AS-002). Full combat gameplay behaviors
- * remain unimplemented (gameplayImplemented: false).
+ * Magazine Ammunition explicit domain state (GS-003 §2, AS-002). T-022 implements
+ * WeaponAction IDLE baseline domain state and updates reload cancellation (GS-001 §2, GS-004 §2).
+ * Full combat gameplay behaviors remain unimplemented (gameplayImplemented: false).
  */
 
 // ============================================================================
@@ -709,7 +710,7 @@ export function completeCharacterPostureTransition(
 
 /**
  * Canonical Weapon Action values mandated by GS-001 §2:
- * - READY
+ * - IDLE
  * - FIRING
  * - RELOADING
  *
@@ -722,7 +723,7 @@ export function completeCharacterPostureTransition(
  * Compile-time narrowing via `as const` does not provide runtime object freezing.
  */
 export const WeaponAction = {
-  READY: 'READY',
+  IDLE: 'IDLE',
   FIRING: 'FIRING',
   RELOADING: 'RELOADING',
 } as const;
@@ -738,7 +739,7 @@ export type WeaponAction = typeof WeaponAction[keyof typeof WeaponAction];
 export function isWeaponAction(value: unknown): value is WeaponAction {
   return (
     typeof value === 'string' &&
-    (value === WeaponAction.READY ||
+    (value === WeaponAction.IDLE ||
       value === WeaponAction.FIRING ||
       value === WeaponAction.RELOADING)
   );
@@ -773,8 +774,8 @@ export interface WeaponActionState {
  * Creates a WeaponActionState requiring an explicit weapon action.
  *
  * Authority Boundary:
- * - Requires explicit canonical WeaponAction (READY, FIRING, RELOADING).
- * - Does NOT invent READY as a universal default.
+ * - Requires explicit canonical WeaponAction (IDLE, FIRING, RELOADING).
+ * - Does NOT invent IDLE as a universal default.
  * - Reuses existing assertWeaponAction to enforce runtime validation.
  * - Returns an Object.freeze'd immutable state wrapper as an implementation choice.
  */
@@ -882,7 +883,7 @@ export function doesStunBlockFiring(isStunned: boolean): boolean {
  * [SEMANTICALLY REQUIRED] GS-004 §2 mandates that if a character begins transitioning
  * from COVERED toward EXPOSED (TRANSITIONING_TO_EXPOSED) while RELOADING:
  * 1. Reload is cancelled immediately.
- * 2. Weapon Action immediately transitions to READY.
+ * 2. Weapon Action immediately transitions to IDLE.
  * 3. Incomplete reload progress is discarded (not preserved).
  * 4. Zero ammunition is granted to the magazine.
  *
@@ -895,14 +896,14 @@ export function doesStunBlockFiring(isStunned: boolean): boolean {
  * - If currentPosture !== CharacterPosture.TRANSITIONING_TO_EXPOSED, returns currentState unchanged.
  * - Returning the existing state reference unchanged is an implementation/API behavior only,
  *   NOT canonical gameplay semantics.
- * - When cancellation applies, returns a NEW WeaponActionState via createWeaponActionState(WeaponAction.READY).
+ * - When cancellation applies, returns a NEW WeaponActionState via createWeaponActionState(WeaponAction.IDLE).
  *   The existing WeaponActionState is never mutated, and no shared singleton state is introduced.
  *
  * CRITICAL AUTHORITY BOUNDARY (GS-004 §2):
- * - READY after reload cancellation denotes strictly that Weapon Action is no longer:
+ * - IDLE after reload cancellation denotes strictly that Weapon Action is no longer:
  *   - FIRING
  *   - RELOADING
- * - READY does NOT imply:
+ * - IDLE does NOT imply:
  *   - firing permission
  *   - ammunition availability
  *   - global actionability
@@ -928,7 +929,7 @@ export function cancelReloadOnPostureTransition(
     return currentState;
   }
 
-  return createWeaponActionState(WeaponAction.READY);
+  return createWeaponActionState(WeaponAction.IDLE);
 }
 
 /**
@@ -937,7 +938,7 @@ export function cancelReloadOnPostureTransition(
  * [SEMANTICALLY REQUIRED] GS-004 §2 and GS-005 §2 mandate that if a character receives
  * STUN while RELOADING:
  * 1. Reload is cancelled immediately.
- * 2. Weapon Action immediately transitions to READY.
+ * 2. Weapon Action immediately transitions to IDLE.
  * 3. Incomplete reload progress is discarded.
  * 4. Zero ammunition is granted.
  *
@@ -950,14 +951,14 @@ export function cancelReloadOnPostureTransition(
  * - If isStunned === false, returns currentState unchanged.
  * - Returning the existing state reference unchanged is an implementation/API behavior only,
  *   NOT canonical gameplay semantics.
- * - When cancellation applies, returns a NEW WeaponActionState via createWeaponActionState(WeaponAction.READY).
+ * - When cancellation applies, returns a NEW WeaponActionState via createWeaponActionState(WeaponAction.IDLE).
  *   The existing WeaponActionState is never mutated, and no shared singleton state is introduced.
  *
  * CRITICAL AUTHORITY BOUNDARY (GS-004 §2):
- * - READY after reload cancellation denotes strictly that Weapon Action is no longer:
+ * - IDLE after reload cancellation denotes strictly that Weapon Action is no longer:
  *   - FIRING
  *   - RELOADING
- * - READY does NOT imply:
+ * - IDLE does NOT imply:
  *   - firing permission
  *   - ammunition availability
  *   - global actionability
@@ -983,7 +984,7 @@ export function cancelReloadOnStun(
     return currentState;
   }
 
-  return createWeaponActionState(WeaponAction.READY);
+  return createWeaponActionState(WeaponAction.IDLE);
 }
 
 // ============================================================================

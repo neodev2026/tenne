@@ -794,17 +794,21 @@ describe('Headless, Orthogonal & Deterministic Execution (AS-001, AS-004, GS-001
 });
 
 describe('Weapon Action Concepts & Posture Firing Prerequisite (GS-001 §2, GS-003 §1)', () => {
-  it('exposes exactly three canonical Weapon Action values: READY, FIRING, RELOADING', () => {
-    expect(Object.keys(WeaponAction).sort()).toEqual(['FIRING', 'READY', 'RELOADING']);
-    expect(WeaponAction.READY).toBe('READY');
+  it('exposes exactly three canonical Weapon Action values: IDLE, FIRING, RELOADING', () => {
+    expect(Object.keys(WeaponAction).sort()).toEqual(['FIRING', 'IDLE', 'RELOADING']);
+    expect(WeaponAction.IDLE).toBe('IDLE');
     expect(WeaponAction.FIRING).toBe('FIRING');
     expect(WeaponAction.RELOADING).toBe('RELOADING');
+    expect('READY' in WeaponAction).toBe(false);
+    expect((WeaponAction as Record<string, unknown>).READY).toBeUndefined();
   });
 
   it('validates canonical Weapon Action values at runtime via isWeaponAction', () => {
-    expect(isWeaponAction('READY')).toBe(true);
+    expect(isWeaponAction('IDLE')).toBe(true);
     expect(isWeaponAction('FIRING')).toBe(true);
     expect(isWeaponAction('RELOADING')).toBe(true);
+    expect(isWeaponAction('READY')).toBe(false);
+    expect(isWeaponAction('CHARGING')).toBe(false);
     expect(isWeaponAction('INVALID_ACTION')).toBe(false);
     expect(isWeaponAction(123)).toBe(false);
     expect(isWeaponAction(null)).toBe(false);
@@ -814,9 +818,11 @@ describe('Weapon Action Concepts & Posture Firing Prerequisite (GS-001 §2, GS-0
   });
 
   it('enforces canonical Weapon Action values at runtime via assertWeaponAction', () => {
-    expect(() => assertWeaponAction('READY')).not.toThrow();
+    expect(() => assertWeaponAction('IDLE')).not.toThrow();
     expect(() => assertWeaponAction('FIRING')).not.toThrow();
     expect(() => assertWeaponAction('RELOADING')).not.toThrow();
+    expect(() => assertWeaponAction('READY')).toThrow(TypeError);
+    expect(() => assertWeaponAction('CHARGING')).toThrow(TypeError);
     expect(() => assertWeaponAction('UNKNOWN')).toThrow(TypeError);
     expect(() => assertWeaponAction(null)).toThrow(TypeError);
     expect(() => assertWeaponAction(undefined)).toThrow(TypeError);
@@ -923,10 +929,10 @@ describe('STUN Status & STUN-Specific Firing Blocker (GS-005 §1, §2, GS-009 §
 });
 
 describe('Weapon Action Explicit Domain State Representation (GS-001 §2)', () => {
-  it('represents READY weapon action via createWeaponActionState', () => {
-    const state: WeaponActionState = createWeaponActionState(WeaponAction.READY);
-    expect(state.action).toBe(WeaponAction.READY);
-    expect(state.action).toBe('READY');
+  it('represents IDLE weapon action via createWeaponActionState', () => {
+    const state: WeaponActionState = createWeaponActionState(WeaponAction.IDLE);
+    expect(state.action).toBe(WeaponAction.IDLE);
+    expect(state.action).toBe('IDLE');
   });
 
   it('represents FIRING weapon action via createWeaponActionState', () => {
@@ -941,7 +947,7 @@ describe('Weapon Action Explicit Domain State Representation (GS-001 §2)', () =
     expect(state.action).toBe('RELOADING');
   });
 
-  it('enforces explicit caller requirement with no default READY value', () => {
+  it('enforces explicit caller requirement with no default IDLE value', () => {
     // Calling with undefined or null must be rejected with TypeError (no default assumed)
     expect(() => createWeaponActionState(undefined as unknown as WeaponAction)).toThrow(TypeError);
     expect(() => createWeaponActionState(null as unknown as WeaponAction)).toThrow(TypeError);
@@ -949,6 +955,7 @@ describe('Weapon Action Explicit Domain State Representation (GS-001 §2)', () =
 
   it('rejects invalid runtime inputs consistently with domain validation conventions', () => {
     expect(() => createWeaponActionState('INVALID_ACTION' as unknown as WeaponAction)).toThrow(TypeError);
+    expect(() => createWeaponActionState('READY' as unknown as WeaponAction)).toThrow(TypeError);
     expect(() => createWeaponActionState('CHARGING' as unknown as WeaponAction)).toThrow(TypeError);
     expect(() => createWeaponActionState(123 as unknown as WeaponAction)).toThrow(TypeError);
     expect(() => createWeaponActionState({} as unknown as WeaponAction)).toThrow(TypeError);
@@ -957,7 +964,7 @@ describe('Weapon Action Explicit Domain State Representation (GS-001 §2)', () =
   });
 
   it('returns an immutable Object.freeze wrapper consistent with current Domain conventions', () => {
-    const state = createWeaponActionState(WeaponAction.READY);
+    const state = createWeaponActionState(WeaponAction.IDLE);
     expect(Object.isFrozen(state)).toBe(true);
     // @ts-expect-error Cannot assign to 'action' because it is a read-only property
     expect(() => { state.action = WeaponAction.FIRING; }).toThrow();
@@ -986,13 +993,13 @@ describe('Weapon Action Explicit Domain State Representation (GS-001 §2)', () =
 
 describe('Reload Cancellation State Transitions (GS-004 §2)', () => {
   describe('Posture-Triggered Reload Cancellation', () => {
-    it('cancels active reload and transitions to READY when beginning transition toward EXPOSED', () => {
+    it('cancels active reload and transitions to IDLE when beginning transition toward EXPOSED', () => {
       const reloading = createWeaponActionState(WeaponAction.RELOADING);
       const result = cancelReloadOnPostureTransition(reloading, CharacterPosture.TRANSITIONING_TO_EXPOSED);
 
-      // Returns READY
-      expect(result.action).toBe(WeaponAction.READY);
-      expect(result.action).toBe('READY');
+      // Returns IDLE
+      expect(result.action).toBe(WeaponAction.IDLE);
+      expect(result.action).toBe('IDLE');
 
       // Returns a new state object (not in-place mutation)
       expect(result).not.toBe(reloading);
@@ -1031,10 +1038,10 @@ describe('Reload Cancellation State Transitions (GS-004 §2)', () => {
       expect(result.action).toBe(WeaponAction.RELOADING);
     });
 
-    it('throws Error if currentState is READY (precondition contract: not reloading)', () => {
-      const ready = createWeaponActionState(WeaponAction.READY);
+    it('throws Error if currentState is IDLE (precondition contract: not reloading)', () => {
+      const idle = createWeaponActionState(WeaponAction.IDLE);
       expect(() =>
-        cancelReloadOnPostureTransition(ready, CharacterPosture.TRANSITIONING_TO_EXPOSED)
+        cancelReloadOnPostureTransition(idle, CharacterPosture.TRANSITIONING_TO_EXPOSED)
       ).toThrow(/Cannot cancel reload: character is not reloading/);
     });
 
@@ -1075,13 +1082,13 @@ describe('Reload Cancellation State Transitions (GS-004 §2)', () => {
   });
 
   describe('STUN-Triggered Reload Cancellation', () => {
-    it('cancels active reload and transitions to READY when isStunned is true', () => {
+    it('cancels active reload and transitions to IDLE when isStunned is true', () => {
       const reloading = createWeaponActionState(WeaponAction.RELOADING);
       const result = cancelReloadOnStun(reloading, true);
 
-      // Returns READY
-      expect(result.action).toBe(WeaponAction.READY);
-      expect(result.action).toBe('READY');
+      // Returns IDLE
+      expect(result.action).toBe(WeaponAction.IDLE);
+      expect(result.action).toBe('IDLE');
 
       // Returns a new state object (not in-place mutation)
       expect(result).not.toBe(reloading);
@@ -1102,9 +1109,9 @@ describe('Reload Cancellation State Transitions (GS-004 §2)', () => {
       expect(result.action).toBe(WeaponAction.RELOADING);
     });
 
-    it('throws Error if currentState is READY (precondition contract: not reloading)', () => {
-      const ready = createWeaponActionState(WeaponAction.READY);
-      expect(() => cancelReloadOnStun(ready, true)).toThrow(
+    it('throws Error if currentState is IDLE (precondition contract: not reloading)', () => {
+      const idle = createWeaponActionState(WeaponAction.IDLE);
+      expect(() => cancelReloadOnStun(idle, true)).toThrow(
         /Cannot cancel reload: character is not reloading/
       );
     });
@@ -1134,7 +1141,7 @@ describe('Reload Cancellation State Transitions (GS-004 §2)', () => {
   });
 
   describe('Authority Boundary & Headless Execution Integrity (GS-004 §2, AS-001, AS-004)', () => {
-    it('verifies READY after cancellation denotes strictly non-firing and non-reloading status', () => {
+    it('verifies IDLE after cancellation denotes strictly non-firing and non-reloading status', () => {
       const reloading = createWeaponActionState(WeaponAction.RELOADING);
       const postPostureCancel = cancelReloadOnPostureTransition(
         reloading,
@@ -1142,19 +1149,34 @@ describe('Reload Cancellation State Transitions (GS-004 §2)', () => {
       );
       const postStunCancel = cancelReloadOnStun(reloading, true);
 
-      // Both result in READY
-      expect(postPostureCancel.action).toBe(WeaponAction.READY);
-      expect(postStunCancel.action).toBe(WeaponAction.READY);
+      // Both result in IDLE
+      expect(postPostureCancel.action).toBe(WeaponAction.IDLE);
+      expect(postStunCancel.action).toBe(WeaponAction.IDLE);
 
       // Critical Authority Boundary verification:
-      // READY after cancellation does NOT imply posture prerequisite satisfaction
+      // IDLE after cancellation does NOT imply posture prerequisite satisfaction
       expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.TRANSITIONING_TO_EXPOSED)).toBe(false);
       expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.COVERED)).toBe(false);
 
-      // READY after cancellation does NOT imply absence of STUN
+      // IDLE after cancellation does NOT imply absence of STUN
       expect(doesStunBlockFiring(true)).toBe(true);
 
       // Neither function alters posture, STUN status, ammo, or global actionability
+    });
+
+    it('confirms IDLE alone does NOT imply firing posture, non-STUN, ammo availability, or global actionability', () => {
+      const idleState = createWeaponActionState(WeaponAction.IDLE);
+      expect(idleState.action).toBe(WeaponAction.IDLE);
+
+      // IDLE does not imply posture-side firing prerequisite (posture remains independent)
+      expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.COVERED)).toBe(false);
+      expect(doesPostureSatisfyFiringPrerequisite(CharacterPosture.TRANSITIONING_TO_EXPOSED)).toBe(false);
+
+      // IDLE does not imply absence of STUN
+      expect(doesStunBlockFiring(true)).toBe(true);
+
+      // IDLE state has strictly only the 'action' property, no ammo or actionability fields
+      expect(Object.keys(idleState)).toEqual(['action']);
     });
 
     it('operates as pure, deterministic state transformations with zero browser globals', () => {
@@ -1289,7 +1311,7 @@ describe('Magazine Ammunition Explicit Domain State (GS-003 §2, AS-002)', () =>
   it('preserves structural independence from WeaponActionState, CharacterPostureState, and STUN', () => {
     const ammoState = createMagazineAmmoState(15);
     const postureState = createInitialCharacterPostureState(CharacterPosture.COVERED);
-    const weaponActionState = createWeaponActionState(WeaponAction.READY);
+    const weaponActionState = createWeaponActionState(WeaponAction.IDLE);
 
     // Ammo state has only current property
     expect(Object.keys(ammoState)).toEqual(['current']);
@@ -1298,7 +1320,7 @@ describe('Magazine Ammunition Explicit Domain State (GS-003 §2, AS-002)', () =>
     // Existing queries remain unaffected
     expect(doesPostureSatisfyFiringPrerequisite(postureState.posture)).toBe(false);
     expect(doesStunBlockFiring(false)).toBe(false);
-    expect(weaponActionState.action).toBe(WeaponAction.READY);
+    expect(weaponActionState.action).toBe(WeaponAction.IDLE);
   });
 
   it('operates headlessly with zero browser globals and preserves gameplayImplemented: false', () => {
