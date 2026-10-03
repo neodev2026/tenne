@@ -1,0 +1,13 @@
+{
+  "id": "T-020",
+  "title": "Represent Magazine Ammunition as Explicit Domain State",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-020-magazine-ammo-state",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "MAGAZINE_AMMO_STATE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-03T11:01:00+02:00"
+}

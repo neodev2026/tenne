@@ -18,7 +18,8 @@
  * Weapon Action concepts and posture-side firing eligibility. T-014 implements
  * STUN status representation and STUN-specific firing blocker. T-017 implements
  * Weapon Action explicit domain state. T-019 implements canonical reload
- * cancellation domain state transitions (GS-004 §2). Full combat gameplay behaviors
+ * cancellation domain state transitions (GS-004 §2). T-020 implements
+ * Magazine Ammunition explicit domain state (GS-003 §2, AS-002). Full combat gameplay behaviors
  * remain unimplemented (gameplayImplemented: false).
  */
 
@@ -983,5 +984,74 @@ export function cancelReloadOnStun(
   }
 
   return createWeaponActionState(WeaponAction.READY);
+}
+
+// ============================================================================
+// Magazine Ammunition State (GS-003 §2, AS-002)
+// ============================================================================
+
+/**
+ * Magazine ammunition count represented as a non-negative safe integer.
+ *
+ * [SEMANTICALLY REQUIRED]:
+ * - GS-003 §2 canonically establishes that magazine ammo reaches 0 when the final round is fired.
+ * - GS-004 §2 establishes zero ammunition granted on reload cancellation.
+ * - AS-001 and AS-002 establish that combat ammo state belongs in the deterministic Domain layer.
+ *
+ * [IMPLEMENTATION CHOICE / API CONTRACT]:
+ * - Represented as a JavaScript number validated with Number.isSafeInteger() and value >= 0.
+ * - Negative-value rejection (value >= 0) is a Human-approved API/data-safety precondition.
+ *   It is NOT a newly declared canonical gameplay semantic.
+ * - Ammo-consumption-per-shot mechanics and magazine capacities remain unresolved under GAP-GS-002
+ *   and are intentionally unmodeled.
+ * - Reserve ammunition and reload completion/replenishment remain unresolved under GAP-GS-003
+ *   and are intentionally unmodeled.
+ * - The domain does not yet canonically define structural ownership decomposition between
+ *   character and weapon.
+ */
+export type MagazineAmmo = number;
+
+export function isMagazineAmmo(value: unknown): value is MagazineAmmo {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
+export function assertMagazineAmmo(
+  value: unknown,
+  context = 'MagazineAmmo'
+): asserts value is MagazineAmmo {
+  if (!isMagazineAmmo(value)) {
+    throw new TypeError(
+      `[${context}] Invalid magazine ammo: expected non-negative safe integer, received ${typeof value} (${String(value)})`
+    );
+  }
+}
+
+/**
+ * Magazine Ammunition State wrapper.
+ *
+ * [IMPLEMENTATION CHOICE] Represents the current ammunition count for a magazine.
+ * Plain readonly data container consistent with WeaponActionState and SquadPostureIntentState.
+ * Does not model magazine capacity (GAP-GS-002), reserve ammunition (GAP-GS-003),
+ * reload timing, firing consumption, ammo decrement, or ammo mutations.
+ */
+export interface MagazineAmmoState {
+  readonly current: MagazineAmmo;
+}
+
+/**
+ * Creates a MagazineAmmoState requiring an explicit caller-supplied ammo count.
+ *
+ * Authority Boundary:
+ * - Requires explicit caller-supplied MagazineAmmo (non-negative safe integer).
+ * - Does NOT invent a default initial ammo count (no default 0 or full).
+ * - Validates input at runtime via assertMagazineAmmo.
+ * - Returns an Object.freeze'd immutable state wrapper as an implementation choice.
+ * - Does NOT introduce a singleton.
+ */
+export function createMagazineAmmoState(current: MagazineAmmo): MagazineAmmoState {
+  assertMagazineAmmo(current, 'createMagazineAmmoState');
+  return Object.freeze({
+    current,
+  });
 }
 
