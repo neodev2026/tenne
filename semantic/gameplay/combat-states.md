@@ -12,7 +12,7 @@
 * **Domain**: Gameplay
 * **Status**: Approved (Canonical)
 * **Tags**: `combat`, `state-machine`, `posture`, `weapon-action`
-* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009).
+* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009). Weapon Action baseline vocabulary refactored from READY to IDLE authorized under Guardrail G-041 (Task T-021).
 
 ### Specification
 Character combat state is governed by two distinct, orthogonal state machine axes: **Posture** and **Weapon Action**. These axes must never be collapsed into a single state.
@@ -24,13 +24,13 @@ Character combat state is governed by two distinct, orthogonal state machine axe
    * `TRANSITIONING_TO_EXPOSED`: Character is actively transitioning from covered to exposed posture.
 
 2. **Weapon Action Axis**:
-   * `READY`: Weapon is operable and awaiting input or firing conditions.
+   * `IDLE`: No active weapon action is currently in progress (the weapon is not currently `FIRING` or `RELOADING`).
    * `FIRING`: Weapon is actively discharging a round or burst.
    * `RELOADING`: A reload action is currently in progress.
 
 3. **Orthogonality Invariant**:
    * `COVERED != RELOADING`. Being in cover does not imply reloading, and reloading does not define posture.
-   * Combinations such as `COVERED + READY` (e.g. holding in cover with full or partial magazine) and `COVERED + RELOADING` are distinct, valid state combinations.
+   * Combinations such as `COVERED + IDLE` (e.g. holding in cover with full or partial magazine) and `COVERED + RELOADING` are distinct, valid state combinations.
 
 ### Semantic Gap Lineage: GAP-GS-001
 * **Portion Resolved by T-009**: Defined discrete Posture states, discrete Weapon Action states, and their orthogonal separation.
@@ -103,7 +103,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 * **Domain**: Gameplay
 * **Status**: Approved (Canonical)
 * **Tags**: `combat`, `reload`, `cancellation`, `stun`
-* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009). Reload cancellation target state authorized under Guardrail G-041 (Task T-018).
+* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009). Reload cancellation target state authorized under Guardrail G-041 (Task T-018). Weapon Action baseline vocabulary refactored from READY to IDLE authorized under Guardrail G-041 (Task T-021).
 
 ### Specification
 1. **Cover-Triggered Reload Condition**:
@@ -112,28 +112,31 @@ Character combat state is governed by two distinct, orthogonal state machine axe
      * The character is fully `COVERED` (reload does not start during `TRANSITIONING_TO_COVERED`).
      * The weapon magazine is not full.
      * The character is not already `RELOADING`.
-   * If the magazine is already full upon entering or holding in cover, `COVERED + READY` is maintained.
+   * If the magazine is already full upon entering or holding in cover, `COVERED + IDLE` is maintained.
 
 2. **Reload Cancellation**:
    * If a character begins transitioning from `COVERED` toward `EXPOSED` (`TRANSITIONING_TO_EXPOSED`) while `RELOADING`:
      * Reload is **cancelled immediately**.
-     * Weapon Action immediately transitions to `READY`.
+     * Weapon Action immediately transitions to `IDLE`.
      * Incomplete reload progress is discarded (not preserved).
      * Zero ammunition is granted to the magazine.
    * If a character receives `STUN` while `RELOADING`:
      * Reload is **cancelled immediately**.
-     * Weapon Action immediately transitions to `READY`.
+     * Weapon Action immediately transitions to `IDLE`.
      * Incomplete reload progress is discarded.
      * Zero ammunition is granted.
    * Invariant: Reload is never merely paused; an interrupted reload is fully cancelled.
-   * **Authority Boundary for Post-Cancellation READY**:
-     * `READY` after reload cancellation denotes strictly that the weapon is no longer `FIRING` or `RELOADING`.
-     * `READY` does **not** imply:
+   * **Authority Boundary for Post-Cancellation IDLE**:
+     * `IDLE` after reload cancellation denotes strictly that the weapon is no longer `FIRING` or `RELOADING`.
+     * `IDLE` does **not** imply:
        * firing permission
        * ammunition availability
-       * global actionability
+       * ammo > 0
        * absence of `STUN`
-       * satisfaction of posture prerequisites
+       * `CharacterPosture.EXPOSED`
+       * satisfaction of firing posture prerequisites
+       * global character actionability
+       * reload eligibility
 
 3. **Post-STUN Reload Resumption**:
    * If `STUN` expires while:
@@ -145,6 +148,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 ### Semantic Gap Lineage: GAP-GS-003
 * **Portion Resolved by T-009**: Established reload as a Weapon Action, automatic cover-triggered entry invariant, cancellation semantics upon uncovering or stun (no progress preservation, zero ammo gained), and post-stun restart conditions.
 * **Portion Resolved by T-018**: Established explicit post-cancellation Weapon Action target state (`READY`) for uncover-triggered and STUN-triggered reload cancellation with explicit authority boundary.
+* **Portion Resolved by T-021**: Refactored Weapon Action baseline vocabulary and post-cancellation target state from `READY` to `IDLE`, preserving cancellation topology and authority boundary.
 * **Remaining Unresolved Items**: Exact reload duration in simulation time, whether manual reload input exists, and reserve ammunition rules remain open pending domain specification.
 
 ---
