@@ -36,6 +36,11 @@ import {
   doesStunBlockFiring,
   cancelReloadOnPostureTransition,
   cancelReloadOnStun,
+  type MagazineAmmo,
+  isMagazineAmmo,
+  assertMagazineAmmo,
+  type MagazineAmmoState,
+  createMagazineAmmoState,
 } from '../src/game/domain/index.ts';
 import { getApplicationState } from '../src/game/application/index.ts';
 
@@ -1172,6 +1177,136 @@ describe('Reload Cancellation State Transitions (GS-004 §2)', () => {
       expect(domain.deterministic).toBe(true);
       expect(domain.gameplayImplemented).toBe(false);
     });
+  });
+});
+
+describe('Magazine Ammunition Explicit Domain State (GS-003 §2, AS-002)', () => {
+  it('validates 0 and positive safe integers via isMagazineAmmo', () => {
+    // 0 is valid (GS-003 §2: magazine ammo reaches 0)
+    expect(isMagazineAmmo(0)).toBe(true);
+    // Positive safe integers are valid
+    expect(isMagazineAmmo(1)).toBe(true);
+    expect(isMagazineAmmo(30)).toBe(true);
+    expect(isMagazineAmmo(100)).toBe(true);
+    expect(isMagazineAmmo(Number.MAX_SAFE_INTEGER)).toBe(true);
+  });
+
+  it('asserts 0 and positive safe integers without throwing via assertMagazineAmmo', () => {
+    expect(() => assertMagazineAmmo(0)).not.toThrow();
+    expect(() => assertMagazineAmmo(1)).not.toThrow();
+    expect(() => assertMagazineAmmo(30)).not.toThrow();
+    expect(() => assertMagazineAmmo(Number.MAX_SAFE_INTEGER)).not.toThrow();
+  });
+
+  it('rejects negative integers via isMagazineAmmo and assertMagazineAmmo', () => {
+    expect(isMagazineAmmo(-1)).toBe(false);
+    expect(isMagazineAmmo(-30)).toBe(false);
+    expect(isMagazineAmmo(Number.MIN_SAFE_INTEGER)).toBe(false);
+    expect(() => assertMagazineAmmo(-1)).toThrow(TypeError);
+    expect(() => assertMagazineAmmo(-30)).toThrow(TypeError);
+    expect(() => assertMagazineAmmo(Number.MIN_SAFE_INTEGER)).toThrow(TypeError);
+  });
+
+  it('rejects fractional numbers via isMagazineAmmo and assertMagazineAmmo', () => {
+    expect(isMagazineAmmo(0.5)).toBe(false);
+    expect(isMagazineAmmo(1.1)).toBe(false);
+    expect(isMagazineAmmo(29.99)).toBe(false);
+    expect(isMagazineAmmo(Math.PI)).toBe(false);
+    expect(() => assertMagazineAmmo(0.5)).toThrow(TypeError);
+    expect(() => assertMagazineAmmo(Math.PI)).toThrow(TypeError);
+  });
+
+  it('rejects numbers beyond safe integer range via isMagazineAmmo and assertMagazineAmmo', () => {
+    expect(isMagazineAmmo(Number.MAX_SAFE_INTEGER + 1)).toBe(false);
+    expect(isMagazineAmmo(Number.MIN_SAFE_INTEGER - 1)).toBe(false);
+    expect(() => assertMagazineAmmo(Number.MAX_SAFE_INTEGER + 1)).toThrow(TypeError);
+  });
+
+  it('rejects NaN, Infinity, and -Infinity via isMagazineAmmo and assertMagazineAmmo', () => {
+    expect(isMagazineAmmo(Number.NaN)).toBe(false);
+    expect(isMagazineAmmo(Number.POSITIVE_INFINITY)).toBe(false);
+    expect(isMagazineAmmo(Number.NEGATIVE_INFINITY)).toBe(false);
+    expect(() => assertMagazineAmmo(Number.NaN)).toThrow(TypeError);
+    expect(() => assertMagazineAmmo(Number.POSITIVE_INFINITY)).toThrow(TypeError);
+    expect(() => assertMagazineAmmo(Number.NEGATIVE_INFINITY)).toThrow(TypeError);
+  });
+
+  it('rejects non-number runtime inputs via isMagazineAmmo and assertMagazineAmmo', () => {
+    expect(isMagazineAmmo('0')).toBe(false);
+    expect(isMagazineAmmo('30')).toBe(false);
+    expect(isMagazineAmmo(true)).toBe(false);
+    expect(isMagazineAmmo(false)).toBe(false);
+    expect(isMagazineAmmo(null)).toBe(false);
+    expect(isMagazineAmmo(undefined)).toBe(false);
+    expect(isMagazineAmmo({})).toBe(false);
+    expect(isMagazineAmmo([])).toBe(false);
+
+    expect(() => assertMagazineAmmo('30')).toThrow(TypeError);
+    expect(() => assertMagazineAmmo(true)).toThrow(TypeError);
+    expect(() => assertMagazineAmmo(null)).toThrow(TypeError);
+    expect(() => assertMagazineAmmo(undefined)).toThrow(TypeError);
+    expect(() => assertMagazineAmmo({})).toThrow(TypeError);
+    expect(() => assertMagazineAmmo([])).toThrow(TypeError);
+  });
+
+  it('creates MagazineAmmoState with 0 preserving explicit value (GS-003 §2)', () => {
+    const state: MagazineAmmoState = createMagazineAmmoState(0);
+    expect(state.current).toBe(0);
+  });
+
+  it('creates MagazineAmmoState with positive safe integer preserving explicit value', () => {
+    const state: MagazineAmmoState = createMagazineAmmoState(30);
+    expect(state.current).toBe(30);
+
+    const singleRoundState: MagazineAmmoState = createMagazineAmmoState(1);
+    expect(singleRoundState.current).toBe(1);
+  });
+
+  it('creates MagazineAmmoState with Number.MAX_SAFE_INTEGER preserving explicit value', () => {
+    const state: MagazineAmmoState = createMagazineAmmoState(Number.MAX_SAFE_INTEGER);
+    expect(state.current).toBe(Number.MAX_SAFE_INTEGER);
+  });
+
+  it('requires explicit caller-supplied current value with no default 0 or full', () => {
+    expect(() => createMagazineAmmoState(undefined as unknown as MagazineAmmo)).toThrow(TypeError);
+    expect(() => createMagazineAmmoState(null as unknown as MagazineAmmo)).toThrow(TypeError);
+  });
+
+  it('rejects invalid numeric and non-numeric inputs in createMagazineAmmoState', () => {
+    expect(() => createMagazineAmmoState(-1 as unknown as MagazineAmmo)).toThrow(TypeError);
+    expect(() => createMagazineAmmoState(1.5 as unknown as MagazineAmmo)).toThrow(TypeError);
+    expect(() => createMagazineAmmoState(Number.NaN as unknown as MagazineAmmo)).toThrow(TypeError);
+    expect(() => createMagazineAmmoState('30' as unknown as MagazineAmmo)).toThrow(TypeError);
+  });
+
+  it('returns an immutable Object.freeze wrapper', () => {
+    const state = createMagazineAmmoState(30);
+    expect(Object.isFrozen(state)).toBe(true);
+    // @ts-expect-error Cannot assign to 'current' because it is a read-only property
+    expect(() => { state.current = 29; }).toThrow();
+  });
+
+  it('preserves structural independence from WeaponActionState, CharacterPostureState, and STUN', () => {
+    const ammoState = createMagazineAmmoState(15);
+    const postureState = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const weaponActionState = createWeaponActionState(WeaponAction.READY);
+
+    // Ammo state has only current property
+    expect(Object.keys(ammoState)).toEqual(['current']);
+    expect(ammoState.current).toBe(15);
+
+    // Existing queries remain unaffected
+    expect(doesPostureSatisfyFiringPrerequisite(postureState.posture)).toBe(false);
+    expect(doesStunBlockFiring(false)).toBe(false);
+    expect(weaponActionState.action).toBe(WeaponAction.READY);
+  });
+
+  it('operates headlessly with zero browser globals and preserves gameplayImplemented: false', () => {
+    expect(typeof window).toBe('undefined');
+    const domain = getDomainState();
+    expect(domain.layer).toBe('domain');
+    expect(domain.deterministic).toBe(true);
+    expect(domain.gameplayImplemented).toBe(false);
   });
 });
 
