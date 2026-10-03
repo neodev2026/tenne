@@ -1,0 +1,13 @@
+{
+  "id": "T-021",
+  "title": "Refactor Weapon Action Baseline Vocabulary from READY to IDLE",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-021-ready-to-idle-semantics",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-03T12:00:00+02:00"
+}

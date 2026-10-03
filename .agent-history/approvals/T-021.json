@@ -1,0 +1,55 @@
+{
+  "taskId": "T-021",
+  "approvedAt": "2026-10-03T12:00:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Refactor Weapon Action Baseline Vocabulary from READY to IDLE",
+    "targetBranch": "agent/t-021-ready-to-idle-semantics",
+    "baseCommit": "6e634a5187eaa5fb9c9f440766cc06caa803ebbc",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "semantic/gameplay/combat-states.md",
+      ".agent-history/tasks/T-021.json",
+      ".agent-history/approvals/T-021.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 4 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": "Explicit human semantic authorization under Guardrail G-041 to refactor canonical Weapon Action baseline vocabulary from READY to IDLE in semantic/gameplay/combat-states.md (GS-001 §2, §3, and GS-004 §1, §2)",
+    "g042Authorization": false,
+    "semanticChange": "Refactor canonical WeaponAction baseline value from READY to IDLE across semantic/gameplay/combat-states.md (GS-001 §2, GS-001 §3, GS-004 §1, GS-004 §2), establishing IDLE as denoting that no active weapon action is currently in progress (neither FIRING nor RELOADING), while preserving transition topology and authority boundary without implying firing permission, ammo presence, actionability, non-stunned status, or exposed posture",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Update semantic/gameplay/combat-states.md rule GS-001 §2 (Weapon Action Axis) value list and definition from READY to IDLE",
+      "Update GS-001 §3 and GS-004 §1 examples from COVERED + READY to COVERED + IDLE",
+      "Update GS-004 §2 (Reload Cancellation) target state from READY to IDLE for both uncover-triggered and STUN-triggered reload cancellation",
+      "Update GS-004 §2 Authority Boundary heading and text to Post-Cancellation IDLE",
+      "Update GS-001 and GS-004 Human Semantic Authorization headers and lineage notes to record T-021 vocabulary refactor",
+      "Zero modifications to src/game/ or tests/ (implementation deferred to subsequent task)"
+    ],
+    "deferredScope": [
+      "Domain code implementation of WeaponAction.IDLE, factories, and transitions in src/game/domain/index.ts deferred to subsequent task",
+      "Unit test updates in tests/game-domain.test.ts deferred to subsequent task",
+      "CHARGING value and charge-session mechanics deferred under GAP-GS-005",
+      "Ammo-depletion WeaponAction transitions (FIRING -> IDLE upon magazine ammo reaching 0) and auto-cover deferred to subsequent semantic task",
+      "Firing cadence, rate of fire, fire intervals, and ammo consumption per shot deferred under GAP-GS-002",
+      "Reload simulation duration, manual reload existence, and reserve ammunition rules deferred under GAP-GS-003",
+      "STUN simulation duration, multiple-STUN resolution, and charge session interactions deferred under GAP-GS-005",
+      "Controlled character routing and account-scoped Auto-Fire preference deferred under GS-009",
+      "Global canFire, combined firing predicates, and global actionability deferred",
+      "Application and Presentation layer changes deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 4 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is TRUE (explicit human owner decision).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Human Semantic Decision: Replace canonical WeaponAction baseline value READY with IDLE, defined as no active weapon action currently in progress (neither FIRING nor RELOADING).",
+    "Authority boundary: IDLE after reload cancellation denotes strictly that the weapon is no longer FIRING or RELOADING; IDLE does NOT imply firing permission, ammunition availability, ammo > 0, absence of STUN, CharacterPosture.EXPOSED, satisfaction of firing posture prerequisites, global character actionability, or reload eligibility.",
+    "This is a semantic vocabulary refinement preserving established transition topology (RELOADING -> IDLE on cancellation); behavioral meaning is unchanged.",
+    "Historical T-017 through T-020 records and events are preserved without modification.",
+    "CHARGING is NOT added and remains deferred under GAP-GS-005.",
+    "Ammo depletion WeaponAction transitions remain unresolved in T-021 and are deferred to a later task.",
+    "Zero Domain/Application/Presentation implementation files are modified in T-021."
+  ]
+}
