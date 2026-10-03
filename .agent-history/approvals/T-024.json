@@ -1,0 +1,58 @@
+{
+  "taskId": "T-024",
+  "approvedAt": "2026-10-03T17:40:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Canonical Ammo-Depletion Domain Transition API",
+    "targetBranch": "agent/t-024-ammo-depletion-domain",
+    "baseCommit": "4801e32193b1d0df2ec634d83b620d7a982eb5af",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/domain/index.ts",
+      "tests/game-domain.test.ts",
+      ".agent-history/tasks/T-024.json",
+      ".agent-history/approvals/T-024.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Define AmmoDepletionResponse interface in src/game/domain/index.ts containing readonly weaponAction: WeaponActionState and readonly characterPosture: CharacterPostureState",
+      "Implement resolveAmmoDepletionResponse(currentWeaponAction, currentPosture): AmmoDepletionResponse in src/game/domain/index.ts",
+      "Validate runtime types via existing assertWeaponAction and assertCharacterPosture throwing TypeError on invalid inputs",
+      "Enforce API preconditions: require currentWeaponAction.action === WeaponAction.FIRING and currentPosture.posture === CharacterPosture.EXPOSED, throwing Error on violations without inactive-trigger no-op fallback",
+      "Atomically return frozen AmmoDepletionResponse pairing createWeaponActionState(WeaponAction.IDLE) and internal createBrandedPostureState(CharacterPosture.TRANSITIONING_TO_COVERED)",
+      "Preserve input state immutability and freeze outer response container",
+      "Preserve ammo boundary: do NOT accept MagazineAmmoState, inspect ammo count, or introduce ammo decrement/consumption/capacity",
+      "Preserve squad intent boundary: do NOT accept SquadPostureIntent or mutate squad intent",
+      "Preserve reload boundary: do NOT initiate reload, return RELOADING, or introduce reload timing",
+      "Add comprehensive unit test suite in tests/game-domain.test.ts covering canonical coordinated transition, immutability, precondition rejections, runtime type rejections, authority boundaries, and headless isolation",
+      "Preserve getDomainState().gameplayImplemented === false"
+    ],
+    "deferredScope": [
+      "Ammo decrement, consumption per shot, capacity, and reserve ammo deferred under GAP-GS-002 and GAP-GS-003",
+      "Rate of fire, fire interval, recoil timing, projectile vs hitscan, and firing cadence deferred under GAP-GS-002 and GAP-GS-004",
+      "Reload duration, manual reload, reload completion, and replenishment deferred under GAP-GS-003",
+      "CHARGING value and charge sessions deferred under GAP-GS-005",
+      "Global canFire, Auto-Fire execution behavior, EventBatch integration, EffectIntent integration, and Application/Presentation integration deferred",
+      "Semantic and guardrail changes deferred (G-041 false, G-042 false)"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified; canonical semantics established in T-023).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Human Design Decision: Use one compound pure Domain operation with a dedicated immutable result type named AmmoDepletionResponse and function named resolveAmmoDepletionResponse.",
+    "Preconditions: Calling resolveAmmoDepletionResponse when currentWeaponAction.action !== FIRING or currentPosture.posture !== EXPOSED throws Error. No inactive-trigger no-op behavior.",
+    "Ammo boundary: MagazineAmmoState is not passed, inspected, or validated. Ammo decrement/mutation is deferred.",
+    "Squad Posture Intent boundary: SquadPostureIntent is not passed, inspected, or mutated.",
+    "Reload boundary: Result weapon action is IDLE; reload does not start during TRANSITIONING_TO_COVERED.",
+    "Authority boundary: Post-depletion IDLE denotes strictly that no active FIRING or RELOADING weapon action is in progress; it does NOT imply firing permission, ammo availability, ammo > 0, absence of STUN, CharacterPosture.EXPOSED, satisfaction of firing posture prerequisites, global character actionability, or reload eligibility.",
+    "Preserve getDomainState() with gameplayImplemented: false.",
+    "Historical T-000 through T-023 records and events are preserved without modification."
+  ]
+}
