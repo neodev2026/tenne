@@ -1,0 +1,13 @@
+{
+  "id": "T-023",
+  "title": "Specify Canonical Ammo-Depletion WeaponAction and Auto-Cover Response",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-023-ammo-depletion-semantics",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-03T16:20:00+02:00"
+}

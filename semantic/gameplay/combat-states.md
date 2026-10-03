@@ -71,7 +71,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 * **Domain**: Gameplay
 * **Status**: Approved (Canonical)
 * **Tags**: `combat`, `firing`, `posture`, `ammo`
-* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009).
+* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009). Canonical ammo-depletion WeaponAction transition and auto-cover response authorized under Guardrail G-041 (Task T-023).
 
 ### Specification
 1. **Firing Posture Invariant**:
@@ -79,11 +79,34 @@ Character combat state is governed by two distinct, orthogonal state machine axe
    * Firing is prohibited while `COVERED`, `TRANSITIONING_TO_COVERED`, or `TRANSITIONING_TO_EXPOSED`.
    * When a transition to `EXPOSED` completes, firing eligibility is reevaluated.
 
-2. **Ammo Depletion Auto-Cover**:
-   * When an `EXPOSED` character fires the final round from their magazine (magazine ammo reaches 0):
-     * Active firing ends immediately.
-     * The character automatically begins transition toward `COVERED` (`TRANSITIONING_TO_COVERED`).
-     * The global Squad Posture Intent is **not** modified.
+2. **Ammo Depletion Auto-Cover Response**:
+   * **Trigger**:
+     * When an `EXPOSED` character fires the final round from the magazine and magazine ammo reaches 0:
+       * Active firing ends immediately.
+       * Weapon Action immediately transitions: `FIRING` -> `IDLE`.
+       * The character automatically begins transition toward `COVERED` (`EXPOSED` -> `TRANSITIONING_TO_COVERED`).
+   * **Coordinated Response Invariant**:
+     * The Weapon Action transition to `IDLE` and the posture transition to `TRANSITIONING_TO_COVERED` are part of the same canonical ammo-depletion response.
+     * No persistent or externally observable combat state may remain in which:
+       `WeaponAction == FIRING` while `CharacterPosture == TRANSITIONING_TO_COVERED`.
+   * **Squad Posture Intent Invariance**:
+     * The global Squad Posture Intent is **not** modified by this character-local automatic response.
+   * **Reload Timing Boundary**:
+     * Reload does **not** begin during `TRANSITIONING_TO_COVERED`.
+     * Reload may only begin later when the character is fully `COVERED` and all existing reload prerequisites are satisfied under `GS-004`.
+   * **Authority Boundary for Post-Depletion IDLE**:
+     * `IDLE` after ammo depletion denotes strictly that no active `FIRING` or `RELOADING` weapon action is in progress.
+     * `IDLE` does **not** imply:
+       * firing permission
+       * ammunition availability
+       * ammo > 0
+       * absence of `STUN`
+       * `CharacterPosture.EXPOSED`
+       * satisfaction of firing posture prerequisites
+       * global character actionability
+       * reload eligibility
+       * reload start
+       * successful ammo replenishment
 
 3. **Ammo-Depletion Reload Return**:
    * After the automatic ammo-depletion cover transition completes, reload proceeds in `COVERED` according to rule `GS-004`.
@@ -93,6 +116,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 
 ### Semantic Gap Lineage: GAP-GS-002 & GAP-GS-004
 * **Portion Resolved by T-009**: Established strict exposure invariant for firing, ammo depletion trigger, automatic cover transition, and reload-completion return routing based on Squad Posture Intent. Ammo exhaustion is formally retired as an independent top-level combat state.
+* **Portion Resolved by T-023**: Specified canonical ammo-depletion response upon firing final round and reaching magazine ammo 0: immediate cessation of active firing, coordinated transition of Weapon Action (`FIRING` -> `IDLE`) and posture (`EXPOSED` -> `TRANSITIONING_TO_COVERED`), prohibition of persistent `FIRING + TRANSITIONING_TO_COVERED` state, invariance of global Squad Posture Intent, reload deferral until fully `COVERED` under GS-004, and post-depletion `IDLE` authority boundary.
 * **Remaining Unresolved Items**:
   * `GAP-GS-002`: Rate of fire, fire interval, projectile vs. hitscan resolution, recoil timing, ammo consumption per shot, and magazine capacities.
   * `GAP-GS-004`: Weapon-specific firing cycle re-entry cadence upon returning to `EXPOSED` (cadence preservation vs. immediate cycle reset).

@@ -1,0 +1,47 @@
+{
+  "taskId": "T-023",
+  "approvedAt": "2026-10-03T16:20:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Specify Canonical Ammo-Depletion WeaponAction and Auto-Cover Response",
+    "targetBranch": "agent/t-023-ammo-depletion-semantics",
+    "baseCommit": "03d47385852c3c72509863dae743d56b331b4fbd",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "semantic/gameplay/combat-states.md",
+      ".agent-history/tasks/T-023.json",
+      ".agent-history/approvals/T-023.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 4 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": "Explicit human semantic authorization under Guardrail G-041 to specify canonical ammo-depletion WeaponAction transition and auto-cover response in semantic/gameplay/combat-states.md (GS-003 §2)",
+    "g042Authorization": false,
+    "semanticChange": "Update canonical GS-003 §2 in semantic/gameplay/combat-states.md to specify that when an EXPOSED character fires the final round from the magazine and magazine ammo reaches 0: active firing ends immediately, WeaponAction immediately transitions from FIRING to IDLE, posture immediately transitions from EXPOSED to TRANSITIONING_TO_COVERED, these transitions form one coordinated ammo-depletion response, no persistent FIRING + TRANSITIONING_TO_COVERED state is valid, global Squad Posture Intent is not modified, reload does not begin during TRANSITIONING_TO_COVERED and requires fully COVERED posture under GS-004 prerequisites, and post-depletion IDLE is bounded by an explicit authority boundary",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Update semantic/gameplay/combat-states.md rule GS-003 §2 (Ammo Depletion Auto-Cover Response) with trigger (EXPOSED character fires final round, magazine ammo reaches 0), immediate WeaponAction transition (FIRING -> IDLE), immediate posture transition (EXPOSED -> TRANSITIONING_TO_COVERED), immediate cessation of active firing, preservation of Squad Posture Intent, coordinated response invariant prohibiting persistent FIRING + TRANSITIONING_TO_COVERED state, reload deferral until fully COVERED under GS-004, and post-depletion IDLE authority boundary",
+      "Update GS-003 Human Semantic Authorization header to record T-023 canonical ammo-depletion WeaponAction transition and auto-cover response",
+      "Update GS-003 Semantic Gap Lineage (GAP-GS-002 & GAP-GS-004) to record the portion resolved by T-023 while explicitly retaining GAP-GS-002 and GAP-GS-004 unresolved items",
+      "Zero modifications to src/game/ or tests/ (Domain implementation strictly deferred)"
+    ],
+    "deferredScope": [
+      "Domain code implementation of ammo-depletion compound transitions, APIs, and tests deferred to subsequent task",
+      "Ammo decrement, ammo consumption per shot, how current ammo changes from N to 0, magazine capacities, and reserve ammunition deferred under GAP-GS-002 and GAP-GS-003",
+      "Rate of fire, fire interval, recoil timing, projectile vs hitscan behavior, and re-entry/cadence deferred under GAP-GS-002 and GAP-GS-004",
+      "Reload duration, manual reload, reload completion behavior, and reload replenishment formula deferred under GAP-GS-003",
+      "CHARGING, charge-session semantics, and STUN interaction with Charge Sessions deferred under GAP-GS-005",
+      "Global canFire, Auto-Fire execution behavior, EventBatch integration, EffectIntent integration, and Domain API shapes deferred",
+      "Application and Presentation layer changes deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 4 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is TRUE (explicit human owner decision).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Human Semantic Decision: When an EXPOSED character fires the final round from the magazine and magazine ammo reaches 0: active firing ends immediately, WeaponAction immediately transitions FIRING -> IDLE, posture immediately begins auto-cover transition EXPOSED -> TRANSITIONING_TO_COVERED, the WeaponAction transition to IDLE and posture transition to TRANSITIONING_TO_COVERED are parts of the same canonical ammo-depletion response, no persistent state of WeaponAction == FIRING while CharacterPosture == TRANSITIONING_TO_COVERED is valid, global Squad Posture Intent is not modified, and reload does not begin during TRANSITIONING_TO_COVERED.",
+    "Authority boundary: Post-depletion IDLE denotes strictly that no active FIRING or RELOADING weapon action is in progress. IDLE does NOT imply firing permission, ammunition availability, ammo > 0, absence of STUN, CharacterPosture.EXPOSED, satisfaction of firing posture prerequisites, global character actionability, reload eligibility, reload start, or successful ammo replenishment.",
+    "Zero Domain/Application/Presentation implementation files or tests are modified in T-023.",
+    "Historical T-000 through T-022 records and events are preserved without modification."
+  ]
+}
