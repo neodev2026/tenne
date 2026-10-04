@@ -71,7 +71,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 * **Domain**: Gameplay
 * **Status**: Approved (Canonical)
 * **Tags**: `combat`, `firing`, `posture`, `ammo`
-* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009). Canonical ammo-depletion WeaponAction transition and auto-cover response authorized under Guardrail G-041 (Task T-023).
+* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009). Canonical ammo-depletion WeaponAction transition and auto-cover response authorized under Guardrail G-041 (Task T-023). Canonical single-round magazine ammunition consumption authorized under Guardrail G-041 (Task T-028).
 
 ### Specification
 1. **Firing Posture Invariant**:
@@ -79,7 +79,38 @@ Character combat state is governed by two distinct, orthogonal state machine axe
    * Firing is prohibited while `COVERED`, `TRANSITIONING_TO_COVERED`, or `TRANSITIONING_TO_EXPOSED`.
    * When a transition to `EXPOSED` completes, firing eligibility is reevaluated.
 
-2. **Ammo Depletion Auto-Cover Response**:
+2. **Single-Round Magazine Ammunition Consumption**:
+   * **Consumption Rule**:
+     * When one valid firing resolution discharges one magazine round, exactly 1 unit of magazine ammunition is consumed.
+   * **Magazine Ammo Transition**:
+     * For current magazine ammunition count $N$:
+       * If $N > 1$: $N \longrightarrow N - 1$
+       * If $N = 1$: $1 \longrightarrow 0$
+     * Consumption must never produce a negative value; negative clamping or saturation at 0 is prohibited.
+   * **Consumption Precondition**:
+     * Consuming a magazine round requires:
+       $$\text{current ammo } N \ge 1$$
+     * Invoking magazine round consumption when $N = 0$ is an invalid gameplay transition.
+     * *Crucial Boundaries:*
+       * `MagazineAmmo` representation validation: non-negative safe integer.
+       * Round-consumption transition precondition: current ammo $N \ge 1$.
+       * Global firing eligibility / `canFire`: NOT defined by this rule.
+   * **Final-Round Firing Resolution Boundary**:
+     * When a valid firing resolution consumes the final magazine round ($1 \longrightarrow 0$), the canonical ammo-depletion response defined in §3 applies at the same firing-resolution boundary:
+       * `WeaponAction`: `FIRING` $\longrightarrow$ `IDLE`
+       * `CharacterPosture`: `EXPOSED` $\longrightarrow$ `TRANSITIONING_TO_COVERED`
+     * The final-round ammo transition and the ammo-depletion response are canonically related to the same firing resolution.
+     * *Scope Boundary:* This establishes gameplay/Domain semantic coordination only. It does NOT define database transactions, ACID semantics, rollback, distributed atomicity, multi-thread guarantees, Application runtime reference replacement, or EventBatch atomicity.
+   * **Reload Boundary Invariance**:
+     * Magazine ammo reaching 0 does NOT start reload immediately.
+     * Depletion triggers automatic transition toward `COVERED` (§3).
+     * `TRANSITIONING_TO_COVERED` is not `RELOADING`.
+     * Reload may only begin later when the character is fully `COVERED` and existing canonical reload prerequisites under `GS-004` are satisfied.
+   * **Explicitly Deferred Scope**:
+     * Global firing eligibility (`canFire`), trigger input routing, trigger press behavior, automatic firing cadence, rate of fire, fire interval, burst timing, projectile vs. hitscan resolution, recoil timing, magazine capacities, reserve ammunition, reload replenishment, manual reload, combat sessions, Application state owner, and Presentation integration remain deferred.
+     * API architecture remains deferred: this specification defines semantic truth only and does not decide whether Domain implementation uses an independent decrement function, compound result, unified firing function, or Application orchestration.
+
+3. **Ammo Depletion Auto-Cover Response**:
    * **Trigger**:
      * When an `EXPOSED` character fires the final round from the magazine and magazine ammo reaches 0:
        * Active firing ends immediately.
@@ -108,7 +139,7 @@ Character combat state is governed by two distinct, orthogonal state machine axe
        * reload start
        * successful ammo replenishment
 
-3. **Ammo-Depletion Reload Return**:
+4. **Ammo-Depletion Reload Return**:
    * After the automatic ammo-depletion cover transition completes, reload proceeds in `COVERED` according to rule `GS-004`.
    * When reload completes in `COVERED`:
      * If latest Squad Posture Intent is `WANT_EXPOSED`: character automatically begins transition toward `EXPOSED`.
@@ -117,8 +148,9 @@ Character combat state is governed by two distinct, orthogonal state machine axe
 ### Semantic Gap Lineage: GAP-GS-002 & GAP-GS-004
 * **Portion Resolved by T-009**: Established strict exposure invariant for firing, ammo depletion trigger, automatic cover transition, and reload-completion return routing based on Squad Posture Intent. Ammo exhaustion is formally retired as an independent top-level combat state.
 * **Portion Resolved by T-023**: Specified canonical ammo-depletion response upon firing final round and reaching magazine ammo 0: immediate cessation of active firing, coordinated transition of Weapon Action (`FIRING` -> `IDLE`) and posture (`EXPOSED` -> `TRANSITIONING_TO_COVERED`), prohibition of persistent `FIRING + TRANSITIONING_TO_COVERED` state, invariance of global Squad Posture Intent, reload deferral until fully `COVERED` under GS-004, and post-depletion `IDLE` authority boundary.
+* **Portion Resolved by T-028**: Specified canonical single-round magazine ammunition consumption semantics upon a valid firing resolution (1 round consumed per discharged round, $N > 1 \to N - 1$, $N = 1 \to 0$, precondition $N \ge 1$, invalidity of $N = 0$ consumption, and coupling to the §3 ammo-depletion response at the same firing-resolution boundary).
 * **Remaining Unresolved Items**:
-  * `GAP-GS-002`: Rate of fire, fire interval, projectile vs. hitscan resolution, recoil timing, ammo consumption per shot, and magazine capacities.
+  * `GAP-GS-002`: Rate of fire, fire interval, projectile vs. hitscan resolution, recoil timing, and magazine capacities. (Note: Single-round ammo consumption resolved by T-028).
   * `GAP-GS-004`: Weapon-specific firing cycle re-entry cadence upon returning to `EXPOSED` (cadence preservation vs. immediate cycle reset).
 
 ---

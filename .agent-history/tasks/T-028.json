@@ -1,0 +1,25 @@
+{
+  "id": "T-028",
+  "title": "Specify Canonical Single-Round Magazine Ammunition Consumption Semantics",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-028-single-round-ammo-consumption-semantics",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-05T00:06:00+02:00",
+  "classification": "gameplay / semantic specification",
+  "trustedBaseCommit": "de8ec8f9287bb93ca9aa3b1ce7633c711628e12f",
+  "authorizedFiles": [
+    "semantic/gameplay/combat-states.md",
+    ".agent-history/tasks/T-028.json",
+    ".agent-history/approvals/T-028.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 4,
+  "g041": true,
+  "g042": false,
+  "implementationOutOfScope": true
+}

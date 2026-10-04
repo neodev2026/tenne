@@ -1,0 +1,57 @@
+{
+  "taskId": "T-028",
+  "approvedAt": "2026-10-05T00:06:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Specify Canonical Single-Round Magazine Ammunition Consumption Semantics",
+    "targetBranch": "agent/t-028-single-round-ammo-consumption-semantics",
+    "baseCommit": "de8ec8f9287bb93ca9aa3b1ce7633c711628e12f",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "semantic/gameplay/combat-states.md",
+      ".agent-history/tasks/T-028.json",
+      ".agent-history/approvals/T-028.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 4 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": "Explicit human gameplay semantic authorization under Guardrail G-041 to specify canonical single-round magazine ammunition consumption semantics in semantic/gameplay/combat-states.md under GS-003",
+    "g042Authorization": false,
+    "semanticChange": "Update canonical GS-003 in semantic/gameplay/combat-states.md to specify that when one valid firing resolution discharges one magazine round, exactly 1 unit of magazine ammunition is consumed; for current ammo N, if N > 1 then N -> N - 1; if N = 1 then 1 -> 0 and the canonical ammo-depletion response (WeaponAction FIRING -> IDLE, CharacterPosture EXPOSED -> TRANSITIONING_TO_COVERED) applies at the same firing-resolution boundary; consumption requires precondition N >= 1; consumption when N = 0 is an invalid gameplay transition; consumption must never produce a negative value; reload does not begin merely because ammo reached 0; and rate of fire, fire intervals, cadence, burst timing, projectile/hitscan resolution, recoil timing, magazine capacities, reserve ammunition, reload replenishment, manual reload, canFire, CombatSession/Runtime, and Domain API shapes remain explicitly deferred",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Update semantic/gameplay/combat-states.md rule GS-003 with canonical single-round magazine ammunition consumption semantics (§2)",
+      "Specify consumption rule: discharging one magazine round in a valid firing resolution consumes exactly 1 unit of magazine ammunition",
+      "Specify magazine ammo transition: N > 1 -> N - 1, and N = 1 -> 0",
+      "Specify precondition: current ammo N >= 1; consumption when N = 0 is an invalid gameplay transition; negative values and clamping prohibited",
+      "Specify final-round integration: when N = 1 -> 0, existing canonical ammo-depletion response (GS-003 §3) applies at the same firing-resolution boundary",
+      "Preserve reload boundary: ammo reaching 0 does not initiate reload; reload remains deferred until fully COVERED under GS-004 prerequisites",
+      "Update GS-003 Human Semantic Authorization header to record T-028 authorization",
+      "Update GS-003 Semantic Gap Lineage (GAP-GS-002) to record portion resolved by T-028 while preserving remaining GAP-GS-002 and GAP-GS-004 items as unresolved",
+      "Zero modifications to src/game/ or tests/ (Domain/Application code implementation strictly deferred)"
+    ],
+    "deferredScope": [
+      "Domain and Application code implementation deferred to subsequent task",
+      "Concrete Domain API shape (independent decrement vs compound result vs unified firing function) deferred",
+      "Global firing eligibility (canFire) and trigger press / input routing deferred",
+      "Rate of fire, fire interval, recoil timing, projectile vs hitscan resolution, and burst timing deferred under GAP-GS-002",
+      "Weapon-specific firing cycle re-entry cadence upon returning to EXPOSED deferred under GAP-GS-004",
+      "Magazine capacity, capacity bounds, and current <= capacity deferred under GAP-GS-002",
+      "Reserve ammunition existence, capacity, reload replenishment formula, and manual reload deferred under GAP-GS-003",
+      "CombatSession, CombatRuntime, Application state ownership, and Presentation rendering deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 4 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is TRUE (explicit human owner decision).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Human Semantic Decision: When one valid firing resolution discharges one magazine round, exactly 1 unit of magazine ammunition is consumed. For N > 1, ammo transitions N -> N - 1. For N = 1, ammo transitions 1 -> 0, and the canonical ammo-depletion response (FIRING -> IDLE, EXPOSED -> TRANSITIONING_TO_COVERED) applies at the same firing-resolution boundary.",
+    "Preconditions: Magazine round consumption requires N >= 1. Invoking consumption when N = 0 is an invalid gameplay transition. Consumption must never produce negative values.",
+    "Representation vs Precondition vs Eligibility: Non-negative safe integer is a representation check; N >= 1 is a transition precondition; canFire remains deferred.",
+    "Reload boundary: Reaching 0 ammo does not start reload; reload requires fully COVERED posture under GS-004.",
+    "Domain API shape is NOT decided by this task (deferred to implementation).",
+    "CombatCoordinationSnapshot remains limited to CharacterPostureState and WeaponActionState (MagazineAmmoState is not added).",
+    "Zero Domain/Application/Presentation implementation files or tests are modified in T-028.",
+    "Historical T-000 through T-026 records and events are preserved without modification."
+  ]
+}
