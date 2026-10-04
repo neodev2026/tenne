@@ -1,0 +1,61 @@
+{
+  "taskId": "T-026",
+  "approvedAt": "2026-10-04T04:26:00+02:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Application-Layer Ammo-Depletion Coordination Snapshot Helper",
+    "targetBranch": "agent/t-026-ammo-depletion-coordination-snapshot",
+    "baseCommit": "63f5ca3ba2d2e6b1befadf597b769aad76f6f085",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/application/index.ts",
+      "tests/game-application.test.ts",
+      ".agent-history/tasks/T-026.json",
+      ".agent-history/approvals/T-026.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Define CombatCoordinationSnapshot interface in src/game/application/index.ts containing exactly readonly characterPosture: CharacterPostureState and readonly weaponAction: WeaponActionState",
+      "Implement resolveAmmoDepletionSnapshot(current: CombatCoordinationSnapshot): CombatCoordinationSnapshot pure helper function in src/game/application/index.ts",
+      "Delegate to canonical Domain resolveAmmoDepletionResponse(current.weaponAction, current.characterPosture)",
+      "Construct and return shallow-frozen CombatCoordinationSnapshot with Object.freeze",
+      "Preserve input snapshot immutability and return new container reference",
+      "Ensure helper never constructs or returns a partial post-depletion snapshot",
+      "Preserve PostureDemoSession isolation and posture-only scope unchanged",
+      "Preserve EventBatch and EffectIntent non-integration boundaries",
+      "Directly pass through Domain TypeError and Error without custom Application error wrapping",
+      "Add unit tests in tests/game-application.test.ts covering canonical transition, reference independence, input immutability, output freezing, co-presence of axes, precondition passthrough, and malformed input passthrough",
+      "Preserve getDomainState().gameplayImplemented === false"
+    ],
+    "deferredScope": [
+      "Stateful combat session, coordinator, and entity store lifecycle deferred",
+      "Actual caller reference reassignment deferred to future state owner",
+      "Character-vs-weapon canonical Domain structural ownership decomposition deferred under AS-002",
+      "Stale-response failure policy for delayed/decoupled response application deferred under AS-002",
+      "Inclusion of MagazineAmmoState, STUN/control status, SquadPostureIntent, and squad membership in Application snapshots deferred",
+      "Ammo decrement, consumption per shot, capacity, and reserve ammo deferred under GAP-GS-002 and GAP-GS-003",
+      "Reload duration, timing, and replenishment deferred under GAP-GS-003",
+      "Presentation adapters and rendering deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified; architecture authorized in T-025, semantics in T-023).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Human Architecture & Implementation Decision: Implement minimal pure helper resolveAmmoDepletionSnapshot and type CombatCoordinationSnapshot.",
+    "No factory function createCombatCoordinationSnapshot is added.",
+    "No stateful coordinator or session is introduced.",
+    "Guarantee boundary: The helper constructs and returns a complete immutable next coordination snapshot. It does not mutate or replace caller-owned state; actual reference replacement remains the responsibility of a future caller or state owner.",
+    "Stale-response boundary: The synchronous API eliminates the delayed precomputed-response window between Domain resolution and snapshot construction. The API does not establish freshness of the input snapshot relative to an external state owner.",
+    "PostureDemoSession remains unchanged and posture-only.",
+    "EventBatch and EffectIntent are not used.",
+    "Preserve getDomainState() with gameplayImplemented: false.",
+    "Historical T-000 through T-025 records and events are preserved without modification."
+  ]
+}

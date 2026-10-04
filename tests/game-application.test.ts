@@ -2,12 +2,18 @@ import { describe, it, expect } from 'vitest';
 import {
   getApplicationState,
   createPostureDemoSession,
+  resolveAmmoDepletionSnapshot,
+  type CombatCoordinationSnapshot,
 } from '../src/game/application/index.ts';
 import {
   CharacterPosture,
   SquadPostureIntent,
   type StableCharacterPosture,
   getDomainState,
+  WeaponAction,
+  createWeaponActionState,
+  createInitialCharacterPostureState,
+  type CharacterPostureState,
 } from '../src/game/domain/index.ts';
 
 describe('Application Layer Architecture & Metadata (AS-001, AS-004)', () => {
@@ -260,5 +266,107 @@ describe('Execution Isolation & Environmental Independence (AS-004)', () => {
     session1.beginTransition();
     expect(session1.getSnapshot().posture).toBe(CharacterPosture.TRANSITIONING_TO_EXPOSED);
     expect(session2.getSnapshot().posture).toBe(CharacterPosture.COVERED);
+  });
+});
+
+describe('Ammo Depletion Coordination Snapshot Helper (AS-002 §2, GS-003 §2)', () => {
+  it('1. resolves canonical transition (FIRING -> IDLE, EXPOSED -> TRANSITIONING_TO_COVERED)', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const input: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: exposedPosture,
+      weaponAction: firingWeapon,
+    });
+
+    const output = resolveAmmoDepletionSnapshot(input);
+
+    expect(output.weaponAction.action).toBe(WeaponAction.IDLE);
+    expect(output.characterPosture.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+  });
+
+  it('2. returns a new snapshot reference without mutating input snapshot', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const input: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: exposedPosture,
+      weaponAction: firingWeapon,
+    });
+
+    const output = resolveAmmoDepletionSnapshot(input);
+
+    expect(output).not.toBe(input);
+    expect(input.characterPosture.posture).toBe(CharacterPosture.EXPOSED);
+    expect(input.weaponAction.action).toBe(WeaponAction.FIRING);
+  });
+
+  it('3. returns a shallowly frozen output container', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const input: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: exposedPosture,
+      weaponAction: firingWeapon,
+    });
+
+    const output = resolveAmmoDepletionSnapshot(input);
+
+    expect(Object.isFrozen(output)).toBe(true);
+  });
+
+  it('4. contains both coordinated axes together in the returned snapshot', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const input: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: exposedPosture,
+      weaponAction: firingWeapon,
+    });
+
+    const output = resolveAmmoDepletionSnapshot(input);
+
+    expect(output.characterPosture).toBeDefined();
+    expect(output.weaponAction).toBeDefined();
+    expect(output.characterPosture.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+    expect(output.weaponAction.action).toBe(WeaponAction.IDLE);
+  });
+
+  it('5. passes through Domain Error on invalid canonical preconditions', () => {
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const idleWeapon = createWeaponActionState(WeaponAction.IDLE);
+    const nonFiringInput: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: exposedPosture,
+      weaponAction: idleWeapon,
+    });
+
+    expect(() => resolveAmmoDepletionSnapshot(nonFiringInput)).toThrow(
+      /Cannot resolve ammo depletion response: weapon action is not FIRING/
+    );
+
+    const coveredPosture = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const nonExposedInput: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: coveredPosture,
+      weaponAction: firingWeapon,
+    });
+
+    expect(() => resolveAmmoDepletionSnapshot(nonExposedInput)).toThrow(
+      /Cannot resolve ammo depletion response: character posture is not EXPOSED/
+    );
+  });
+
+  it('6. passes through Domain TypeError on malformed axis value', () => {
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const malformedWeaponInput: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: exposedPosture,
+      weaponAction: { action: 'INVALID' as unknown as WeaponAction },
+    });
+
+    expect(() => resolveAmmoDepletionSnapshot(malformedWeaponInput)).toThrow(TypeError);
+
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const malformedPostureInput: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: { posture: 'INVALID' as unknown as CharacterPosture } as unknown as CharacterPostureState,
+      weaponAction: firingWeapon,
+    });
+
+    expect(() => resolveAmmoDepletionSnapshot(malformedPostureInput)).toThrow(TypeError);
   });
 });

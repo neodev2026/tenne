@@ -1,0 +1,13 @@
+{
+  "id": "T-026",
+  "title": "Implement Application-Layer Ammo-Depletion Coordination Snapshot Helper",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-026-ammo-depletion-coordination-snapshot",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-10-04T04:26:00+02:00"
+}

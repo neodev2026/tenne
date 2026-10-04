@@ -29,8 +29,10 @@ import {
   beginIntentDrivenPostureTransition,
   completeCharacterPostureTransition,
   doesPostureSatisfyFiringPrerequisite,
+  resolveAmmoDepletionResponse,
   type CharacterPostureState,
   type SquadPostureIntentState,
+  type WeaponActionState,
 } from '../domain/index.ts';
 
 // ============================================================================
@@ -230,4 +232,75 @@ export function createPostureDemoSession(
   initialIntent?: SquadPostureIntent
 ): PostureDemoSession {
   return new PostureDemoSessionImpl(initialPosture, initialIntent);
+}
+
+// ============================================================================
+// Multi-Axis Combat Coordination Snapshot (AS-002 §2)
+// ============================================================================
+
+/**
+ * Application-level multi-axis combat coordination snapshot (AS-002 §2).
+ *
+ * Holds references to canonical Domain state values for multi-axis orchestration.
+ *
+ * In accordance with AS-002 §2:
+ * - This container is NOT canonical Domain ownership.
+ * - It is an Application-level orchestration snapshot holding references to canonical Domain values.
+ * - It does NOT imply Character-vs-Weapon structural ownership at the Domain level.
+ * - Holds strictly the minimum authorized axes for ammo depletion: CharacterPostureState and WeaponActionState.
+ * - Explicitly does NOT include MagazineAmmoState, STUN/control status, SquadPostureIntent,
+ *   character identity, squad membership, universal character data, or general combat session data.
+ */
+export interface CombatCoordinationSnapshot {
+  readonly characterPosture: CharacterPostureState;
+  readonly weaponAction: WeaponActionState;
+}
+
+// ============================================================================
+// Ammo Depletion Coordination Orchestration (AS-002 §2, GS-003 §2)
+// ============================================================================
+
+/**
+ * Resolves the canonical ammo-depletion transition and returns a complete, immutable next
+ * CombatCoordinationSnapshot (AS-002 §2, GS-003 §2).
+ *
+ * Guarantees:
+ * - The helper constructs and returns a complete immutable next coordination snapshot.
+ * - Both coordinated axes (CharacterPostureState and WeaponActionState) are present together.
+ * - The helper never constructs or returns a partial post-depletion coordination snapshot.
+ * - The input snapshot is not mutated.
+ * - The returned snapshot is a new shallow-frozen container (Object.freeze).
+ *
+ * Non-Guarantees (Boundary):
+ * - The helper does not mutate or replace caller-owned state.
+ * - Actual reference replacement remains the responsibility of a future caller or state owner:
+ *     currentSnapshot = resolveAmmoDepletionSnapshot(currentSnapshot);
+ * - Does NOT provide database transactional atomicity, ACID, rollback, distributed atomicity,
+ *   CAS, locks, multithread synchronization, or EventBatch atomicity.
+ *
+ * Stale-Response Boundary:
+ * - The synchronous API eliminates the delayed precomputed-response window between Domain
+ *   resolution and snapshot construction because both occur within one synchronous function call
+ *   and the intermediate AmmoDepletionResponse is not exposed for delayed application.
+ * - The API does not establish freshness of the input snapshot relative to an external state owner.
+ * - No stale-input freshness mechanism or stale-response failure policy is introduced.
+ *
+ * Error Propagation:
+ * - Delegates directly to Domain resolveAmmoDepletionResponse.
+ * - Malformed Domain axis values surface Domain TypeError (from assertWeaponAction / assertCharacterPosture).
+ * - Precondition violations (e.g., action not FIRING or posture not EXPOSED) surface Domain Error.
+ * - Does not wrap Domain errors or invent Application error classes.
+ */
+export function resolveAmmoDepletionSnapshot(
+  current: CombatCoordinationSnapshot
+): CombatCoordinationSnapshot {
+  const response = resolveAmmoDepletionResponse(
+    current.weaponAction,
+    current.characterPosture
+  );
+
+  return Object.freeze({
+    characterPosture: response.characterPosture,
+    weaponAction: response.weaponAction,
+  });
 }
