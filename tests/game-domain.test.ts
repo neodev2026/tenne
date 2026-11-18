@@ -43,7 +43,10 @@ import {
   createMagazineAmmoState,
   type AmmoDepletionResponse,
   resolveAmmoDepletionResponse,
+  type MagazineRoundConsumptionResult,
+  resolveMagazineRoundConsumption,
 } from '../src/game/domain/index.ts';
+import * as domainModule from '../src/game/domain/index.ts';
 import { getApplicationState } from '../src/game/application/index.ts';
 
 describe('Game Architecture Isolation & Bootstrap Compatibility (AS-001, AS-004)', () => {
@@ -1461,6 +1464,231 @@ describe('Ammo Depletion Auto-Cover Response (GS-003 §2)', () => {
   });
 });
 
+describe('Single-Round Magazine Ammunition Consumption & Final-Round Depletion Coordination (GS-003 §2, §3)', () => {
+  it('1. consumes 1 round when N = 30 -> 29 and returns depletionResponse === null', () => {
+    const ammo = createMagazineAmmoState(30);
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
 
+    const result: MagazineRoundConsumptionResult = resolveMagazineRoundConsumption(
+      ammo,
+      firingWeapon,
+      exposedPosture
+    );
 
+    expect(result.magazineAmmo.current).toBe(29);
+    expect(result.depletionResponse).toBeNull();
+  });
 
+  it('2. consumes 1 round when N = 2 -> 1 and returns depletionResponse === null', () => {
+    const ammo = createMagazineAmmoState(2);
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    const result = resolveMagazineRoundConsumption(ammo, firingWeapon, exposedPosture);
+
+    expect(result.magazineAmmo.current).toBe(1);
+    expect(result.depletionResponse).toBeNull();
+  });
+
+  it('3 & 4. consumes final round when N = 1 -> 0 and returns canonical depletionResponse (IDLE, TRANSITIONING_TO_COVERED)', () => {
+    const ammo = createMagazineAmmoState(1);
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    const result = resolveMagazineRoundConsumption(ammo, firingWeapon, exposedPosture);
+
+    expect(result.magazineAmmo.current).toBe(0);
+    expect(result.depletionResponse).not.toBeNull();
+    expect(result.depletionResponse?.weaponAction.action).toBe(WeaponAction.IDLE);
+    expect(result.depletionResponse?.characterPosture.posture).toBe(
+      CharacterPosture.TRANSITIONING_TO_COVERED
+    );
+  });
+
+  it('5, 6, 7 & 8. preserves input immutability and freezes outer result, returned MagazineAmmoState, and final-round AmmoDepletionResponse', () => {
+    const ammo30 = createMagazineAmmoState(30);
+    const ammo1 = createMagazineAmmoState(1);
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    const resNonFinal = resolveMagazineRoundConsumption(ammo30, firingWeapon, exposedPosture);
+    const resFinal = resolveMagazineRoundConsumption(ammo1, firingWeapon, exposedPosture);
+
+    // 5. Inputs remain unchanged
+    expect(ammo30.current).toBe(30);
+    expect(ammo1.current).toBe(1);
+    expect(firingWeapon.action).toBe(WeaponAction.FIRING);
+    expect(exposedPosture.posture).toBe(CharacterPosture.EXPOSED);
+    expect(resNonFinal.magazineAmmo).not.toBe(ammo30);
+    expect(resFinal.magazineAmmo).not.toBe(ammo1);
+
+    // 6. Outer result frozen
+    expect(Object.isFrozen(resNonFinal)).toBe(true);
+    expect(Object.isFrozen(resFinal)).toBe(true);
+
+    // 7. Returned MagazineAmmoState frozen
+    expect(Object.isFrozen(resNonFinal.magazineAmmo)).toBe(true);
+    expect(Object.isFrozen(resFinal.magazineAmmo)).toBe(true);
+
+    // 8. Final-round AmmoDepletionResponse and its inner states frozen
+    expect(resFinal.depletionResponse).not.toBeNull();
+    expect(Object.isFrozen(resFinal.depletionResponse)).toBe(true);
+    expect(Object.isFrozen(resFinal.depletionResponse?.weaponAction)).toBe(true);
+    expect(Object.isFrozen(resFinal.depletionResponse?.characterPosture)).toBe(true);
+
+    // @ts-expect-error Cannot assign to read-only property 'magazineAmmo'
+    expect(() => { resFinal.magazineAmmo = createMagazineAmmoState(10); }).toThrow();
+    // @ts-expect-error Cannot assign to read-only property 'current'
+    expect(() => { resFinal.magazineAmmo.current = 5; }).toThrow();
+  });
+
+  it('9. throws Error when ammo = 0 (precondition N >= 1; no clamping, no no-op)', () => {
+    const emptyAmmo = createMagazineAmmoState(0);
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    expect(() =>
+      resolveMagazineRoundConsumption(emptyAmmo, firingWeapon, exposedPosture)
+    ).toThrow(Error);
+    expect(() =>
+      resolveMagazineRoundConsumption(emptyAmmo, firingWeapon, exposedPosture)
+    ).toThrow(/Cannot consume magazine round: magazine ammo is 0/);
+  });
+
+  it('10, 11 & 12. throws TypeError for malformed ammo, malformed WeaponActionState, and malformed CharacterPostureState', () => {
+    const validAmmo = createMagazineAmmoState(10);
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    // 10. Malformed ammo throws TypeError
+    expect(() =>
+      resolveMagazineRoundConsumption(null as unknown as MagazineAmmoState, firingWeapon, exposedPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption(undefined as unknown as MagazineAmmoState, firingWeapon, exposedPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption({ current: -1 } as unknown as MagazineAmmoState, firingWeapon, exposedPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption({ current: 1.5 } as unknown as MagazineAmmoState, firingWeapon, exposedPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption({ current: Number.NaN } as unknown as MagazineAmmoState, firingWeapon, exposedPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption({} as unknown as MagazineAmmoState, firingWeapon, exposedPosture)
+    ).toThrow(TypeError);
+
+    // 11. Malformed WeaponActionState throws TypeError
+    expect(() =>
+      resolveMagazineRoundConsumption(validAmmo, null as unknown as WeaponActionState, exposedPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption(validAmmo, undefined as unknown as WeaponActionState, exposedPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption(validAmmo, { action: 'INVALID' as unknown as WeaponAction }, exposedPosture)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption(validAmmo, {} as unknown as WeaponActionState, exposedPosture)
+    ).toThrow(TypeError);
+
+    // 12. Malformed CharacterPostureState throws TypeError
+    expect(() =>
+      resolveMagazineRoundConsumption(validAmmo, firingWeapon, null as unknown as CharacterPostureState)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption(validAmmo, firingWeapon, undefined as unknown as CharacterPostureState)
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption(
+        validAmmo,
+        firingWeapon,
+        { posture: 'INVALID' as unknown as CharacterPosture } as unknown as CharacterPostureState
+      )
+    ).toThrow(TypeError);
+    expect(() =>
+      resolveMagazineRoundConsumption(validAmmo, firingWeapon, {} as unknown as CharacterPostureState)
+    ).toThrow(TypeError);
+  });
+
+  it('13 & 14. throws Error when WeaponAction is IDLE (for N > 1 and N = 1) or RELOADING', () => {
+    const ammo30 = createMagazineAmmoState(30);
+    const ammo1 = createMagazineAmmoState(1);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+    const idleWeapon = createWeaponActionState(WeaponAction.IDLE);
+    const reloadingWeapon = createWeaponActionState(WeaponAction.RELOADING);
+
+    // 13. IDLE throws Error uniformly for N > 1 and N = 1
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo30, idleWeapon, exposedPosture)
+    ).toThrow(/Cannot consume magazine round: weapon action is not FIRING/);
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo1, idleWeapon, exposedPosture)
+    ).toThrow(/Cannot consume magazine round: weapon action is not FIRING/);
+
+    // 14. RELOADING throws Error uniformly for N > 1 and N = 1
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo30, reloadingWeapon, exposedPosture)
+    ).toThrow(/Cannot consume magazine round: weapon action is not FIRING/);
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo1, reloadingWeapon, exposedPosture)
+    ).toThrow(/Cannot consume magazine round: weapon action is not FIRING/);
+  });
+
+  it('15 & 16. throws Error when CharacterPosture is COVERED (for N > 1 and N = 1) or in transitional postures', () => {
+    const ammo30 = createMagazineAmmoState(30);
+    const ammo1 = createMagazineAmmoState(1);
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+
+    const coveredPosture = createInitialCharacterPostureState(CharacterPosture.COVERED);
+    const transToCovered = beginIntentDrivenPostureTransition(
+      createInitialCharacterPostureState(CharacterPosture.EXPOSED),
+      SquadPostureIntent.WANT_COVERED
+    );
+    const transToExposed = beginIntentDrivenPostureTransition(
+      createInitialCharacterPostureState(CharacterPosture.COVERED),
+      SquadPostureIntent.WANT_EXPOSED
+    );
+
+    // 15. COVERED throws Error uniformly for N > 1 and N = 1
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo30, firingWeapon, coveredPosture)
+    ).toThrow(/Cannot consume magazine round: character posture is not EXPOSED/);
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo1, firingWeapon, coveredPosture)
+    ).toThrow(/Cannot consume magazine round: character posture is not EXPOSED/);
+
+    // 16. Transitional postures throw Error uniformly for N > 1 and N = 1
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo30, firingWeapon, transToCovered)
+    ).toThrow(/Cannot consume magazine round: character posture is not EXPOSED/);
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo1, firingWeapon, transToCovered)
+    ).toThrow(/Cannot consume magazine round: character posture is not EXPOSED/);
+
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo30, firingWeapon, transToExposed)
+    ).toThrow(/Cannot consume magazine round: character posture is not EXPOSED/);
+    expect(() =>
+      resolveMagazineRoundConsumption(ammo1, firingWeapon, transToExposed)
+    ).toThrow(/Cannot consume magazine round: character posture is not EXPOSED/);
+  });
+
+  it('17 & 18. preserves resolveAmmoDepletionResponse behavior unchanged and keeps consumeMagazineRound internal (unexported)', () => {
+    const firingWeapon = createWeaponActionState(WeaponAction.FIRING);
+    const exposedPosture = createInitialCharacterPostureState(CharacterPosture.EXPOSED);
+
+    const directDepletion = resolveAmmoDepletionResponse(firingWeapon, exposedPosture);
+    expect(directDepletion.weaponAction.action).toBe(WeaponAction.IDLE);
+    expect(directDepletion.characterPosture.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+
+    // Verify public API minimization: consumeMagazineRound is strictly internal and not exported
+    expect('consumeMagazineRound' in domainModule).toBe(false);
+    expect((domainModule as Record<string, unknown>).consumeMagazineRound).toBeUndefined();
+    expect('canFire' in domainModule).toBe(false);
+    expect('resolveFiringRound' in domainModule).toBe(false);
+  });
+});

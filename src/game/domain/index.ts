@@ -22,6 +22,7 @@
  * Magazine Ammunition explicit domain state (GS-003 §2, AS-002). T-022 implements
  * WeaponAction IDLE baseline domain state and updates reload cancellation (GS-001 §2, GS-004 §2).
  * T-024 implements canonical ammo-depletion domain transition API (GS-003 §2).
+ * T-029 implements single-round magazine consumption and final-round depletion coordination (GS-003 §2, §3).
  * Full combat gameplay behaviors remain unimplemented (gameplayImplemented: false).
  */
 
@@ -1142,4 +1143,119 @@ export function resolveAmmoDepletionResponse(
   });
 }
 
+// ============================================================================
+// Single-Round Magazine Ammunition Consumption & Final-Round Depletion (GS-003 §2, §3)
+// ============================================================================
 
+/**
+ * Complete canonical Domain result for one magazine-round consumption (GS-003 §2, §3).
+ *
+ * Authority Boundary:
+ * - Domain guarantee: The public round-consumption API does not expose a separate final-round
+ *   ammo-decrement operation that omits the corresponding canonical depletion response.
+ * - For N > 1: pairs updated MagazineAmmoState (current = N - 1) with depletionResponse: null.
+ * - For N = 1: pairs updated MagazineAmmoState (current = 0) with the canonical AmmoDepletionResponse
+ *   produced by delegating to resolveAmmoDepletionResponse.
+ * - Non-guarantees: This Domain structure does NOT perform Application state installation,
+ *   runtime reference replacement, observer-visible Application atomicity, database transactions,
+ *   ACID semantics, rollback, or distributed consistency. A caller still decides how to install
+ *   or use the returned Domain result.
+ */
+export interface MagazineRoundConsumptionResult {
+  readonly magazineAmmo: MagazineAmmoState;
+  readonly depletionResponse: AmmoDepletionResponse | null;
+}
+
+/**
+ * Internal helper decrementing magazine ammunition by 1 round (GS-003 §2).
+ *
+ * [IMPLEMENTATION CHOICE]: Strictly unexported internal helper so the public Domain API
+ * never exposes an isolated final-round decrement (1 -> 0) divorced from the canonical
+ * ammo-depletion response.
+ */
+function consumeMagazineRound(
+  currentAmmo: MagazineAmmoState
+): MagazineAmmoState {
+  assertMagazineAmmo(currentAmmo?.current, 'consumeMagazineRound');
+
+  if (currentAmmo.current === 0) {
+    throw new Error(
+      '[consumeMagazineRound] Cannot consume magazine round: magazine ammo is 0 (precondition N >= 1 violated)'
+    );
+  }
+
+  return createMagazineAmmoState(currentAmmo.current - 1);
+}
+
+/**
+ * Resolves the complete canonical Domain result for one magazine-round consumption (GS-003 §2, §3).
+ *
+ * [SEMANTICALLY REQUIRED (T-028 / GS-003 §2, §3)]:
+ * - When one valid firing resolution discharges one magazine round, exactly 1 unit of magazine
+ *   ammunition is consumed.
+ * - Preconditions:
+ *   - currentWeaponAction.action === WeaponAction.FIRING
+ *   - currentPosture.posture === CharacterPosture.EXPOSED
+ *   - currentAmmo.current >= 1
+ * - For N > 1:
+ *   - magazineAmmo.current = N - 1
+ *   - depletionResponse = null
+ * - For N = 1:
+ *   - magazineAmmo.current = 0
+ *   - depletionResponse is produced by delegating to resolveAmmoDepletionResponse(currentWeaponAction, currentPosture),
+ *     yielding WeaponAction.IDLE and CharacterPosture.TRANSITIONING_TO_COVERED.
+ *
+ * [VALIDATION & ERROR CONTRACT]:
+ * - Malformed currentAmmo, currentWeaponAction, or currentPosture throws TypeError.
+ * - currentAmmo.current === 0 throws Error (no clamping, no no-op).
+ * - currentWeaponAction.action !== WeaponAction.FIRING throws Error (uniformly for N > 1 and N = 1).
+ * - currentPosture.posture !== CharacterPosture.EXPOSED throws Error (uniformly for N > 1 and N = 1).
+ *
+ * [SCOPE & NON-GUARANTEE BOUNDARY]:
+ * - Domain guarantee: The public round-consumption API does not expose a separate final-round
+ *   ammo-decrement operation that omits the corresponding canonical depletion response.
+ * - Non-guarantees: Does NOT perform Application state installation, runtime reference replacement,
+ *   observer-visible Application atomicity, database transactions, ACID, rollback, or distributed
+ *   consistency. A caller still decides how to install/use the returned Domain result.
+ * - Does NOT evaluate or introduce canFire, STUN, Auto-Fire intent, trigger state, firing cadence,
+ *   fire interval, burst timing, projectile/hitscan state, recoil, reserve ammunition, magazine
+ *   capacity, or reload replenishment.
+ */
+export function resolveMagazineRoundConsumption(
+  currentAmmo: MagazineAmmoState,
+  currentWeaponAction: WeaponActionState,
+  currentPosture: CharacterPostureState
+): MagazineRoundConsumptionResult {
+  assertMagazineAmmo(currentAmmo?.current, 'resolveMagazineRoundConsumption');
+  assertWeaponAction(currentWeaponAction?.action, 'resolveMagazineRoundConsumption');
+  assertCharacterPosture(currentPosture?.posture, 'resolveMagazineRoundConsumption');
+
+  if (currentWeaponAction.action !== WeaponAction.FIRING) {
+    throw new Error(
+      `[resolveMagazineRoundConsumption] Cannot consume magazine round: weapon action is not FIRING (action: ${currentWeaponAction.action})`
+    );
+  }
+
+  if (currentPosture.posture !== CharacterPosture.EXPOSED) {
+    throw new Error(
+      `[resolveMagazineRoundConsumption] Cannot consume magazine round: character posture is not EXPOSED (posture: ${currentPosture.posture})`
+    );
+  }
+
+  if (currentAmmo.current === 0) {
+    throw new Error(
+      '[resolveMagazineRoundConsumption] Cannot consume magazine round: magazine ammo is 0 (precondition N >= 1 violated)'
+    );
+  }
+
+  const nextAmmo = consumeMagazineRound(currentAmmo);
+  const depletionResponse =
+    nextAmmo.current === 0
+      ? resolveAmmoDepletionResponse(currentWeaponAction, currentPosture)
+      : null;
+
+  return Object.freeze({
+    magazineAmmo: nextAmmo,
+    depletionResponse,
+  });
+}
