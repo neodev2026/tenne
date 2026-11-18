@@ -3,6 +3,7 @@ import {
   getApplicationState,
   createPostureDemoSession,
   resolveAmmoDepletionSnapshot,
+  createCombatAmmoPrototypeSession,
   type CombatCoordinationSnapshot,
 } from '../src/game/application/index.ts';
 import {
@@ -368,5 +369,163 @@ describe('Ammo Depletion Coordination Snapshot Helper (AS-002 §2, GS-003 §2)',
     });
 
     expect(() => resolveAmmoDepletionSnapshot(malformedPostureInput)).toThrow(TypeError);
+  });
+});
+
+describe('Prototype-Scoped Combat Ammo Application Session (AS-002 §3, GS-003 §2, §3)', () => {
+  it('initializes with default EXPOSED, FIRING, 3 ammo, and isFiringResolutionAvailable === true', () => {
+    const session = createCombatAmmoPrototypeSession();
+    const snapshot = session.getSnapshot();
+
+    expect(snapshot.posture).toBe(CharacterPosture.EXPOSED);
+    expect(snapshot.weaponAction).toBe(WeaponAction.FIRING);
+    expect(snapshot.magazineAmmo).toBe(3);
+    expect(snapshot.isFiringResolutionAvailable).toBe(true);
+    expect(Object.isFrozen(snapshot)).toBe(true);
+  });
+
+  it('supports custom valid initialization options and derives isFiringResolutionAvailable accurately', () => {
+    const sessionCovered = createCombatAmmoPrototypeSession({
+      initialPosture: CharacterPosture.COVERED,
+      initialWeaponAction: WeaponAction.IDLE,
+      initialMagazineAmmo: 5,
+    });
+    const coveredSnapshot = sessionCovered.getSnapshot();
+    expect(coveredSnapshot.posture).toBe(CharacterPosture.COVERED);
+    expect(coveredSnapshot.weaponAction).toBe(WeaponAction.IDLE);
+    expect(coveredSnapshot.magazineAmmo).toBe(5);
+    expect(coveredSnapshot.isFiringResolutionAvailable).toBe(false);
+
+    const sessionZeroAmmo = createCombatAmmoPrototypeSession({
+      initialPosture: CharacterPosture.EXPOSED,
+      initialWeaponAction: WeaponAction.FIRING,
+      initialMagazineAmmo: 0,
+    });
+    expect(sessionZeroAmmo.getSnapshot().isFiringResolutionAvailable).toBe(false);
+  });
+
+  it('rejects invalid posture, weaponAction, or magazineAmmo at runtime with TypeError', () => {
+    expect(() =>
+      createCombatAmmoPrototypeSession({
+        initialPosture: CharacterPosture.TRANSITIONING_TO_COVERED as unknown as StableCharacterPosture,
+      })
+    ).toThrow(TypeError);
+
+    expect(() =>
+      createCombatAmmoPrototypeSession({
+        initialPosture: 'INVALID_POSTURE' as unknown as StableCharacterPosture,
+      })
+    ).toThrow(TypeError);
+
+    expect(() =>
+      createCombatAmmoPrototypeSession({
+        initialWeaponAction: 'INVALID_ACTION' as unknown as WeaponAction,
+      })
+    ).toThrow(TypeError);
+
+    expect(() =>
+      createCombatAmmoPrototypeSession({
+        initialMagazineAmmo: -1,
+      })
+    ).toThrow(TypeError);
+
+    expect(() =>
+      createCombatAmmoPrototypeSession({
+        initialMagazineAmmo: 1.5,
+      })
+    ).toThrow(TypeError);
+  });
+
+  it('resolves multi-round sequence 3 -> 2 -> 1 -> 0 with synchronous final-round depletion coordination', () => {
+    const session = createCombatAmmoPrototypeSession();
+
+    // Round 1: 3 -> 2 (stays EXPOSED + FIRING)
+    expect(session.resolveSingleFiring()).toBe(true);
+    let snap = session.getSnapshot();
+    expect(snap.magazineAmmo).toBe(2);
+    expect(snap.posture).toBe(CharacterPosture.EXPOSED);
+    expect(snap.weaponAction).toBe(WeaponAction.FIRING);
+    expect(snap.isFiringResolutionAvailable).toBe(true);
+
+    // Round 2: 2 -> 1 (stays EXPOSED + FIRING)
+    expect(session.resolveSingleFiring()).toBe(true);
+    snap = session.getSnapshot();
+    expect(snap.magazineAmmo).toBe(1);
+    expect(snap.posture).toBe(CharacterPosture.EXPOSED);
+    expect(snap.weaponAction).toBe(WeaponAction.FIRING);
+    expect(snap.isFiringResolutionAvailable).toBe(true);
+
+    // Final Round 3: 1 -> 0 (synchronously transitions to IDLE + TRANSITIONING_TO_COVERED)
+    expect(session.resolveSingleFiring()).toBe(true);
+    snap = session.getSnapshot();
+    expect(snap.magazineAmmo).toBe(0);
+    expect(snap.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+    expect(snap.weaponAction).toBe(WeaponAction.IDLE);
+    expect(snap.isFiringResolutionAvailable).toBe(false);
+    expect(Object.isFrozen(snap)).toBe(true);
+  });
+
+  it('returns false and leaves state unchanged when resolveSingleFiring is called after depletion or unmet preconditions', () => {
+    const session = createCombatAmmoPrototypeSession({ initialMagazineAmmo: 1 });
+    expect(session.resolveSingleFiring()).toBe(true);
+
+    // Post-depletion call returns false and leaves state untouched
+    expect(session.resolveSingleFiring()).toBe(false);
+    const snap = session.getSnapshot();
+    expect(snap.magazineAmmo).toBe(0);
+    expect(snap.posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+    expect(snap.weaponAction).toBe(WeaponAction.IDLE);
+    expect(snap.isFiringResolutionAvailable).toBe(false);
+
+    // Unmet preconditions (COVERED or IDLE)
+    const coveredSession = createCombatAmmoPrototypeSession({
+      initialPosture: CharacterPosture.COVERED,
+      initialWeaponAction: WeaponAction.FIRING,
+      initialMagazineAmmo: 3,
+    });
+    expect(coveredSession.resolveSingleFiring()).toBe(false);
+    expect(coveredSession.getSnapshot().magazineAmmo).toBe(3);
+  });
+
+  it('restores initial prototype state cleanly via resetPrototype()', () => {
+    const session = createCombatAmmoPrototypeSession({
+      initialPosture: CharacterPosture.EXPOSED,
+      initialWeaponAction: WeaponAction.FIRING,
+      initialMagazineAmmo: 2,
+    });
+
+    expect(session.resolveSingleFiring()).toBe(true);
+    expect(session.resolveSingleFiring()).toBe(true);
+    expect(session.getSnapshot().magazineAmmo).toBe(0);
+    expect(session.getSnapshot().posture).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+    expect(session.getSnapshot().weaponAction).toBe(WeaponAction.IDLE);
+
+    session.resetPrototype();
+
+    const restored = session.getSnapshot();
+    expect(restored.magazineAmmo).toBe(2);
+    expect(restored.posture).toBe(CharacterPosture.EXPOSED);
+    expect(restored.weaponAction).toBe(WeaponAction.FIRING);
+    expect(restored.isFiringResolutionAvailable).toBe(true);
+    expect(Object.isFrozen(restored)).toBe(true);
+  });
+
+  it('preserves snapshot immutability, excludes canonical canFire, and keeps PostureDemoSession & CombatCoordinationSnapshot unchanged', () => {
+    const session = createCombatAmmoPrototypeSession();
+    const snap = session.getSnapshot();
+    expect(Object.isFrozen(snap)).toBe(true);
+    expect((snap as unknown as Record<string, unknown>).canFire).toBeUndefined();
+
+    // PostureDemoSession remains posture-only
+    const postureSession = createPostureDemoSession();
+    expect((postureSession.getSnapshot() as unknown as Record<string, unknown>).magazineAmmo).toBeUndefined();
+
+    // CombatCoordinationSnapshot remains strictly 2-axis
+    const coordSnap: CombatCoordinationSnapshot = Object.freeze({
+      characterPosture: createInitialCharacterPostureState(CharacterPosture.EXPOSED),
+      weaponAction: createWeaponActionState(WeaponAction.FIRING),
+    });
+    const nextCoord = resolveAmmoDepletionSnapshot(coordSnap);
+    expect(Object.keys(nextCoord).sort()).toEqual(['characterPosture', 'weaponAction']);
   });
 });

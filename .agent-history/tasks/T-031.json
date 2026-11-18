@@ -1,0 +1,25 @@
+{
+  "id": "T-031",
+  "title": "Implement Prototype-Scoped Combat Ammo Application Session",
+  "milestoneId": "M-001",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-031-combat-ammo-prototype-session",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "APPLICATION_PROTOTYPE_SESSION",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-11-19T00:28:00+01:00",
+  "classification": "application implementation",
+  "trustedBaseCommit": "c365f8e5ae6c8ac41a34adbb03b203603ebd387c",
+  "authorizedFiles": [
+    "src/game/application/index.ts",
+    "tests/game-application.test.ts",
+    ".agent-history/tasks/T-031.json",
+    ".agent-history/approvals/T-031.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 5,
+  "g041": false,
+  "g042": false
+}

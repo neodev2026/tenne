@@ -1,0 +1,29 @@
+{
+  "taskId": "T-031",
+  "approvedAt": "2026-11-19T00:27:51+01:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Prototype-Scoped Combat Ammo Application Session",
+    "targetBranch": "agent/t-031-combat-ammo-prototype-session",
+    "baseCommit": "c365f8e5ae6c8ac41a34adbb03b203603ebd387c",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/application/index.ts",
+      "tests/game-application.test.ts",
+      ".agent-history/tasks/T-031.json",
+      ".agent-history/approvals/T-031.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override; exact path .agent-history/verifications/latest-verification.log remains excluded",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "implementationScope": "Implement CombatAmmoPrototypeSnapshot, CombatAmmoPrototypeOptions, CombatAmmoPrototypeSession, and createCombatAmmoPrototypeSession in src/game/application/index.ts conforming to the frozen T-030 contract (AS-002 §3), delegating strictly to Domain resolveMagazineRoundConsumption with synchronous copy-on-write reference replacement, preserving PostureDemoSession and 2-axis CombatCoordinationSnapshot unchanged, and adding comprehensive headless unit tests in tests/game-application.test.ts",
+    "guardrailsChange": "No guardrail change authorized; G-042 is false"
+  },
+  "clarifications": [
+    "isFiringResolutionAvailable is strictly an Application-level precondition projection, NOT canonical canFire.",
+    "resetPrototype() is strictly a prototype UI replay convenience, NOT canonical reload or ammo replenishment.",
+    "PostureDemoSession and 2-axis CombatCoordinationSnapshot remain unchanged.",
+    "Task scope is strictly 5 budget-counted files; G-041 = false; G-042 = false."
+  ]
+}

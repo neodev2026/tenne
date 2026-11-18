@@ -19,20 +19,28 @@
 import {
   CharacterPosture,
   SquadPostureIntent,
+  WeaponAction,
   type StableCharacterPosture,
   assertStableCharacterPosture,
   assertSquadPostureIntent,
+  assertWeaponAction,
+  assertMagazineAmmo,
   createInitialCharacterPostureState,
   createSquadPostureIntentState,
+  createWeaponActionState,
+  createMagazineAmmoState,
   updateSquadPostureIntent,
   getApplicablePostureTransition,
   beginIntentDrivenPostureTransition,
   completeCharacterPostureTransition,
   doesPostureSatisfyFiringPrerequisite,
   resolveAmmoDepletionResponse,
+  resolveMagazineRoundConsumption,
   type CharacterPostureState,
   type SquadPostureIntentState,
   type WeaponActionState,
+  type MagazineAmmo,
+  type MagazineAmmoState,
 } from '../domain/index.ts';
 
 // ============================================================================
@@ -303,4 +311,178 @@ export function resolveAmmoDepletionSnapshot(
     characterPosture: response.characterPosture,
     weaponAction: response.weaponAction,
   });
+}
+
+// ============================================================================
+// Prototype-Scoped Combat Ammo Application Session (AS-002 §3, GS-003 §2, §3)
+// ============================================================================
+
+/**
+ * Narrow, read-only projection of the prototype-scoped single-character combat
+ * ammo session (AS-002 §3).
+ *
+ * CRITICAL AUTHORITY BOUNDARY:
+ * - `isFiringResolutionAvailable` is strictly an Application-level precondition
+ *   projection (`posture === EXPOSED && weaponAction === FIRING && magazineAmmo >= 1`).
+ * - It is NOT canonical `canFire`, NOT global combat actionability, and does NOT
+ *   evaluate STUN, Auto-Fire intent, firing cadence, or reload eligibility.
+ */
+export interface CombatAmmoPrototypeSnapshot {
+  readonly posture: CharacterPosture;
+  readonly weaponAction: WeaponAction;
+  readonly magazineAmmo: MagazineAmmo;
+  readonly isFiringResolutionAvailable: boolean;
+}
+
+/**
+ * Optional initialization overrides for the prototype-scoped combat ammo session.
+ *
+ * [IMPLEMENTATION / PROTOTYPE DEMO CHOICES]:
+ * Defaults (`EXPOSED`, `FIRING`, `3`) are strictly non-canonical prototype demo
+ * conveniences and do not define canonical combat starting state or magazine capacity.
+ */
+export interface CombatAmmoPrototypeOptions {
+  readonly initialPosture?: StableCharacterPosture;
+  readonly initialWeaponAction?: WeaponAction;
+  readonly initialMagazineAmmo?: MagazineAmmo;
+}
+
+/**
+ * Isolated, prototype-scoped Application runtime session for single-round firing
+ * and final-round depletion coordination (AS-002 §3).
+ *
+ * Authority Boundary:
+ * - Prototype-scoped only; does NOT establish canonical general `CombatSession` architecture.
+ * - Preserves `CombatCoordinationSnapshot` as strictly 2-axis (`characterPosture` + `weaponAction`)
+ *   and holds `MagazineAmmoState` alongside it internally.
+ * - Delegates all round-consumption and final-round depletion rules strictly to Domain
+ *   `resolveMagazineRoundConsumption`.
+ * - Performs synchronous copy-on-write reference replacement so no caller observes a partial
+ *   final-round depletion state.
+ * - `resetPrototype()` is strictly a prototype UI replay convenience, NOT canonical reload
+ *   or ammo replenishment.
+ */
+export interface CombatAmmoPrototypeSession {
+  /**
+   * Returns a shallow-frozen read-only snapshot projection of the current prototype state.
+   */
+  getSnapshot(): CombatAmmoPrototypeSnapshot;
+
+  /**
+   * Resolves a single firing round when Application preconditions are satisfied
+   * (`EXPOSED`, `FIRING`, `magazineAmmo >= 1`).
+   *
+   * @returns `true` if a round was consumed and state was synchronously updated;
+   *          `false` if preconditions were not met (state left unchanged).
+   */
+  resolveSingleFiring(): boolean;
+
+  /**
+   * Restores the session to its validated initial prototype state.
+   *
+   * Strictly a prototype UI replay convenience — NOT canonical reload or ammo replenishment.
+   */
+  resetPrototype(): void;
+}
+
+/**
+ * [IMPLEMENTATION / PROTOTYPE DEMO INITIALIZATION CHOICES]
+ * Non-canonical defaults for prototype interactivity when caller omits options.
+ */
+const DEFAULT_PROTOTYPE_POSTURE: StableCharacterPosture = CharacterPosture.EXPOSED;
+const DEFAULT_PROTOTYPE_WEAPON_ACTION: WeaponAction = WeaponAction.FIRING;
+const DEFAULT_PROTOTYPE_MAGAZINE_AMMO: MagazineAmmo = 3;
+
+class CombatAmmoPrototypeSessionImpl implements CombatAmmoPrototypeSession {
+  private readonly _initialPosture: StableCharacterPosture;
+  private readonly _initialWeaponAction: WeaponAction;
+  private readonly _initialMagazineAmmo: MagazineAmmo;
+
+  private _coordinationSnapshot: CombatCoordinationSnapshot;
+  private _magazineAmmo: MagazineAmmoState;
+
+  constructor(options?: CombatAmmoPrototypeOptions) {
+    const initialPosture = options?.initialPosture ?? DEFAULT_PROTOTYPE_POSTURE;
+    const initialWeaponAction = options?.initialWeaponAction ?? DEFAULT_PROTOTYPE_WEAPON_ACTION;
+    const initialMagazineAmmo = options?.initialMagazineAmmo ?? DEFAULT_PROTOTYPE_MAGAZINE_AMMO;
+
+    assertStableCharacterPosture(initialPosture, 'createCombatAmmoPrototypeSession');
+    assertWeaponAction(initialWeaponAction, 'createCombatAmmoPrototypeSession');
+    assertMagazineAmmo(initialMagazineAmmo, 'createCombatAmmoPrototypeSession');
+
+    this._initialPosture = initialPosture;
+    this._initialWeaponAction = initialWeaponAction;
+    this._initialMagazineAmmo = initialMagazineAmmo;
+
+    this._coordinationSnapshot = Object.freeze({
+      characterPosture: createInitialCharacterPostureState(initialPosture),
+      weaponAction: createWeaponActionState(initialWeaponAction),
+    });
+    this._magazineAmmo = createMagazineAmmoState(initialMagazineAmmo);
+  }
+
+  getSnapshot(): CombatAmmoPrototypeSnapshot {
+    const posture = this._coordinationSnapshot.characterPosture.posture;
+    const weaponAction = this._coordinationSnapshot.weaponAction.action;
+    const magazineAmmo = this._magazineAmmo.current;
+    const isFiringResolutionAvailable =
+      posture === CharacterPosture.EXPOSED &&
+      weaponAction === WeaponAction.FIRING &&
+      magazineAmmo >= 1;
+
+    return Object.freeze({
+      posture,
+      weaponAction,
+      magazineAmmo,
+      isFiringResolutionAvailable,
+    });
+  }
+
+  resolveSingleFiring(): boolean {
+    if (
+      this._coordinationSnapshot.characterPosture.posture !== CharacterPosture.EXPOSED ||
+      this._coordinationSnapshot.weaponAction.action !== WeaponAction.FIRING ||
+      this._magazineAmmo.current < 1
+    ) {
+      return false;
+    }
+
+    const result = resolveMagazineRoundConsumption(
+      this._magazineAmmo,
+      this._coordinationSnapshot.weaponAction,
+      this._coordinationSnapshot.characterPosture
+    );
+
+    const nextMagazineAmmo = result.magazineAmmo;
+    const nextCoordinationSnapshot: CombatCoordinationSnapshot =
+      result.depletionResponse !== null
+        ? Object.freeze({
+            characterPosture: result.depletionResponse.characterPosture,
+            weaponAction: result.depletionResponse.weaponAction,
+          })
+        : this._coordinationSnapshot;
+
+    this._magazineAmmo = nextMagazineAmmo;
+    this._coordinationSnapshot = nextCoordinationSnapshot;
+    return true;
+  }
+
+  resetPrototype(): void {
+    this._coordinationSnapshot = Object.freeze({
+      characterPosture: createInitialCharacterPostureState(this._initialPosture),
+      weaponAction: createWeaponActionState(this._initialWeaponAction),
+    });
+    this._magazineAmmo = createMagazineAmmoState(this._initialMagazineAmmo);
+  }
+}
+
+/**
+ * Creates an isolated, prototype-scoped Combat Ammo Application Session (AS-002 §3).
+ *
+ * @param options Optional non-canonical prototype initialization overrides.
+ */
+export function createCombatAmmoPrototypeSession(
+  options?: CombatAmmoPrototypeOptions
+): CombatAmmoPrototypeSession {
+  return new CombatAmmoPrototypeSessionImpl(options);
 }
