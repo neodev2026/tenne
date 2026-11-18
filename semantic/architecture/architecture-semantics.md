@@ -10,7 +10,7 @@
 * **Domain**: Architecture
 * **Status**: Approved
 * **Tags**: `architecture`, `state-machine`, `state`
-* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009 bootstrap; Task T-025 Application Multi-Axis Combat State Coordination Boundary).
+* **Human Semantic Authorization**: Explicitly authorized by Human Owner under Guardrail G-041 (Task T-009 bootstrap; Task T-025 Application Multi-Axis Combat State Coordination Boundary; Task T-030 Prototype-Scoped Single-Character Firing/Ammo Session Boundary).
 
 ### Specification
 1. **Canonical Combat State Ownership**:
@@ -50,13 +50,37 @@
      * Canonical architecture does not mandate the public implementation name `CharacterCombatState`.
      * Architectural documentation references this construct as an *Application multi-axis combat coordination snapshot* or *Application combat coordination container*. Concrete TypeScript naming remains an implementation-layer choice.
 
+3. **Prototype-Scoped Single-Character Firing/Ammo Runtime Session Boundary (T-030)**:
+   * **Prototype Scope & Non-Canonical Session Boundary**:
+     * To support an interactive browser prototype on `/play/` consuming `resolveMagazineRoundConsumption` (`GS-003 §2, §3`), an isolated, prototype-scoped Application runtime session (`CombatAmmoPrototypeSession`) is authorized.
+     * `CombatAmmoPrototypeSession` is strictly a **prototype-scoped** Application runtime owner for a single prototype character. It does **not** establish the canonical general `CombatSession` architecture, multi-character squad lifecycle, ECS, generic store, or Domain character-vs-weapon structural ownership.
+     * `CombatCoordinationSnapshot` remains strictly limited to its 2 authorized axes (`CharacterPostureState` and `WeaponActionState`); `MagazineAmmoState` is **not** added to `CombatCoordinationSnapshot`.
+     * `PostureDemoSession` remains strictly posture-only and unchanged.
+   * **Synchronous Multi-Axis Reference Replacement**:
+     * Internally, the prototype session holds a `CombatCoordinationSnapshot` reference (`CharacterPostureState` + `WeaponActionState`) alongside a `MagazineAmmoState` reference.
+     * On a valid single-round firing resolution, the session delegates strictly to Domain `resolveMagazineRoundConsumption(ammo, weaponAction, posture)` and replaces both the `MagazineAmmoState` reference and (on final-round depletion `1 -> 0`) the `CombatCoordinationSnapshot` reference within one synchronous operation before returning.
+     * External readers/observers must never witness a partial state (such as `magazineAmmo === 0` while `weaponAction === FIRING` or `posture === EXPOSED`, or `IDLE + TRANSITIONING_TO_COVERED` with `magazineAmmo > 0`).
+   * **Frozen Shared Contract for Parallel Application & Presentation Development**:
+     * Read-only Snapshot Projection (`CombatAmmoPrototypeSnapshot`):
+       * `readonly posture: CharacterPosture`
+       * `readonly weaponAction: WeaponAction`
+       * `readonly magazineAmmo: MagazineAmmo`
+       * `readonly isFiringResolutionAvailable: boolean` — strictly an Application-level precondition projection (`posture === EXPOSED && weaponAction === FIRING && magazineAmmo >= 1`) indicating whether `resolveSingleFiring()` can currently invoke Domain `resolveMagazineRoundConsumption`. It is **not** canonical global `canFire`, global actionability, or firing cadence.
+     * Session Interaction Contract (`CombatAmmoPrototypeSession`):
+       * `getSnapshot(): CombatAmmoPrototypeSnapshot` — returns a shallow-frozen read-only snapshot projection.
+       * `resolveSingleFiring(): boolean` — if preconditions (`EXPOSED`, `FIRING`, `magazineAmmo >= 1`) are satisfied, invokes Domain `resolveMagazineRoundConsumption`, atomically replaces internal references, and returns `true`; otherwise leaves state unchanged and returns `false`.
+       * `resetPrototype(): void` — prototype UI replay convenience restoring the session's configured initial prototype state; strictly **not** canonical reload or ammo replenishment.
+     * Prototype Initialization Defaults:
+       * Prototype bootstrap defaults (`CharacterPosture.EXPOSED`, `WeaponAction.FIRING`, `initialMagazineAmmo = 3`) are non-canonical demo choices and do **not** define canonical starting combat posture, weapon action, or magazine capacity.
+
 ### Architectural Gap Lineage & Boundaries
 * **Portion Resolved by T-025**: Authorized the Application multi-axis combat state coordination container pattern; established the copy-on-write reference replacement rule; bounded the coordinated axes strictly to `CharacterPostureState` and `WeaponActionState` for ammo depletion; preserved `PostureDemoSession` isolation; confirmed `EventBatch` and `EffectIntent` non-integration; identified the stale-response architectural risk and synchronous design direction.
+* **Portion Resolved by T-030**: Authorized an isolated, prototype-scoped single-character Application runtime session (`CombatAmmoPrototypeSession`) with synchronous copy-on-write reference replacement for `CombatCoordinationSnapshot` + `MagazineAmmoState` and froze the minimal shared snapshot/session contract for parallel Application and Presentation development, while preserving `CombatCoordinationSnapshot` (2-axis) and `PostureDemoSession` (posture-only) unchanged.
 * **Remaining Unresolved Items**:
   * *Structural Ownership Decomposition*: The structural ownership decomposition between character and weapon states at the Domain level remains unresolved (as noted in Domain line 1011).
   * *Stale-Response Failure Policy*: Concrete failure behavior when applying a stale response (whether the Application layer throws an Error, returns false, no-ops, or emits an event) is not authorized by this specification and remains unresolved.
-  * *Additional Axes Expansion*: Inclusion of `MagazineAmmoState`, STUN/control status, and squad membership in Application aggregates remains deferred.
-  * *Combat Session Architecture*: Architecture and lifecycle of a multi-character combat session remain deferred.
+  * *Additional Axes Expansion*: Inclusion of `MagazineAmmoState`, STUN/control status, and squad membership in canonical `CombatCoordinationSnapshot` or general Application aggregates remains deferred.
+  * *Canonical Combat Session Architecture*: Architecture and lifecycle of a canonical multi-character `CombatSession` remain deferred.
 
 ## AS-003: Rendering Cannot Define Gameplay Truth
 * **Domain**: Architecture

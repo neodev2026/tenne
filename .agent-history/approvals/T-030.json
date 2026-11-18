@@ -1,0 +1,29 @@
+{
+  "taskId": "T-030",
+  "approvedAt": "2026-11-19T00:22:15+01:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Specify Prototype-Scoped Application Runtime Session Boundary for Single-Round Firing and Depletion",
+    "targetBranch": "agent/t-030-prototype-session-architecture",
+    "baseCommit": "13086856f4e256850643a93871cc41715399b644",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "semantic/architecture/architecture-semantics.md",
+      ".agent-history/tasks/T-030.json",
+      ".agent-history/approvals/T-030.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 4 budget-counted files; no G-031 override; exact path .agent-history/verifications/latest-verification.log remains excluded",
+    "g041Authorization": "Explicit human architecture authorization under Guardrail G-041 to specify the prototype-scoped single-character Application runtime session boundary (CombatAmmoPrototypeSession) and freeze the shared snapshot/session contract for parallel T-031 and T-032 development in semantic/architecture/architecture-semantics.md under AS-002",
+    "g042Authorization": false,
+    "semanticChange": "Update AS-002 in semantic/architecture/architecture-semantics.md to add §3 authorizing an isolated, prototype-scoped Application runtime session (CombatAmmoPrototypeSession) holding CombatCoordinationSnapshot + MagazineAmmoState with synchronous copy-on-write reference replacement upon Domain resolveMagazineRoundConsumption, freezing the minimal shared snapshot/session contract for T-031 and T-032, while explicitly not establishing canonical general CombatSession architecture and keeping CombatCoordinationSnapshot (2-axis) and PostureDemoSession (posture-only) unchanged",
+    "guardrailsChange": "No guardrail change authorized; G-042 is false"
+  },
+  "clarifications": [
+    "CombatAmmoPrototypeSession is explicitly prototype-scoped and does not establish canonical general CombatSession architecture.",
+    "T-030 freezes the minimal shared contract (CombatAmmoPrototypeSnapshot and CombatAmmoPrototypeSession) for parallel T-031 and T-032 development.",
+    "CombatCoordinationSnapshot remains strictly 2-axis (CharacterPostureState and WeaponActionState).",
+    "PostureDemoSession remains strictly posture-only and unchanged.",
+    "Task scope is strictly 4 budget-counted files; G-041 = true; G-042 = false."
+  ]
+}
