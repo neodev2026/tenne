@@ -1,0 +1,26 @@
+{
+  "taskId": "T-033",
+  "approvedAt": "2026-11-19T00:22:15+01:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Integrate Playable Combat Prototype on /play/ and Perform End-to-End Multi-Branch Verification",
+    "targetBranch": "agent/t-033-play-combat-prototype-integration",
+    "baseCommit": "13086856f4e256850643a93871cc41715399b644",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/presentation/index.ts",
+      "tests/presentation.test.ts",
+      ".agent-history/tasks/T-033.json",
+      ".agent-history/approvals/T-033.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override; exact path .agent-history/verifications/latest-verification.log remains excluded",
+    "g041Authorization": false,
+    "g042Authorization": false
+  },
+  "clarifications": [
+    "Merges independent parallel branches T-031 (Application) and T-032 (Presentation) and resolves mechanical .agent-history/events.jsonl conflict.",
+    "Wires createCombatAmmoPrototypeSession (T-031) into mountCombatPrototype (T-032) on /play/ via initializePresentationShell while preserving PostureDemoSession and mountPostureDemo.",
+    "Executes integrated Application -> Presentation verification in tests/presentation.test.ts to detect any semantic conflict without Git conflict."
+  ]
+}

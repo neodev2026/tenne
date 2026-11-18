@@ -6,14 +6,19 @@ import {
   MANDATORY_AUTHORITY_DISCLAIMER,
   MANDATORY_TRANSITION_NOTE,
   type PostureDemoViewModel,
+  createCombatPrototypeController,
+  deriveCombatPrototypeViewModel,
+  type CombatPrototypeViewModel,
 } from '../src/game/presentation/index.ts';
 import {
   createPostureDemoSession,
+  createCombatAmmoPrototypeSession,
   type PostureDemoSnapshot,
 } from '../src/game/application/index.ts';
 import {
   CharacterPosture,
   SquadPostureIntent,
+  WeaponAction,
   getDomainState,
 } from '../src/game/domain/index.ts';
 
@@ -410,5 +415,66 @@ describe('Full Walkthrough Progression: Forward and Reverse Sequences', () => {
     expect(controller.beginTransition()).toBe(true);
     expect(currentVm.postureLabel).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
     expect(currentVm.isTransitionInProgress).toBe(true);
+  });
+});
+
+describe('Integrated Application -> Presentation Combat Prototype Verification (T-033)', () => {
+  it('wires real CombatAmmoPrototypeSession (T-031) into CombatPrototypeController (T-032) across 3 -> 2 -> 1 -> 0 depletion', () => {
+    const session = createCombatAmmoPrototypeSession();
+    let currentVm: CombatPrototypeViewModel = deriveCombatPrototypeViewModel(session.getSnapshot());
+    const observedSnapshots: CombatPrototypeViewModel[] = [];
+
+    const controller = createCombatPrototypeController(session, (vm) => {
+      currentVm = vm;
+      observedSnapshots.push(vm);
+    });
+
+    // Initial state: EXPOSED, FIRING, ammo = 3
+    expect(currentVm.postureLabel).toBe(CharacterPosture.EXPOSED);
+    expect(currentVm.weaponActionLabel).toBe(WeaponAction.FIRING);
+    expect(currentVm.magazineAmmoCount).toBe(3);
+    expect(currentVm.isFireButtonEnabled).toBe(true);
+    expect(currentVm.isDepletedAutoCoverActive).toBe(false);
+    expect(currentVm.stagePostureClass).toBe('stage-exposed');
+
+    // Shot 1: 3 -> 2 (stays EXPOSED + FIRING)
+    expect(controller.fireRound()).toBe(true);
+    expect(currentVm.magazineAmmoCount).toBe(2);
+    expect(currentVm.postureLabel).toBe(CharacterPosture.EXPOSED);
+    expect(currentVm.weaponActionLabel).toBe(WeaponAction.FIRING);
+    expect(currentVm.isFireButtonEnabled).toBe(true);
+    expect(currentVm.isDepletedAutoCoverActive).toBe(false);
+
+    // Shot 2: 2 -> 1 (stays EXPOSED + FIRING)
+    expect(controller.fireRound()).toBe(true);
+    expect(currentVm.magazineAmmoCount).toBe(1);
+    expect(currentVm.postureLabel).toBe(CharacterPosture.EXPOSED);
+    expect(currentVm.weaponActionLabel).toBe(WeaponAction.FIRING);
+    expect(currentVm.isFireButtonEnabled).toBe(true);
+    expect(currentVm.isDepletedAutoCoverActive).toBe(false);
+
+    // Shot 3 (final round): 1 -> 0 triggers synchronous FIRING -> IDLE and EXPOSED -> TRANSITIONING_TO_COVERED
+    expect(controller.fireRound()).toBe(true);
+    expect(currentVm.magazineAmmoCount).toBe(0);
+    expect(currentVm.weaponActionLabel).toBe(WeaponAction.IDLE);
+    expect(currentVm.postureLabel).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+    expect(currentVm.isFireButtonEnabled).toBe(false);
+    expect(currentVm.isDepletedAutoCoverActive).toBe(true);
+    expect(currentVm.stagePostureClass).toBe('stage-transitioning-cover');
+
+    // Post-depletion attempt returns false and preserves depleted state
+    expect(controller.fireRound()).toBe(false);
+    expect(currentVm.magazineAmmoCount).toBe(0);
+    expect(currentVm.weaponActionLabel).toBe(WeaponAction.IDLE);
+    expect(currentVm.postureLabel).toBe(CharacterPosture.TRANSITIONING_TO_COVERED);
+
+    // Reset demo restores initial prototype state cleanly
+    const resetVm = controller.resetDemo();
+    expect(resetVm.magazineAmmoCount).toBe(3);
+    expect(resetVm.postureLabel).toBe(CharacterPosture.EXPOSED);
+    expect(resetVm.weaponActionLabel).toBe(WeaponAction.FIRING);
+    expect(resetVm.isFireButtonEnabled).toBe(true);
+    expect(resetVm.isDepletedAutoCoverActive).toBe(false);
+    expect(observedSnapshots).toHaveLength(5);
   });
 });
