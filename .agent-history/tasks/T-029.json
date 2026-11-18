@@ -1,0 +1,27 @@
+{
+  "id": "T-029",
+  "title": "Implement Domain API for Single-Round Magazine Consumption and Final-Round Depletion Coordination",
+  "milestoneId": "M-000",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-029-magazine-round-consumption-domain",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-11-18T15:27:11+01:00",
+  "classification": "gameplay / domain implementation",
+  "trustedBaseCommit": "114d7b13d9f89bdd46254e3c401c687e7a5d28ac",
+  "authorizedFiles": [
+    "src/game/domain/index.ts",
+    "tests/game-domain.test.ts",
+    ".agent-history/tasks/T-029.json",
+    ".agent-history/approvals/T-029.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 5,
+  "g041": false,
+  "g042": false,
+  "semanticAuthority": "T-028",
+  "applicationRuntimeIntegrationOutOfScope": true
+}

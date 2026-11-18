@@ -1,0 +1,56 @@
+{
+  "taskId": "T-029",
+  "approvedAt": "2026-11-18T15:27:11+01:00",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Domain API for Single-Round Magazine Consumption and Final-Round Depletion Coordination",
+    "targetBranch": "agent/t-029-magazine-round-consumption-domain",
+    "baseCommit": "114d7b13d9f89bdd46254e3c401c687e7a5d28ac",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/domain/index.ts",
+      "tests/game-domain.test.ts",
+      ".agent-history/tasks/T-029.json",
+      ".agent-history/approvals/T-029.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override, exception, or scope expansion authorized; exact path .agent-history/verifications/latest-verification.log remains excluded under existing accounting rule",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticAuthority": "Canonical single-round magazine ammunition consumption and final-round depletion coordination semantics established by T-028 under GS-003 §2 and §3",
+    "semanticChange": "No semantic specification or registry change authorized; G-041 is false",
+    "guardrailsChange": "No guardrail implementation, registry definition, severity, or policy change is authorized; G-042 is false",
+    "implementationScope": [
+      "Export MagazineRoundConsumptionResult interface in src/game/domain/index.ts containing readonly magazineAmmo: MagazineAmmoState and readonly depletionResponse: AmmoDepletionResponse | null",
+      "Export resolveMagazineRoundConsumption(currentAmmo, currentWeaponAction, currentPosture): MagazineRoundConsumptionResult in src/game/domain/index.ts",
+      "Implement internal unexported helper consumeMagazineRound(currentAmmo: MagazineAmmoState): MagazineAmmoState in src/game/domain/index.ts",
+      "Enforce runtime type validation via assertMagazineAmmo, assertWeaponAction, and assertCharacterPosture throwing TypeError on malformed inputs",
+      "Enforce transition preconditions uniformly for N > 1 and N = 1: currentWeaponAction.action === WeaponAction.FIRING, currentPosture.posture === CharacterPosture.EXPOSED, and currentAmmo.current >= 1, throwing Error on violations without clamping or no-op",
+      "For N > 1: return frozen MagazineRoundConsumptionResult with magazineAmmo.current = N - 1 and depletionResponse = null",
+      "For N = 1: return frozen MagazineRoundConsumptionResult with magazineAmmo.current = 0 and depletionResponse delegated to resolveAmmoDepletionResponse(currentWeaponAction, currentPosture)",
+      "Preserve input state immutability and existing resolveAmmoDepletionResponse behavior unchanged",
+      "Add unit tests in tests/game-domain.test.ts covering N > 1, N = 1, immutability, freezing, precondition errors, TypeError validation, and unexported helper boundary",
+      "Preserve getDomainState().gameplayImplemented === false"
+    ],
+    "deferredScope": [
+      "Application-layer integration, CombatCoordinationSnapshot modifications, and runtime state installation deferred",
+      "Presentation-layer integration and rendering deferred",
+      "Global firing eligibility (canFire), STUN inspection, Auto-Fire intent, and trigger state deferred",
+      "Firing cadence, fire interval, burst timing, projectile/hitscan resolution, and recoil deferred under GAP-GS-002 and GAP-GS-004",
+      "Magazine capacity, reserve ammunition, and reload replenishment deferred under GAP-GS-002 and GAP-GS-003",
+      "Character aggregate, Weapon aggregate, CombatSession, and CombatRuntime deferred"
+    ]
+  },
+  "clarifications": [
+    "Task scope is strictly 5 budget-counted files.",
+    "Normal G-031 limit of 5 files is observed with zero overrides.",
+    "G-041 semantic authorization is FALSE (zero semantic files modified; semantics canonically authorized by T-028).",
+    "G-042 guardrails authorization is FALSE (zero guardrails modified).",
+    "Public Domain API adds only MagazineRoundConsumptionResult and resolveMagazineRoundConsumption.",
+    "consumeMagazineRound is strictly internal and unexported.",
+    "Final-round depletionResponse is produced by delegating to resolveAmmoDepletionResponse without duplicating depletion logic.",
+    "Domain guarantee boundary: The public round-consumption API does not expose a separate final-round ammo-decrement operation that omits the corresponding canonical depletion response. It does not perform Application state installation, runtime reference replacement, observer-visible Application atomicity, database transactions, ACID, rollback, or distributed consistency.",
+    "Zero Application or Presentation files are modified in T-029.",
+    "Historical T-000 through T-028 records and events are preserved without modification."
+  ]
+}
