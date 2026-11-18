@@ -1,0 +1,29 @@
+{
+  "taskId": "T-032",
+  "approvedAt": "2026-11-18T23:27:52Z",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Playable Combat Prototype Visual Component and View-Model",
+    "targetBranch": "agent/t-032-combat-prototype-presentation-view",
+    "baseCommit": "c365f8e",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/presentation/combat-prototype.ts",
+      "tests/combat-prototype-view.test.ts",
+      ".agent-history/tasks/T-032.json",
+      ".agent-history/approvals/T-032.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Normal G-031 limit of 5 budget-counted files strictly enforced; authorized scope is exactly 5 budget-counted files; no G-031 override; exact path .agent-history/verifications/latest-verification.log remains excluded",
+    "g041Authorization": false,
+    "g042Authorization": false,
+    "semanticChange": "No semantic change authorized; G-041 is false. Adheres strictly to frozen T-030 (AS-002 §3) contract.",
+    "guardrailsChange": "No guardrail change authorized; G-042 is false"
+  },
+  "clarifications": [
+    "Presentation owns zero gameplay state; all state flows from session.getSnapshot().",
+    "Module must be 100% Node-safe to import (no top-level document access).",
+    "Do not modify src/game/application/index.ts (T-031) or src/game/presentation/index.ts (T-033).",
+    "Task scope is strictly 5 budget-counted files; G-041 = false; G-042 = false."
+  ]
+}
