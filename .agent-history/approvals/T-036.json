@@ -1,0 +1,26 @@
+{
+  "taskId": "T-036",
+  "approvedAt": "2026-11-19T01:25:44Z",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement Cover and Reload Combat Prototype Presentation",
+    "targetBranch": "agent/t-036-cover-reload-presentation",
+    "baseCommit": "90e03a253d37e648843c16239425cdcf7a8fb0ac",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/presentation/combat-prototype.ts",
+      "tests/combat-prototype-view.test.ts",
+      ".agent-history/tasks/T-036.json",
+      ".agent-history/approvals/T-036.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Five budget-counted files; no override.",
+    "g041Authorization": false,
+    "g042Authorization": false
+  },
+  "clarifications": [
+    "Implement the T-034 AS-002 Presentation contract with a structural session port compatible with the original T-030 session. Missing controls are disabled.",
+    "Display Application-provided state and availability, dispatch each walkthrough command, then refresh.",
+    "Browser integration verification is deferred to T-037."
+  ]
+}

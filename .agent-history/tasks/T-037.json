@@ -1,0 +1,24 @@
+{
+  "id": "T-037",
+  "title": "Integrate and Verify the M-002 Cover and Reload Combat Loop",
+  "milestoneId": "M-002",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-037-cover-reload-integration",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "PLAY_COMBAT_PROTOTYPE_INTEGRATION",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-11-19T01:40:02Z",
+  "classification": "gameplay integration and verification",
+  "trustedBaseCommit": "90e03a253d37e648843c16239425cdcf7a8fb0ac",
+  "authorizedFiles": [
+    "tests/presentation.test.ts",
+    ".agent-history/tasks/T-037.json",
+    ".agent-history/approvals/T-037.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 4,
+  "g041": false,
+  "g042": false
+}

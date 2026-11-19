@@ -319,19 +319,24 @@ export function resolveAmmoDepletionSnapshot(
 
 /**
  * Narrow, read-only projection of the prototype-scoped single-character combat
- * ammo session (AS-002 §3).
+ * ammo session (AS-002 §3–4).
  *
  * CRITICAL AUTHORITY BOUNDARY:
  * - `isFiringResolutionAvailable` is strictly an Application-level precondition
  *   projection (`posture === EXPOSED && weaponAction === FIRING && magazineAmmo >= 1`).
  * - It is NOT canonical `canFire`, NOT global combat actionability, and does NOT
- *   evaluate STUN, Auto-Fire intent, firing cadence, or reload eligibility.
+ *   evaluate STUN, Auto-Fire intent, firing cadence, or canonical reload eligibility.
  */
 export interface CombatAmmoPrototypeSnapshot {
   readonly posture: CharacterPosture;
   readonly weaponAction: WeaponAction;
   readonly magazineAmmo: MagazineAmmo;
   readonly isFiringResolutionAvailable: boolean;
+  readonly isCoverTransitionCompletionAvailable: boolean;
+  readonly isReloadStartAvailable: boolean;
+  readonly isReloadCompletionAvailable: boolean;
+  readonly isExposureStartAvailable: boolean;
+  readonly isExposureCompletionAvailable: boolean;
 }
 
 /**
@@ -376,6 +381,11 @@ export interface CombatAmmoPrototypeSession {
    *          `false` if preconditions were not met (state left unchanged).
    */
   resolveSingleFiring(): boolean;
+  completeCoverTransition(): boolean;
+  startReload(): boolean;
+  completeReload(): boolean;
+  beginExposure(): boolean;
+  completeExposure(): boolean;
 
   /**
    * Restores the session to its validated initial prototype state.
@@ -393,6 +403,13 @@ const DEFAULT_PROTOTYPE_POSTURE: StableCharacterPosture = CharacterPosture.EXPOS
 const DEFAULT_PROTOTYPE_WEAPON_ACTION: WeaponAction = WeaponAction.FIRING;
 const DEFAULT_PROTOTYPE_MAGAZINE_AMMO: MagazineAmmo = 3;
 
+type CombatPrototypeStep =
+  | 'awaitingCoverCompletion'
+  | 'awaitingReloadStart'
+  | 'awaitingReloadCompletion'
+  | 'awaitingExposureStart'
+  | 'awaitingExposureCompletion';
+
 class CombatAmmoPrototypeSessionImpl implements CombatAmmoPrototypeSession {
   private readonly _initialPosture: StableCharacterPosture;
   private readonly _initialWeaponAction: WeaponAction;
@@ -400,6 +417,7 @@ class CombatAmmoPrototypeSessionImpl implements CombatAmmoPrototypeSession {
 
   private _coordinationSnapshot: CombatCoordinationSnapshot;
   private _magazineAmmo: MagazineAmmoState;
+  private _step: CombatPrototypeStep | null = null;
 
   constructor(options?: CombatAmmoPrototypeOptions) {
     const initialPosture = options?.initialPosture ?? DEFAULT_PROTOTYPE_POSTURE;
@@ -435,6 +453,11 @@ class CombatAmmoPrototypeSessionImpl implements CombatAmmoPrototypeSession {
       weaponAction,
       magazineAmmo,
       isFiringResolutionAvailable,
+      isCoverTransitionCompletionAvailable: this._step === 'awaitingCoverCompletion',
+      isReloadStartAvailable: this._step === 'awaitingReloadStart',
+      isReloadCompletionAvailable: this._step === 'awaitingReloadCompletion',
+      isExposureStartAvailable: this._step === 'awaitingExposureStart',
+      isExposureCompletionAvailable: this._step === 'awaitingExposureCompletion',
     });
   }
 
@@ -464,10 +487,93 @@ class CombatAmmoPrototypeSessionImpl implements CombatAmmoPrototypeSession {
 
     this._magazineAmmo = nextMagazineAmmo;
     this._coordinationSnapshot = nextCoordinationSnapshot;
+    if (result.depletionResponse !== null) {
+      this._step = 'awaitingCoverCompletion';
+    }
+    return true;
+  }
+
+  completeCoverTransition(): boolean {
+    if (this._step !== 'awaitingCoverCompletion') {
+      return false;
+    }
+
+    const { state } = completeCharacterPostureTransition(
+      this._coordinationSnapshot.characterPosture,
+      SquadPostureIntent.WANT_COVERED
+    );
+    this._coordinationSnapshot = Object.freeze({
+      ...this._coordinationSnapshot,
+      characterPosture: state,
+    });
+    this._step = 'awaitingReloadStart';
+    return true;
+  }
+
+  startReload(): boolean {
+    if (this._step !== 'awaitingReloadStart') {
+      return false;
+    }
+
+    this._coordinationSnapshot = Object.freeze({
+      ...this._coordinationSnapshot,
+      weaponAction: createWeaponActionState(WeaponAction.RELOADING),
+    });
+    this._step = 'awaitingReloadCompletion';
+    return true;
+  }
+
+  completeReload(): boolean {
+    if (this._step !== 'awaitingReloadCompletion') {
+      return false;
+    }
+
+    const magazineAmmo = createMagazineAmmoState(DEFAULT_PROTOTYPE_MAGAZINE_AMMO);
+    this._coordinationSnapshot = Object.freeze({
+      ...this._coordinationSnapshot,
+      weaponAction: createWeaponActionState(WeaponAction.IDLE),
+    });
+    this._magazineAmmo = magazineAmmo;
+    this._step = 'awaitingExposureStart';
+    return true;
+  }
+
+  beginExposure(): boolean {
+    if (this._step !== 'awaitingExposureStart') {
+      return false;
+    }
+
+    const characterPosture = beginIntentDrivenPostureTransition(
+      this._coordinationSnapshot.characterPosture,
+      SquadPostureIntent.WANT_EXPOSED
+    );
+    this._coordinationSnapshot = Object.freeze({
+      ...this._coordinationSnapshot,
+      characterPosture,
+    });
+    this._step = 'awaitingExposureCompletion';
+    return true;
+  }
+
+  completeExposure(): boolean {
+    if (this._step !== 'awaitingExposureCompletion') {
+      return false;
+    }
+
+    const { state } = completeCharacterPostureTransition(
+      this._coordinationSnapshot.characterPosture,
+      SquadPostureIntent.WANT_EXPOSED
+    );
+    this._coordinationSnapshot = Object.freeze({
+      characterPosture: state,
+      weaponAction: createWeaponActionState(WeaponAction.FIRING),
+    });
+    this._step = null;
     return true;
   }
 
   resetPrototype(): void {
+    this._step = null;
     this._coordinationSnapshot = Object.freeze({
       characterPosture: createInitialCharacterPostureState(this._initialPosture),
       weaponAction: createWeaponActionState(this._initialWeaponAction),
