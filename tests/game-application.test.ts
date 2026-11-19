@@ -529,3 +529,80 @@ describe('Prototype-Scoped Combat Ammo Application Session (AS-002 §3, GS-003 �
     expect(Object.keys(nextCoord).sort()).toEqual(['characterPosture', 'weaponAction']);
   });
 });
+
+
+describe('M-002 Cover and Reload Prototype (AS-002 §4)', () => {
+  const commands = [
+    ['completeCoverTransition', 'isCoverTransitionCompletionAvailable'],
+    ['startReload', 'isReloadStartAvailable'],
+    ['completeReload', 'isReloadCompletionAvailable'],
+    ['beginExposure', 'isExposureStartAvailable'],
+    ['completeExposure', 'isExposureCompletionAvailable'],
+  ] as const;
+
+  it('publishes one eligible step at a time and completes two firing cycles', () => {
+    const session = createCombatAmmoPrototypeSession();
+    const assertStep = (posture: CharacterPosture, weaponAction: WeaponAction, ammo: number, active?: typeof commands[number][0]) => {
+      const snapshot = session.getSnapshot();
+      expect(snapshot).toMatchObject({ posture, weaponAction, magazineAmmo: ammo });
+      expect(Object.isFrozen(snapshot)).toBe(true);
+      for (const [command, flag] of commands) {
+        expect(snapshot[flag]).toBe(command === active);
+        if (command !== active) {
+          expect(session[command]()).toBe(false);
+          expect(session.getSnapshot()).toEqual(snapshot);
+        }
+      }
+    };
+
+    assertStep(CharacterPosture.EXPOSED, WeaponAction.FIRING, 3);
+    for (let cycle = 0; cycle < 2; cycle += 1) {
+      for (const ammo of [2, 1, 0]) {
+        expect(session.resolveSingleFiring()).toBe(true);
+        expect(session.getSnapshot().magazineAmmo).toBe(ammo);
+      }
+      assertStep(CharacterPosture.TRANSITIONING_TO_COVERED, WeaponAction.IDLE, 0, 'completeCoverTransition');
+      expect(session.completeCoverTransition()).toBe(true);
+      assertStep(CharacterPosture.COVERED, WeaponAction.IDLE, 0, 'startReload');
+      expect(session.startReload()).toBe(true);
+      assertStep(CharacterPosture.COVERED, WeaponAction.RELOADING, 0, 'completeReload');
+      expect(session.completeReload()).toBe(true);
+      assertStep(CharacterPosture.COVERED, WeaponAction.IDLE, 3, 'beginExposure');
+      expect(session.beginExposure()).toBe(true);
+      assertStep(CharacterPosture.TRANSITIONING_TO_EXPOSED, WeaponAction.IDLE, 3, 'completeExposure');
+      expect(session.resolveSingleFiring()).toBe(false);
+      expect(session.completeExposure()).toBe(true);
+      assertStep(CharacterPosture.EXPOSED, WeaponAction.FIRING, 3);
+      expect(session.getSnapshot().isFiringResolutionAvailable).toBe(true);
+    }
+  });
+
+  it('refills to the fixed prototype default and resets to configured initial ammo', () => {
+    const session = createCombatAmmoPrototypeSession({ initialMagazineAmmo: 1 });
+    expect(session.resolveSingleFiring()).toBe(true);
+    expect(session.completeCoverTransition()).toBe(true);
+    expect(session.startReload()).toBe(true);
+    expect(session.completeReload()).toBe(true);
+    expect(session.getSnapshot().magazineAmmo).toBe(3);
+
+    session.resetPrototype();
+    expect(session.getSnapshot().magazineAmmo).toBe(1);
+    expect(session.getSnapshot().isExposureStartAvailable).toBe(false);
+    expect(session.beginExposure()).toBe(false);
+  });
+
+  it('requires a completed walkthrough step even when options match its posture and ammo', () => {
+    const session = createCombatAmmoPrototypeSession({
+      initialPosture: CharacterPosture.COVERED,
+      initialWeaponAction: WeaponAction.IDLE,
+      initialMagazineAmmo: 0,
+    });
+
+    const initial = session.getSnapshot();
+    for (const [command, flag] of commands) {
+      expect(initial[flag]).toBe(false);
+      expect(session[command]()).toBe(false);
+      expect(session.getSnapshot()).toEqual(initial);
+    }
+  });
+});
