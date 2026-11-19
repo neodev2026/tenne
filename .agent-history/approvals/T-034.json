@@ -1,0 +1,26 @@
+{
+  "taskId": "T-034",
+  "approvedAt": "2026-11-19T01:08:13Z",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Specify the M-002 Cover & Reload Combat Prototype Contract",
+    "targetBranch": "agent/t-034-cover-reload-prototype-contract",
+    "baseCommit": "5c8a012d170bed48bdce9d93583f1611ad9f12f5",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "semantic/gameplay/combat-states.md",
+      "semantic/architecture/architecture-semantics.md",
+      ".agent-history/tasks/T-034.json",
+      ".agent-history/approvals/T-034.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Five budget-counted files; no override.",
+    "g041Authorization": "Authorize prototype-only GS-004 and AS-002 contract documentation.",
+    "g042Authorization": false
+  },
+  "clarifications": [
+    "Human Owner authorized the proposed T-034 scope in the planning conversation.",
+    "G-052 decision approves explicit demo steps for reload and exposure, fixed prototype refill to 3, and firing re-entry on exposure completion.",
+    "T-035 through T-037 require their own recorded approvals."
+  ]
+}

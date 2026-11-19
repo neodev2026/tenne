@@ -73,6 +73,22 @@
      * Prototype Initialization Defaults:
        * Prototype bootstrap defaults (`CharacterPosture.EXPOSED`, `WeaponAction.FIRING`, `initialMagazineAmmo = 3`) are non-canonical demo choices and do **not** define canonical starting combat posture, weapon action, or magazine capacity.
 
+4. **M-002 Cover and Reload Prototype Extension (T-034, G-041)**:
+   * Extend the existing `CombatAmmoPrototypeSession` and its read-only snapshot for the GS-004 M-002 walkthrough. Reuse Domain firing resolution and Domain posture transition helpers. The existing Application session owns only prototype progression and uses the Domain value factories for weapon action and ammo. Its local posture routing inputs never update global Squad Posture Intent.
+   * Keep the existing snapshot fields and commands. Add the following commands and corresponding read-only boolean snapshot fields. Application derives each field from exactly the same eligibility as its command.
+
+     | Session command | Snapshot field |
+     | --- | --- |
+     | `completeCoverTransition(): boolean` | `readonly isCoverTransitionCompletionAvailable: boolean` |
+     | `startReload(): boolean` | `readonly isReloadStartAvailable: boolean` |
+     | `completeReload(): boolean` | `readonly isReloadCompletionAvailable: boolean` |
+     | `beginExposure(): boolean` | `readonly isExposureStartAvailable: boolean` |
+     | `completeExposure(): boolean` | `readonly isExposureCompletionAvailable: boolean` |
+
+   * A command returns `true` after synchronously publishing the complete next state and returns `false` with no state change when unavailable. Reload completion publishes `IDLE` and restored ammo together. Exposure completion publishes `EXPOSED` and `FIRING` together. Keep the two-axis coordination container and the separate ammo state.
+   * A successful final-round firing command enters the new walkthrough. Constructor options retain their existing behavior; injecting an initial posture, weapon action or ammo does not imply completion of any walkthrough step. Reset clears walkthrough progress and restores the configured initial values. Existing firing availability continues to require `EXPOSED / FIRING` with positive ammo.
+   * Presentation consumes the snapshot fields for control availability, dispatches the matching command, and refreshes from the session. Test the ordered loop and rejected out-of-order commands headlessly, then verify the mounted `/play/` flow in the browser.
+
 ### Architectural Gap Lineage & Boundaries
 * **Portion Resolved by T-025**: Authorized the Application multi-axis combat state coordination container pattern; established the copy-on-write reference replacement rule; bounded the coordinated axes strictly to `CharacterPostureState` and `WeaponActionState` for ammo depletion; preserved `PostureDemoSession` isolation; confirmed `EventBatch` and `EffectIntent` non-integration; identified the stale-response architectural risk and synchronous design direction.
 * **Portion Resolved by T-030**: Authorized an isolated, prototype-scoped single-character Application runtime session (`CombatAmmoPrototypeSession`) with synchronous copy-on-write reference replacement for `CombatCoordinationSnapshot` + `MagazineAmmoState` and froze the minimal shared snapshot/session contract for parallel Application and Presentation development, while preserving `CombatCoordinationSnapshot` (2-axis) and `PostureDemoSession` (posture-only) unchanged.
