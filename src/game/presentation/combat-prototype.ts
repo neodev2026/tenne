@@ -2,7 +2,7 @@
  * TENNE Presentation Layer — Playable Combat Prototype Visual Component & View-Model
  *
  * Rule AS-001: Gameplay and Rendering Separation (Presentation strictly observes snapshot state).
- * Rule AS-002 §3: Prototype-Scoped Application Runtime Session Boundary (Frozen Contract from T-030).
+ * Rule AS-002 §§3–4: Prototype-Scoped Application Runtime Session Boundary.
  * Rule AS-003: Rendering Cannot Define Gameplay Truth.
  * Rule AS-004: Gameplay Logic Must Be Testable Without Browser (100% Node-safe to import).
  *
@@ -18,7 +18,7 @@ import {
 } from '../domain/index.ts';
 
 // ============================================================================
-// Frozen Contract from T-030 (AS-002 §3)
+// Prototype Session Port (AS-002 §§3–4)
 // ============================================================================
 
 export interface CombatPrototypeSnapshotInput {
@@ -26,11 +26,22 @@ export interface CombatPrototypeSnapshotInput {
   readonly weaponAction: WeaponAction;
   readonly magazineAmmo: MagazineAmmo;
   readonly isFiringResolutionAvailable: boolean;
+  // Accept the T-030 session until the T-034 extension is wired into /play/.
+  readonly isCoverTransitionCompletionAvailable?: boolean;
+  readonly isReloadStartAvailable?: boolean;
+  readonly isReloadCompletionAvailable?: boolean;
+  readonly isExposureStartAvailable?: boolean;
+  readonly isExposureCompletionAvailable?: boolean;
 }
 
 export interface CombatPrototypeSessionPort {
   getSnapshot(): CombatPrototypeSnapshotInput;
   resolveSingleFiring(): boolean;
+  completeCoverTransition?(): boolean;
+  startReload?(): boolean;
+  completeReload?(): boolean;
+  beginExposure?(): boolean;
+  completeExposure?(): boolean;
   resetPrototype(): void;
 }
 
@@ -49,6 +60,11 @@ export interface CombatPrototypeViewModel {
   readonly weaponActionLabel: string;
   readonly magazineAmmoCount: number;
   readonly isFireButtonEnabled: boolean;
+  readonly isEnterCoverButtonEnabled: boolean;
+  readonly isStartReloadButtonEnabled: boolean;
+  readonly isCompleteReloadButtonEnabled: boolean;
+  readonly isExposeButtonEnabled: boolean;
+  readonly isCompleteExposureButtonEnabled: boolean;
   readonly isDepletedAutoCoverActive: boolean;
   readonly stagePostureClass: CombatPrototypeStagePostureClass;
   readonly statusHeadline: string;
@@ -56,7 +72,7 @@ export interface CombatPrototypeViewModel {
 }
 
 export const PROTOTYPE_AUTHORITY_NOTE =
-  'Prototype scope only — global firing eligibility, fire cadence, projectiles, magazine capacity, and reload replenishment are not modeled.';
+  'Reload restores the demo ammo to its default. Advance each step with its button.';
 
 function deriveStagePostureClass(posture: CharacterPosture): CombatPrototypeStagePostureClass {
   switch (posture) {
@@ -88,10 +104,7 @@ function deriveStatusHeadline(
 }
 
 /**
- * Pure projection from a T-030 contract snapshot into a shallow-frozen CombatPrototypeViewModel.
- *
- * Presentation invents zero gameplay rules: button availability is derived strictly from
- * `snapshot.isFiringResolutionAvailable`.
+ * Projects the snapshot into a shallow-frozen view model. Availability comes from the session.
  */
 export function deriveCombatPrototypeViewModel(
   snapshot: CombatPrototypeSnapshotInput
@@ -109,6 +122,11 @@ export function deriveCombatPrototypeViewModel(
     weaponActionLabel: snapshot.weaponAction,
     magazineAmmoCount: snapshot.magazineAmmo,
     isFireButtonEnabled: snapshot.isFiringResolutionAvailable,
+    isEnterCoverButtonEnabled: snapshot.isCoverTransitionCompletionAvailable ?? false,
+    isStartReloadButtonEnabled: snapshot.isReloadStartAvailable ?? false,
+    isCompleteReloadButtonEnabled: snapshot.isReloadCompletionAvailable ?? false,
+    isExposeButtonEnabled: snapshot.isExposureStartAvailable ?? false,
+    isCompleteExposureButtonEnabled: snapshot.isExposureCompletionAvailable ?? false,
     isDepletedAutoCoverActive,
     stagePostureClass,
     statusHeadline,
@@ -123,6 +141,11 @@ export function deriveCombatPrototypeViewModel(
 export interface CombatPrototypeController {
   getViewModel(): CombatPrototypeViewModel;
   fireRound(): boolean;
+  completeCoverTransition(): boolean;
+  startReload(): boolean;
+  completeReload(): boolean;
+  beginExposure(): boolean;
+  completeExposure(): boolean;
   resetDemo(): CombatPrototypeViewModel;
 }
 
@@ -137,21 +160,43 @@ export function createCombatPrototypeController(
   session: CombatPrototypeSessionPort,
   onRefresh?: (vm: CombatPrototypeViewModel) => void
 ): CombatPrototypeController {
+  function refresh(): CombatPrototypeViewModel {
+    const vm = deriveCombatPrototypeViewModel(session.getSnapshot());
+    onRefresh?.(vm);
+    return vm;
+  }
+
+  function dispatch(command: (() => boolean) | undefined): boolean {
+    const resolved = command?.call(session) ?? false;
+    refresh();
+    return resolved;
+  }
+
   return {
     getViewModel(): CombatPrototypeViewModel {
       return deriveCombatPrototypeViewModel(session.getSnapshot());
     },
     fireRound(): boolean {
-      const resolved = session.resolveSingleFiring();
-      const vm = deriveCombatPrototypeViewModel(session.getSnapshot());
-      onRefresh?.(vm);
-      return resolved;
+      return dispatch(session.resolveSingleFiring);
+    },
+    completeCoverTransition(): boolean {
+      return dispatch(session.completeCoverTransition);
+    },
+    startReload(): boolean {
+      return dispatch(session.startReload);
+    },
+    completeReload(): boolean {
+      return dispatch(session.completeReload);
+    },
+    beginExposure(): boolean {
+      return dispatch(session.beginExposure);
+    },
+    completeExposure(): boolean {
+      return dispatch(session.completeExposure);
     },
     resetDemo(): CombatPrototypeViewModel {
       session.resetPrototype();
-      const vm = deriveCombatPrototypeViewModel(session.getSnapshot());
-      onRefresh?.(vm);
-      return vm;
+      return refresh();
     },
   };
 }
@@ -159,6 +204,14 @@ export function createCombatPrototypeController(
 // ============================================================================
 // Visually Coherent Prototype DOM Mount (Browser Only)
 // ============================================================================
+
+const WALKTHROUGH_CONTROLS = [
+  { id: 'proto-btn-enter-cover', label: 'Enter Cover', command: 'completeCoverTransition', availability: 'isEnterCoverButtonEnabled' },
+  { id: 'proto-btn-start-reload', label: 'Start Reload', command: 'startReload', availability: 'isStartReloadButtonEnabled' },
+  { id: 'proto-btn-complete-reload', label: 'Complete Reload', command: 'completeReload', availability: 'isCompleteReloadButtonEnabled' },
+  { id: 'proto-btn-expose', label: 'Expose', command: 'beginExposure', availability: 'isExposeButtonEnabled' },
+  { id: 'proto-btn-complete-exposure', label: 'Complete Exposure', command: 'completeExposure', availability: 'isCompleteExposureButtonEnabled' },
+] as const;
 
 export interface CombatPrototypeMountInstance {
   unmount(): void;
@@ -197,7 +250,7 @@ export function mountCombatPrototype(
         <h2 style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; color: var(--text-primary);">
           TENNE — Combat Prototype
         </h2>
-        <p id="proto-status-headline" style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; margin-top: 0.2rem; color: var(--accent-cyan);"></p>
+        <p id="proto-status-headline" role="status" style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; margin-top: 0.2rem; color: var(--accent-cyan);"></p>
       </div>
       <span class="badge-tag" style="font-size: 0.7rem;">Playable Prototype</span>
     </header>
@@ -273,6 +326,11 @@ export function mountCombatPrototype(
       <button type="button" id="proto-btn-fire" class="btn-primary" style="cursor: pointer; padding: 0.65rem 1.5rem; font-size: 0.95rem; border: none;">
         Fire Round
       </button>
+      ${WALKTHROUGH_CONTROLS.map(({ id, label }) => `
+        <button type="button" id="${id}" class="btn-secondary" style="padding: 0.65rem 1rem; font-size: 0.9rem;" disabled>
+          ${label}
+        </button>
+      `).join('')}
       <button type="button" id="proto-btn-reset" class="btn-secondary" style="cursor: pointer; padding: 0.65rem 1.25rem; font-size: 0.9rem;">
         Reset Demo
       </button>
@@ -297,6 +355,12 @@ export function mountCombatPrototype(
   const btnFire = wrapper.querySelector<HTMLButtonElement>('#proto-btn-fire')!;
   const btnReset = wrapper.querySelector<HTMLButtonElement>('#proto-btn-reset')!;
   const authorityNoteEl = wrapper.querySelector<HTMLElement>('#proto-authority-note')!;
+
+  const walkthroughButtons = WALKTHROUGH_CONTROLS.map(({ id, command, availability }) => ({
+    button: wrapper.querySelector<HTMLButtonElement>(`#${id}`)!,
+    command,
+    availability,
+  }));
 
   // Track highest observed ammo count purely for visual pip slot rendering (UI presentation only)
   let maxObservedPips = 3;
@@ -360,6 +424,11 @@ export function mountCombatPrototype(
     btnFire.disabled = !vm.isFireButtonEnabled;
     btnFire.style.opacity = vm.isFireButtonEnabled ? '1' : '0.4';
     btnFire.style.cursor = vm.isFireButtonEnabled ? 'pointer' : 'not-allowed';
+
+    for (const { button, availability } of walkthroughButtons) {
+      button.disabled = !vm[availability];
+      button.style.opacity = vm[availability] ? '1' : '0.4';
+    }
   }
 
   const controller = createCombatPrototypeController(session, render);
@@ -374,12 +443,23 @@ export function mountCombatPrototype(
   btnFire.addEventListener('click', onFireClick);
   btnReset.addEventListener('click', onResetClick);
 
+  const walkthroughListeners = walkthroughButtons.map(({ button, command }) => {
+    const listener = (): void => {
+      controller[command]();
+    };
+    button.addEventListener('click', listener);
+    return { button, listener };
+  });
+
   render(controller.getViewModel());
 
   return {
     unmount(): void {
       btnFire.removeEventListener('click', onFireClick);
       btnReset.removeEventListener('click', onResetClick);
+      for (const { button, listener } of walkthroughListeners) {
+        button.removeEventListener('click', listener);
+      }
       container.innerHTML = '';
     },
     getController(): CombatPrototypeController {
