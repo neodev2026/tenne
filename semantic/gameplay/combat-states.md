@@ -201,6 +201,22 @@ Character combat state is governed by two distinct, orthogonal state machine axe
      * The character becomes actionable,
    * Then a **new reload begins from the start** under the canonical covered reload invariant.
 
+### M-002 Cover & Reload Combat Loop (/play/ prototype)
+* **Human Semantic Authorization**: T-034, G-041 and G-052. This single-character demonstration uses explicit step controls for reload and exposure. Canonical automatic reload entry, cancellation, and latest Squad Posture Intent routing continue to apply to canonical combat.
+* The default run starts at `EXPOSED / FIRING / 3`. Each valid firing command consumes one round under GS-003. The final round updates ammo, weapon action and posture together to `TRANSITIONING_TO_COVERED / IDLE / 0`.
+* The user steps through the following states. The listed source state and current step are required for each command.
+
+| Control | Source (posture / action / ammo) | Result (posture / action / ammo) |
+| --- | --- | --- |
+| Enter Cover | `TRANSITIONING_TO_COVERED / IDLE / 0` after the final round | `COVERED / IDLE / 0` |
+| Start Reload | `COVERED / IDLE / 0` after cover entry | `COVERED / RELOADING / 0` |
+| Complete Reload | `COVERED / RELOADING / 0` after reload start | `COVERED / IDLE / 3` |
+| Expose | `COVERED / IDLE / 3` after reload completion | `TRANSITIONING_TO_EXPOSED / IDLE / 3` |
+| Complete Exposure | `TRANSITIONING_TO_EXPOSED / IDLE / 3` after exposure starts | `EXPOSED / FIRING / 3` |
+
+* Reload completion restores the fixed prototype default, including when a run was initialized with a different ammo count. The value defines neither a canonical capacity nor a general replenishment formula. This demo uses explicit exposure after reload; it does not update global Squad Posture Intent. Firing resumes on a subsequent user command, with one round consumed per command.
+* This contract defers reload duration, reserve ammo, automatic reload implementation, cadence, burst, projectile/hitscan, damage, and enemy AI. Existing canonical STUN and reload cancellation semantics apply outside this demo.
+
 ### Semantic Gap Lineage: GAP-GS-003
 * **Portion Resolved by T-009**: Established reload as a Weapon Action, automatic cover-triggered entry invariant, cancellation semantics upon uncovering or stun (no progress preservation, zero ammo gained), and post-stun restart conditions.
 * **Portion Resolved by T-018**: Established explicit post-cancellation Weapon Action target state (`READY`) for uncover-triggered and STUN-triggered reload cancellation with explicit authority boundary.

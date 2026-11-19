@@ -1,0 +1,26 @@
+{
+  "id": "T-034",
+  "title": "Specify the M-002 Cover & Reload Combat Prototype Contract",
+  "milestoneId": "M-002",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-034-cover-reload-prototype-contract",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "PROTOTYPE_SPECIFICATION",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-11-19T01:08:13Z",
+  "classification": "gameplay / architecture semantic specification",
+  "trustedBaseCommit": "5c8a012d170bed48bdce9d93583f1611ad9f12f5",
+  "authorizedFiles": [
+    "semantic/gameplay/combat-states.md",
+    "semantic/architecture/architecture-semantics.md",
+    ".agent-history/tasks/T-034.json",
+    ".agent-history/approvals/T-034.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 5,
+  "g041": true,
+  "g042": false,
+  "implementationOutOfScope": true
+}
