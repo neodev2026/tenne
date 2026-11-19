@@ -1,0 +1,25 @@
+{
+  "taskId": "T-035",
+  "approvedAt": "2026-11-19T01:24:26Z",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Implement the M-002 Cover and Reload Application Session",
+    "targetBranch": "agent/t-035-cover-reload-application",
+    "baseCommit": "90e03a253d37e648843c16239425cdcf7a8fb0ac",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/application/index.ts",
+      "tests/game-application.test.ts",
+      ".agent-history/tasks/T-035.json",
+      ".agent-history/approvals/T-035.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Five budget-counted files; no override.",
+    "g041Authorization": false,
+    "g042Authorization": false
+  },
+  "clarifications": [
+    "Human Owner approved T-035 and T-036 after PR #31 merged.",
+    "Implement the approved T-034 contract and its headless tests. Integration is a separate task."
+  ]
+}
