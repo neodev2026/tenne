@@ -478,3 +478,46 @@ describe('Integrated Application -> Presentation Combat Prototype Verification (
     expect(observedSnapshots).toHaveLength(5);
   });
 });
+
+describe('Integrated M-002 Cover and Reload Combat Loop (T-037)', () => {
+  it('walks the real session through reload and exposure to the next shot', () => {
+    const controller = createCombatPrototypeController(createCombatAmmoPrototypeSession());
+
+    const assertState = (postureLabel: CharacterPosture, weaponActionLabel: WeaponAction, magazineAmmoCount: number, enabled: keyof CombatPrototypeViewModel) => {
+      const view = controller.getViewModel();
+      expect(view).toMatchObject({ postureLabel, weaponActionLabel, magazineAmmoCount });
+      const controls = [
+        'isFireButtonEnabled',
+        'isEnterCoverButtonEnabled',
+        'isStartReloadButtonEnabled',
+        'isCompleteReloadButtonEnabled',
+        'isExposeButtonEnabled',
+        'isCompleteExposureButtonEnabled',
+      ] as const;
+      for (const control of controls) {
+        expect(view[control]).toBe(control === enabled);
+      }
+    };
+
+    for (const ammo of [3, 2, 1]) {
+      assertState(CharacterPosture.EXPOSED, WeaponAction.FIRING, ammo, 'isFireButtonEnabled');
+      expect(controller.fireRound()).toBe(true);
+    }
+    assertState(CharacterPosture.TRANSITIONING_TO_COVERED, WeaponAction.IDLE, 0, 'isEnterCoverButtonEnabled');
+    expect(controller.startReload()).toBe(false);
+    expect(controller.completeCoverTransition()).toBe(true);
+    assertState(CharacterPosture.COVERED, WeaponAction.IDLE, 0, 'isStartReloadButtonEnabled');
+    expect(controller.startReload()).toBe(true);
+    assertState(CharacterPosture.COVERED, WeaponAction.RELOADING, 0, 'isCompleteReloadButtonEnabled');
+    expect(controller.beginExposure()).toBe(false);
+    expect(controller.completeReload()).toBe(true);
+    assertState(CharacterPosture.COVERED, WeaponAction.IDLE, 3, 'isExposeButtonEnabled');
+    expect(controller.beginExposure()).toBe(true);
+    assertState(CharacterPosture.TRANSITIONING_TO_EXPOSED, WeaponAction.IDLE, 3, 'isCompleteExposureButtonEnabled');
+    expect(controller.fireRound()).toBe(false);
+    expect(controller.completeExposure()).toBe(true);
+    assertState(CharacterPosture.EXPOSED, WeaponAction.FIRING, 3, 'isFireButtonEnabled');
+    expect(controller.fireRound()).toBe(true);
+    assertState(CharacterPosture.EXPOSED, WeaponAction.FIRING, 2, 'isFireButtonEnabled');
+  });
+});
