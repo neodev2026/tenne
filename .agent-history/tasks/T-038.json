@@ -1,0 +1,26 @@
+{
+  "id": "T-038",
+  "title": "Add Presentation-Only Shot Feedback and a Practice Target",
+  "milestoneId": "M-003",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-038-shot-feedback",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "PRESENTATION_ONLY",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-11-19T02:15:53Z",
+  "classification": "presentation and headless verification",
+  "trustedBaseCommit": "d07f72cdff2b5ab3e4f7a1fbcd8f4813a4951006",
+  "authorizedFiles": [
+    "src/game/presentation/combat-prototype.ts",
+    "tests/combat-prototype-view.test.ts",
+    ".agent-history/tasks/T-038.json",
+    ".agent-history/approvals/T-038.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 5,
+  "g041": false,
+  "g042": false,
+  "g052": false
+}

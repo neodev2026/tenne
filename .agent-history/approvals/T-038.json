@@ -1,0 +1,25 @@
+{
+  "taskId": "T-038",
+  "approvedAt": "2026-11-19T02:15:53Z",
+  "approver": "Human Owner",
+  "approvedScope": {
+    "taskTitle": "Add Presentation-Only Shot Feedback and a Practice Target",
+    "targetBranch": "agent/t-038-shot-feedback",
+    "baseCommit": "d07f72cdff2b5ab3e4f7a1fbcd8f4813a4951006",
+    "autonomyLevel": "L1.5",
+    "authorizedFiles": [
+      "src/game/presentation/combat-prototype.ts",
+      "tests/combat-prototype-view.test.ts",
+      ".agent-history/tasks/T-038.json",
+      ".agent-history/approvals/T-038.json",
+      ".agent-history/events.jsonl"
+    ],
+    "g031Policy": "Five budget-counted files; no override.",
+    "g041Authorization": false,
+    "g042Authorization": false
+  },
+  "clarifications": [
+    "Human Owner authorized T-038 following the M-003 proposal.",
+    "Display a stationary practice target and one presentation cue for each successful existing firing command. Hit resolution, damage and enemy behavior are outside scope."
+  ]
+}
