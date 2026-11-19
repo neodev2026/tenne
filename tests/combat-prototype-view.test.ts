@@ -217,3 +217,61 @@ describe('T-032: Combat Prototype Presentation View-Model & Controller', () => {
     });
   });
 });
+
+describe('T-036: Cover and Reload Prototype Controls', () => {
+  const controls = [
+    ['completeCoverTransition', 'isCoverTransitionCompletionAvailable', 'isEnterCoverButtonEnabled'],
+    ['startReload', 'isReloadStartAvailable', 'isStartReloadButtonEnabled'],
+    ['completeReload', 'isReloadCompletionAvailable', 'isCompleteReloadButtonEnabled'],
+    ['beginExposure', 'isExposureStartAvailable', 'isExposeButtonEnabled'],
+    ['completeExposure', 'isExposureCompletionAvailable', 'isCompleteExposureButtonEnabled'],
+  ] as const;
+
+  const snapshot: CombatPrototypeSnapshotInput = {
+    posture: CharacterPosture.EXPOSED,
+    weaponAction: WeaponAction.FIRING,
+    magazineAmmo: 3,
+    isFiringResolutionAvailable: true,
+  };
+
+  it('renders absent walkthrough flags as disabled for the original prototype session', () => {
+    const vm = deriveCombatPrototypeViewModel(snapshot);
+    for (const [, , availability] of controls) {
+      expect(vm[availability]).toBe(false);
+    }
+  });
+
+  it.each(controls)('dispatches %s and refreshes after accepted and rejected attempts', (command, flag, availability) => {
+    const { session } = createMockSession();
+    const nextSnapshot: CombatPrototypeSnapshotInput = {
+      [flag]: false,
+      posture: CharacterPosture.COVERED,
+      weaponAction: WeaponAction.RELOADING,
+      magazineAmmo: 0,
+      isFiringResolutionAvailable: false,
+    };
+    const readSnapshot = vi.fn()
+      .mockReturnValueOnce({ ...snapshot, [flag]: true })
+      .mockReturnValue(nextSnapshot);
+    const execute = vi.fn().mockReturnValueOnce(true).mockReturnValue(false);
+    const refresh = vi.fn();
+    const controller = createCombatPrototypeController({
+      ...session,
+      getSnapshot: readSnapshot,
+      [command]: execute,
+    }, refresh);
+
+    expect(controller.getViewModel()[availability]).toBe(true);
+    expect(controller[command]()).toBe(true);
+    expect(refresh).toHaveBeenLastCalledWith(expect.objectContaining({
+      [availability]: false,
+      weaponActionLabel: WeaponAction.RELOADING,
+      magazineAmmoCount: 0,
+    }));
+
+    expect(controller[command]()).toBe(false);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(readSnapshot).toHaveBeenCalledTimes(3);
+  });
+});

@@ -1,0 +1,25 @@
+{
+  "id": "T-036",
+  "title": "Implement Cover and Reload Combat Prototype Presentation",
+  "milestoneId": "M-002",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-036-cover-reload-presentation",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "PRESENTATION_ONLY",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-11-19T01:25:44Z",
+  "classification": "presentation / view-model / headless unit tests",
+  "trustedBaseCommit": "90e03a253d37e648843c16239425cdcf7a8fb0ac",
+  "authorizedFiles": [
+    "src/game/presentation/combat-prototype.ts",
+    "tests/combat-prototype-view.test.ts",
+    ".agent-history/tasks/T-036.json",
+    ".agent-history/approvals/T-036.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 5,
+  "g041": false,
+  "g042": false
+}
