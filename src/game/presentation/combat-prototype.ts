@@ -158,7 +158,8 @@ export interface CombatPrototypeController {
  */
 export function createCombatPrototypeController(
   session: CombatPrototypeSessionPort,
-  onRefresh?: (vm: CombatPrototypeViewModel) => void
+  onRefresh?: (vm: CombatPrototypeViewModel) => void,
+  onShot?: () => void
 ): CombatPrototypeController {
   function refresh(): CombatPrototypeViewModel {
     const vm = deriveCombatPrototypeViewModel(session.getSnapshot());
@@ -177,7 +178,11 @@ export function createCombatPrototypeController(
       return deriveCombatPrototypeViewModel(session.getSnapshot());
     },
     fireRound(): boolean {
-      return dispatch(session.resolveSingleFiring);
+      const fired = dispatch(session.resolveSingleFiring);
+      if (fired) {
+        onShot?.();
+      }
+      return fired;
     },
     completeCoverTransition(): boolean {
       return dispatch(session.completeCoverTransition);
@@ -265,10 +270,13 @@ export function mountCombatPrototype(
         <line x1="440" y1="185" x2="460" y2="220" stroke="rgba(148, 163, 184, 0.12)" stroke-width="1" />
         <line x1="560" y1="185" x2="600" y2="220" stroke="rgba(148, 163, 184, 0.12)" stroke-width="1" />
 
-        <!-- Distant range marker -->
-        <rect x="490" y="70" width="52" height="72" rx="4" fill="rgba(244, 63, 94, 0.1)" stroke="rgba(244, 63, 94, 0.35)" stroke-width="1.5" stroke-dasharray="4 3" />
-        <circle cx="516" cy="106" r="14" fill="none" stroke="rgba(244, 63, 94, 0.45)" stroke-width="1.5" />
-        <circle cx="516" cy="106" r="4" fill="rgba(244, 63, 94, 0.65)" />
+        <g id="proto-practice-target" role="img" aria-label="Practice target">
+          <line x1="516" y1="133" x2="516" y2="185" stroke="#64748b" stroke-width="4" />
+          <rect x="489" y="70" width="54" height="69" rx="5" fill="#202b3a" stroke="#94a3b8" stroke-width="2" />
+          <circle cx="516" cy="102" r="19" fill="none" stroke="#cbd5e1" stroke-width="2" />
+          <circle cx="516" cy="102" r="12" fill="none" stroke="#cbd5e1" stroke-width="2" />
+          <circle cx="516" cy="102" r="5" fill="#fbbf24" />
+        </g>
 
         <!-- Character silhouette group (translated smoothly by posture) -->
         <g id="proto-unit-group" style="transition: transform 220ms ease;">
@@ -281,11 +289,12 @@ export function mountCombatPrototype(
           <line x1="197" y1="138" x2="202" y2="183" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" />
           <!-- Weapon barrel -->
           <rect x="198" y="98" width="54" height="8" rx="2" fill="#e2e8f0" />
-          <!-- Muzzle flash indicator (visible when EXPOSED + FIRING) -->
-          <g id="proto-muzzle-flash">
-            <polygon points="256,102 276,94 270,102 284,102 270,106 276,112" fill="#f59e0b" />
-            <line x1="286" y1="102" x2="480" y2="106" stroke="rgba(245, 158, 11, 0.55)" stroke-width="2" stroke-dasharray="8 6" />
-          </g>
+        </g>
+
+        <!-- Keep the cue at the firing position as the last round sends the unit into cover. -->
+        <g id="proto-muzzle-flash" opacity="0" aria-hidden="true">
+          <path d="M253 102 L270 92 L267 99 L284 102 L267 105 L270 112 Z" fill="#fbbf24" />
+          <circle cx="258" cy="102" r="4" fill="#fef3c7" />
         </g>
 
         <!-- Tactical cover barricade / wall (foreground) -->
@@ -387,12 +396,6 @@ export function mountCombatPrototype(
       unitGroupEl.style.transform = 'translate(-4px, 22px)';
     }
 
-    // Show muzzle flash indicator only while EXPOSED and FIRING
-    const showMuzzleFlash =
-      vm.stagePostureClass === 'stage-exposed' &&
-      vm.weaponActionLabel === WeaponAction.FIRING;
-    muzzleFlashEl.style.display = showMuzzleFlash ? 'inline' : 'none';
-
     // Auto-cover callout banner
     autoCoverBannerEl.style.display = vm.isDepletedAutoCoverActive ? 'block' : 'none';
 
@@ -431,12 +434,20 @@ export function mountCombatPrototype(
     }
   }
 
-  const controller = createCombatPrototypeController(session, render);
+  let shotAnimation: Animation | undefined;
+  const controller = createCombatPrototypeController(session, render, () => {
+    shotAnimation?.cancel();
+    shotAnimation = muzzleFlashEl.animate([{ opacity: 1 }, { opacity: 0 }], {
+      duration: 180,
+      easing: 'ease-out',
+    });
+  });
 
   const onFireClick = (): void => {
     controller.fireRound();
   };
   const onResetClick = (): void => {
+    shotAnimation?.cancel();
     controller.resetDemo();
   };
 
@@ -455,6 +466,7 @@ export function mountCombatPrototype(
 
   return {
     unmount(): void {
+      shotAnimation?.cancel();
       btnFire.removeEventListener('click', onFireClick);
       btnReset.removeEventListener('click', onResetClick);
       for (const { button, listener } of walkthroughListeners) {

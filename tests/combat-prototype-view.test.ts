@@ -275,3 +275,29 @@ describe('T-036: Cover and Reload Prototype Controls', () => {
     expect(readSnapshot).toHaveBeenCalledTimes(3);
   });
 });
+
+describe('T-038: Shot Feedback', () => {
+  it('signals each accepted round, including the round that starts auto-cover', () => {
+    const { session } = createMockSession();
+    const refresh = vi.fn();
+    const onShot = vi.fn();
+    const controller = createCombatPrototypeController(session, refresh, onShot);
+
+    for (let shot = 1; shot <= 3; shot += 1) {
+      expect(controller.fireRound()).toBe(true);
+      expect(onShot).toHaveBeenCalledTimes(shot);
+    }
+    expect(refresh).toHaveBeenLastCalledWith(expect.objectContaining({
+      postureLabel: CharacterPosture.TRANSITIONING_TO_COVERED,
+      magazineAmmoCount: 0,
+    }));
+
+    expect(controller.fireRound()).toBe(false);
+    expect(onShot).toHaveBeenCalledTimes(3);
+
+    controller.resetDemo();
+    expect(onShot).toHaveBeenCalledTimes(3);
+    expect(controller.fireRound()).toBe(true);
+    expect(onShot).toHaveBeenCalledTimes(4);
+  });
+});
