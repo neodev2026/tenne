@@ -1,0 +1,25 @@
+{
+  "id": "T-032",
+  "title": "Implement Playable Combat Prototype Visual Component and View-Model",
+  "milestoneId": "M-001",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-032-combat-prototype-presentation-view",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "PRESENTATION_ONLY",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-11-18T23:27:52Z",
+  "classification": "presentation / view-model / headless unit tests",
+  "trustedBaseCommit": "c365f8e",
+  "authorizedFiles": [
+    "src/game/presentation/combat-prototype.ts",
+    "tests/combat-prototype-view.test.ts",
+    ".agent-history/tasks/T-032.json",
+    ".agent-history/approvals/T-032.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 5,
+  "g041": false,
+  "g042": false
+}

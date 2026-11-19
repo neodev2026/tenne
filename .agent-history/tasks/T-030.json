@@ -1,0 +1,25 @@
+{
+  "id": "T-030",
+  "title": "Specify Prototype-Scoped Application Runtime Session Boundary for Single-Round Firing and Depletion",
+  "milestoneId": "M-001",
+  "status": "IN_PROGRESS",
+  "origin": "HUMAN_APPROVED",
+  "autonomyLevel": "L1.5",
+  "branch": "agent/t-030-prototype-session-architecture",
+  "assignedAgent": "EngineerAgent",
+  "gameplayScope": "NONE",
+  "bootstrapExceptionGranted": false,
+  "startedAt": "2026-11-19T00:22:30+01:00",
+  "classification": "architecture / semantic specification",
+  "trustedBaseCommit": "13086856f4e256850643a93871cc41715399b644",
+  "authorizedFiles": [
+    "semantic/architecture/architecture-semantics.md",
+    ".agent-history/tasks/T-030.json",
+    ".agent-history/approvals/T-030.json",
+    ".agent-history/events.jsonl"
+  ],
+  "g031FileCount": 4,
+  "g041": true,
+  "g042": false,
+  "implementationOutOfScope": true
+}

@@ -12,12 +12,34 @@
 
 import {
   createPostureDemoSession,
+  createCombatAmmoPrototypeSession,
   type PostureDemoSession,
   type PostureDemoSnapshot,
 } from '../application/index.ts';
 import {
   SquadPostureIntent,
 } from '../domain/index.ts';
+import {
+  mountCombatPrototype,
+  createCombatPrototypeController,
+  deriveCombatPrototypeViewModel,
+  type CombatPrototypeController,
+  type CombatPrototypeMountInstance,
+  type CombatPrototypeSessionPort,
+  type CombatPrototypeSnapshotInput,
+  type CombatPrototypeViewModel,
+} from './combat-prototype.ts';
+
+export {
+  mountCombatPrototype,
+  createCombatPrototypeController,
+  deriveCombatPrototypeViewModel,
+  type CombatPrototypeController,
+  type CombatPrototypeMountInstance,
+  type CombatPrototypeSessionPort,
+  type CombatPrototypeSnapshotInput,
+  type CombatPrototypeViewModel,
+};
 
 // ============================================================================
 // Presentation View Model Projection (Pure)
@@ -388,7 +410,8 @@ export function initializePresentationShell(containerId: string): boolean {
     console.warn(`[TENNE Presentation] Mount container #${containerId} not found.`);
     return false;
   }
-  mountPostureDemo(container);
+  const session = createCombatAmmoPrototypeSession();
+  mountCombatPrototype(container, session);
   return true;
 }
 
